@@ -1,4 +1,4 @@
-import { prisma } from '../config/prisma.js';
+import { prisma } from "../config/prisma.js";
 export class ActivityRepository {
     list(args) {
         return prisma.activity.findMany(args);

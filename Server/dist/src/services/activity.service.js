@@ -1,8 +1,8 @@
-import { prisma } from '../config/prisma.js';
+import { prisma } from "../config/prisma.js";
 export async function listActivities(scope) {
     return prisma.activity.findMany({
         where: { businessId: { in: scope.visibleBusinesses } },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         take: 100,
         include: {
             actor: {

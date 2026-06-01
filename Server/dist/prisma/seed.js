@@ -1,18 +1,29 @@
-import bcrypt from 'bcryptjs';
-import { PrismaClient, PerspectiveType } from '@prisma/client';
+import bcrypt from "bcryptjs";
+import { PrismaClient, PerspectiveType } from "@prisma/client";
 const prisma = new PrismaClient();
-const passwordHash = await bcrypt.hash('Password@123', 12);
-const organizationName = 'Embtel ERP';
+const passwordHash = await bcrypt.hash("Password@123", 12);
+const organizationName = "Embtel ERP";
 const businessDefinitions = [
-    { name: 'Immigration Business', code: 'immigration' },
-    { name: 'Credential Evaluation', code: 'credential-evaluation' },
-    { name: 'HR Department', code: 'hr' },
-    { name: 'IT Services & Inhouse Team', code: 'it-services' },
+    { name: "Immigration Business", code: "immigration" },
+    { name: "Credential Evaluation", code: "credential-evaluation" },
+    { name: "HR Department", code: "hr" },
+    { name: "IT Services & Inhouse Team", code: "it-services" },
 ];
-const departments = ['Sales', 'Marketing', 'Documentation', 'Recruitment', 'Development', 'Operations', 'Finance', 'Support'];
+const departments = [
+    "Sales",
+    "Marketing",
+    "Documentation",
+    "Recruitment",
+    "Development",
+    "Operations",
+    "Finance",
+    "Support",
+];
 async function main() {
     await prisma.auditLog.deleteMany();
     await prisma.activity.deleteMany();
+    await prisma.perspectiveSession.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.task.deleteMany();
     await prisma.document.deleteMany();
     await prisma.perspective.deleteMany();
@@ -28,23 +39,23 @@ async function main() {
     const organization = await prisma.organization.create({
         data: {
             name: organizationName,
-            slug: 'embtel-erp',
+            slug: "embtel-erp",
         },
     });
     const roles = await Promise.all([
-        prisma.role.create({ data: { name: 'Intern', level: 0 } }),
-        prisma.role.create({ data: { name: 'Executive', level: 1 } }),
-        prisma.role.create({ data: { name: 'Manager', level: 2 } }),
-        prisma.role.create({ data: { name: 'Head', level: 3 } }),
-        prisma.role.create({ data: { name: 'Business Owner', level: 4 } }),
-        prisma.role.create({ data: { name: 'Super Admin', level: 5 } }),
+        prisma.role.create({ data: { name: "Intern", level: 0 } }),
+        prisma.role.create({ data: { name: "Executive", level: 1 } }),
+        prisma.role.create({ data: { name: "Manager", level: 2 } }),
+        prisma.role.create({ data: { name: "Head", level: 3 } }),
+        prisma.role.create({ data: { name: "Business Owner", level: 4 } }),
+        prisma.role.create({ data: { name: "Super Admin", level: 5 } }),
     ]);
     const permissions = await Promise.all([
-        prisma.permission.create({ data: { code: 'employee.read' } }),
-        prisma.permission.create({ data: { code: 'employee.write' } }),
-        prisma.permission.create({ data: { code: 'task.read' } }),
-        prisma.permission.create({ data: { code: 'task.write' } }),
-        prisma.permission.create({ data: { code: 'audit.read' } }),
+        prisma.permission.create({ data: { code: "employee.read" } }),
+        prisma.permission.create({ data: { code: "employee.write" } }),
+        prisma.permission.create({ data: { code: "task.read" } }),
+        prisma.permission.create({ data: { code: "task.write" } }),
+        prisma.permission.create({ data: { code: "audit.read" } }),
     ]);
     await prisma.rolePermission.createMany({
         data: [
@@ -69,7 +80,7 @@ async function main() {
                 data: {
                     businessId: business.id,
                     name: departmentName,
-                    code: departmentName.toLowerCase().replaceAll(' ', '-'),
+                    code: departmentName.toLowerCase().replaceAll(" ", "-"),
                 },
             });
             createdDepartments.push(department.id);
@@ -96,11 +107,14 @@ async function main() {
             departmentId: null,
             teamId: null,
             roleId: roles[4].id,
-            firstName: 'Amina',
-            lastName: 'Khan',
-            email: 'owner@embtelerp.com',
+            firstName: "Amina",
+            lastName: "Khan",
+            fullName: "Amina Khan",
+            email: "owner@embtelerp.com",
             passwordHash,
-            designation: 'Business Owner',
+            level: roles[4].level,
+            title: roles[4].name,
+            designation: "Business Owner",
         },
     });
     const heads = [];
@@ -114,9 +128,12 @@ async function main() {
                 roleId: roles[3].id,
                 reportsToId: owner.id,
                 firstName: `Head${index + 1}`,
-                lastName: 'Lead',
+                lastName: "Lead",
+                fullName: `Head${index + 1} Lead`,
                 email: `head${index + 1}@embtelerp.com`,
                 passwordHash,
+                level: roles[3].level,
+                title: roles[3].name,
                 designation: `Department Head ${index + 1}`,
             },
         });
@@ -135,9 +152,12 @@ async function main() {
                 roleId: roles[2].id,
                 reportsToId: parent.id,
                 firstName: `Manager${index + 1}`,
-                lastName: 'Team',
+                lastName: "Team",
+                fullName: `Manager${index + 1} Team`,
                 email: `manager${index + 1}@embtelerp.com`,
                 passwordHash,
+                level: roles[2].level,
+                title: roles[2].name,
                 designation: `Manager ${index + 1}`,
             },
         });
@@ -156,9 +176,12 @@ async function main() {
                 roleId: roles[1].id,
                 reportsToId: parent.id,
                 firstName: `Executive${index + 1}`,
-                lastName: 'Staff',
+                lastName: "Staff",
+                fullName: `Executive${index + 1} Staff`,
                 email: `executive${index + 1}@embtelerp.com`,
                 passwordHash,
+                level: roles[1].level,
+                title: roles[1].name,
                 designation: `Executive ${index + 1}`,
             },
         });
@@ -176,15 +199,24 @@ async function main() {
                 roleId: roles[0].id,
                 reportsToId: parent.id,
                 firstName: `Intern${index + 1}`,
-                lastName: 'Trainee',
+                lastName: "Trainee",
+                fullName: `Intern${index + 1} Trainee`,
                 email: `intern${index + 1}@embtelerp.com`,
                 passwordHash,
+                level: roles[0].level,
+                title: roles[0].name,
                 designation: `Intern ${index + 1}`,
             },
         });
         interns.push(intern);
     }
-    const allEmployees = [owner, ...heads, ...managers, ...executives, ...interns];
+    const allEmployees = [
+        owner,
+        ...heads,
+        ...managers,
+        ...executives,
+        ...interns,
+    ];
     for (const employee of allEmployees) {
         if (!employee.reportsToId) {
             continue;
@@ -211,7 +243,7 @@ async function main() {
             perspectiveType: PerspectiveType.SELF,
         },
     });
-    console.log('Seed complete');
+    console.log("Seed complete");
 }
 main()
     .catch(async (error) => {

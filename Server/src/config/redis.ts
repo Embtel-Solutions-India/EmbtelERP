@@ -1,16 +1,16 @@
-import { createClient } from "redis";
-import { env } from "./env.js";
+import { createClient } from 'redis'
+import { env } from './env.js'
 
 export const redisClient = env.REDIS_URL
   ? createClient({ url: env.REDIS_URL })
-  : null;
+  : null
 
 export async function connectRedis(): Promise<void> {
   if (!redisClient) {
-    return;
+    return
   }
 
   if (!redisClient.isOpen) {
-    await redisClient.connect();
+    await redisClient.connect()
   }
 }

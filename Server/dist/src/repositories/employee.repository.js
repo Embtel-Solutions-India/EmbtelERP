@@ -1,4 +1,4 @@
-import { prisma } from '../config/prisma.js';
+import { prisma } from "../config/prisma.js";
 export class EmployeeRepository {
     findById(id) {
         return prisma.employee.findUnique({ where: { id } });

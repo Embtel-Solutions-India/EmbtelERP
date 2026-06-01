@@ -1,4 +1,4 @@
-import { prisma } from '../config/prisma.js';
+import { prisma } from "../config/prisma.js";
 export async function recordActivity(input) {
     return prisma.activity.create({
         data: {
@@ -7,7 +7,9 @@ export async function recordActivity(input) {
             action: input.action,
             targetType: input.targetType,
             targetId: input.targetId ?? null,
-            metadata: input.metadata ? input.metadata : undefined,
+            metadata: input.metadata
+                ? input.metadata
+                : undefined,
         },
     });
 }

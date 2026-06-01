@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import { z } from 'zod';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { attachScope } from '../middleware/scope.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { validateBody } from '../middleware/validate.middleware.js';
-import { createEmployee, getEmployeeById, listEmployees } from '../services/employee.service.js';
+import { Router } from "express";
+import { z } from "zod";
+import { authenticate } from "../middleware/auth.middleware.js";
+import { attachScope } from "../middleware/scope.middleware.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { validateBody } from "../middleware/validate.middleware.js";
+import { createEmployee, getEmployeeById, listEmployees, } from "../services/employee.service.js";
 const createEmployeeSchema = z.object({
     organizationId: z.string().min(1),
     businessId: z.string().min(1),
@@ -14,21 +14,24 @@ const createEmployeeSchema = z.object({
     reportsToId: z.string().min(1).nullable().optional(),
     firstName: z.string().min(1),
     lastName: z.string().min(1),
+    fullName: z.string().min(1).nullable().optional(),
     email: z.string().email(),
     password: z.string().min(8),
+    level: z.number().int().min(0).optional(),
+    title: z.string().min(1).nullable().optional(),
     designation: z.string().nullable().optional(),
 });
 export const employeesRouter = Router();
 employeesRouter.use(authenticate, attachScope);
-employeesRouter.get('/', asyncHandler(async (req, res) => {
+employeesRouter.get("/", asyncHandler(async (req, res) => {
     const employees = await listEmployees(req.scope?.visibleEmployees ?? []);
     res.json({ data: employees });
 }));
-employeesRouter.get('/:id', asyncHandler(async (req, res) => {
+employeesRouter.get("/:id", asyncHandler(async (req, res) => {
     const employee = await getEmployeeById(String(req.params.id));
     res.json({ data: employee });
 }));
-employeesRouter.post('/', validateBody(createEmployeeSchema), asyncHandler(async (req, res) => {
+employeesRouter.post("/", validateBody(createEmployeeSchema), asyncHandler(async (req, res) => {
     const actorId = req.user?.employeeId;
     const employee = await createEmployee(req.body, actorId);
     res.status(201).json({ data: employee });

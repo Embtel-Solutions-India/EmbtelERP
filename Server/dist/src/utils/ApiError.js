@@ -5,6 +5,6 @@ export class ApiError extends Error {
         super(message);
         this.statusCode = statusCode;
         this.details = details;
-        this.name = 'ApiError';
+        this.name = "ApiError";
     }
 }
