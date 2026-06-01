@@ -5,7 +5,7 @@ export async function attachScope(req, _res, next) {
         next(new ApiError(401, "Unauthenticated request"));
         return;
     }
-    req.perspective = await getActivePerspectiveForUser(req.user.employeeId, req.user.sessionId);
+    req.perspective = await getActivePerspectiveForUser(req.user.employeeId);
     req.scope = await getDataScope(req.user.employeeId, req.perspective?.currentPerspectiveId ?? null);
     next();
 }

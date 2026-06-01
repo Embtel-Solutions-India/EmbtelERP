@@ -14,6 +14,6 @@ perspectivesRouter.get("/available", asyncHandler(async (req, res) => {
     res.json({ data: perspectives });
 }));
 perspectivesRouter.post("/switch", validateBody(switchSchema), asyncHandler(async (req, res) => {
-    const perspective = await switchPerspective(req.user.employeeId, req.user.sessionId, req.body.currentPerspectiveId);
+    const perspective = await switchPerspective(req.user.employeeId, req.body.currentPerspectiveId);
     res.json({ data: perspective });
 }));

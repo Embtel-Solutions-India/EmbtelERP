@@ -14,11 +14,8 @@ const createEmployeeSchema = z.object({
     reportsToId: z.string().min(1).nullable().optional(),
     firstName: z.string().min(1),
     lastName: z.string().min(1),
-    fullName: z.string().min(1).nullable().optional(),
     email: z.string().email(),
     password: z.string().min(8),
-    level: z.number().int().min(0).optional(),
-    title: z.string().min(1).nullable().optional(),
     designation: z.string().nullable().optional(),
 });
 export const employeesRouter = Router();

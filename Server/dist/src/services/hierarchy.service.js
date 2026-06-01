@@ -2,11 +2,11 @@ import { prisma } from "../config/prisma.js";
 export async function getDescendants(employeeId) {
     const rows = await prisma.$queryRaw `
     WITH RECURSIVE hierarchy AS (
-      SELECT e."id", e."firstName", e."lastName", e."businessId", e."departmentId", e."teamId", e."roleId", e."level", e."reportsToId"
+      SELECT e."id", e."firstName", e."lastName", e."businessId", e."departmentId", e."teamId", e."roleId", e."reportsToId"
       FROM "Employee" e
       WHERE e."reportsToId" = ${employeeId}
       UNION ALL
-      SELECT child."id", child."firstName", child."lastName", child."businessId", child."departmentId", child."teamId", child."roleId", child."level", child."reportsToId"
+      SELECT child."id", child."firstName", child."lastName", child."businessId", child."departmentId", child."teamId", child."roleId", child."reportsToId"
       FROM "Employee" child
       INNER JOIN hierarchy parent ON child."reportsToId" = parent."id"
     )
@@ -27,11 +27,11 @@ export async function isDescendantOf(candidateId, ancestorId) {
 export async function getHierarchyTree(rootEmployeeId) {
     const employees = await prisma.$queryRaw `
     WITH RECURSIVE hierarchy AS (
-      SELECT e."id", e."firstName", e."lastName", e."businessId", e."departmentId", e."teamId", e."roleId", e."level", e."reportsToId", 0 AS depth
+      SELECT e."id", e."firstName", e."lastName", e."businessId", e."departmentId", e."teamId", e."roleId", e."reportsToId", 0 AS depth
       FROM "Employee" e
       WHERE e."id" = ${rootEmployeeId}
       UNION ALL
-      SELECT child."id", child."firstName", child."lastName", child."businessId", child."departmentId", child."teamId", child."roleId", child."level", child."reportsToId", parent.depth + 1 AS depth
+      SELECT child."id", child."firstName", child."lastName", child."businessId", child."departmentId", child."teamId", child."roleId", child."reportsToId", parent.depth + 1 AS depth
       FROM "Employee" child
       INNER JOIN hierarchy parent ON child."reportsToId" = parent."id"
     )
@@ -47,7 +47,7 @@ export async function getHierarchyTree(rootEmployeeId) {
             id: employee.id,
             employeeId: employee.id,
             name: `${employee.firstName} ${employee.lastName}`,
-            roleLevel: employee.level,
+            roleLevel: 0,
             children: [],
         });
     }

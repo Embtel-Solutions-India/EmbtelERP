@@ -57,6 +57,16 @@ export async function createEmployee(
   }
 
   const passwordHash = await bcrypt.hash(input.password, 12);
+
+  // derive level from role and business code for employeeCode
+  const role = await prisma.role.findUnique({ where: { id: input.roleId } });
+  const business = await prisma.business.findUnique({
+    where: { id: input.businessId },
+  });
+
+  const fullName = `${input.firstName} ${input.lastName}`.trim();
+  const level = role?.level ?? null;
+
   const employee = await prisma.employee.create({
     data: {
       ...input,
@@ -64,8 +74,27 @@ export async function createEmployee(
       teamId: input.teamId ?? null,
       reportsToId: input.reportsToId ?? null,
       passwordHash,
+      fullName,
+      level,
     },
   });
+
+  // generate stable employeeCode using created id and business code
+  if (!employee.employeeCode) {
+    const businessCode =
+      business && (business.code || business.name)
+        ? (business.code ?? business.name)
+        : "GEN";
+    const idSuffix = employee.id.replace(/-/g, "").slice(-6).toUpperCase();
+    const code = `EMP-${businessCode
+      .toString()
+      .replace(/[^A-Z0-9]/gi, "")
+      .slice(0, 6)}-${idSuffix}`;
+    await prisma.employee.update({
+      where: { id: employee.id },
+      data: { employeeCode: code },
+    });
+  }
 
   await recordActivity({
     actorId,
@@ -76,5 +105,9 @@ export async function createEmployee(
     metadata: { role: roleLabel(0) },
   });
 
-  return employee;
+  // return freshest copy
+  return prisma.employee.findUnique({
+    where: { id: employee.id },
+    include: { role: true, business: true, department: true, team: true },
+  });
 }

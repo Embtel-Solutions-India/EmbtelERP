@@ -1,8 +1,10 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
+import { connectRedis } from "./config/redis.js";
 import { prisma } from "./config/prisma.js";
 async function main() {
+    await connectRedis();
     const app = createApp();
     app.listen(env.PORT, () => {
         logger.info("server started", { port: env.PORT });

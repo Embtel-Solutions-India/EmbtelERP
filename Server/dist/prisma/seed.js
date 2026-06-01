@@ -22,8 +22,6 @@ const departments = [
 async function main() {
     await prisma.auditLog.deleteMany();
     await prisma.activity.deleteMany();
-    await prisma.perspectiveSession.deleteMany();
-    await prisma.session.deleteMany();
     await prisma.task.deleteMany();
     await prisma.document.deleteMany();
     await prisma.perspective.deleteMany();
@@ -109,11 +107,8 @@ async function main() {
             roleId: roles[4].id,
             firstName: "Amina",
             lastName: "Khan",
-            fullName: "Amina Khan",
             email: "owner@embtelerp.com",
             passwordHash,
-            level: roles[4].level,
-            title: roles[4].name,
             designation: "Business Owner",
         },
     });
@@ -129,11 +124,8 @@ async function main() {
                 reportsToId: owner.id,
                 firstName: `Head${index + 1}`,
                 lastName: "Lead",
-                fullName: `Head${index + 1} Lead`,
                 email: `head${index + 1}@embtelerp.com`,
                 passwordHash,
-                level: roles[3].level,
-                title: roles[3].name,
                 designation: `Department Head ${index + 1}`,
             },
         });
@@ -153,11 +145,8 @@ async function main() {
                 reportsToId: parent.id,
                 firstName: `Manager${index + 1}`,
                 lastName: "Team",
-                fullName: `Manager${index + 1} Team`,
                 email: `manager${index + 1}@embtelerp.com`,
                 passwordHash,
-                level: roles[2].level,
-                title: roles[2].name,
                 designation: `Manager ${index + 1}`,
             },
         });
@@ -177,11 +166,8 @@ async function main() {
                 reportsToId: parent.id,
                 firstName: `Executive${index + 1}`,
                 lastName: "Staff",
-                fullName: `Executive${index + 1} Staff`,
                 email: `executive${index + 1}@embtelerp.com`,
                 passwordHash,
-                level: roles[1].level,
-                title: roles[1].name,
                 designation: `Executive ${index + 1}`,
             },
         });
@@ -200,11 +186,8 @@ async function main() {
                 reportsToId: parent.id,
                 firstName: `Intern${index + 1}`,
                 lastName: "Trainee",
-                fullName: `Intern${index + 1} Trainee`,
                 email: `intern${index + 1}@embtelerp.com`,
                 passwordHash,
-                level: roles[0].level,
-                title: roles[0].name,
                 designation: `Intern ${index + 1}`,
             },
         });

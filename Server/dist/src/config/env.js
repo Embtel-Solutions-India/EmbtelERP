@@ -12,6 +12,7 @@ const envSchema = z.object({
         .string()
         .min(16)
         .default("change-me-in-production-refresh"),
+    REDIS_URL: z.string().optional(),
     CORS_ORIGIN: z.string().default("*"),
 });
 export const env = envSchema.parse(process.env);

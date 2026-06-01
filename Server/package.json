@@ -8,6 +8,7 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:seed": "tsx prisma/seed.ts",
+    "db:backfill": "tsx prisma/backfill/employee_fields.ts",
     "lint": "eslint src prisma --ext .ts"
   },
   "dependencies": {
