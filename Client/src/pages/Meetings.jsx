@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
 import { Add, VideoCall, LocationOn, Schedule, Cancel, Edit } from '@mui/icons-material'
@@ -5,8 +6,9 @@ import {
   FaDesktop, FaSearch, FaClipboardList, FaHandshake,
   FaFileSignature, FaRocket, FaPhoneAlt, FaCalendarAlt, FaCheckCircle,
 } from 'react-icons/fa'
-import { cancelMeeting } from '../redux/slices/meetingSlice'
+import { addMeeting, cancelMeeting } from '../redux/slices/meetingSlice'
 import PageHeader from '../components/common/PageHeader'
+import ActionFormModal from '../components/common/ActionFormModal'
 import { formatDate, formatTime, getInitials } from '../utils'
 
 const STATUS_COLORS = {
@@ -26,9 +28,23 @@ const DEFAULT_TYPE = { Icon: FaCalendarAlt, color: 'text-primary-500' }
 export default function Meetings() {
   const dispatch = useDispatch()
   const { list: meetings } = useSelector((s) => s.meetings)
+  const [isMeetingFormOpen, setMeetingFormOpen] = useState(false)
 
   const upcoming = meetings.filter(m => m.status === 'Scheduled')
   const completed = meetings.filter(m => m.status === 'Completed')
+  const handleScheduleMeeting = (values) => {
+    dispatch(addMeeting({
+      id: Date.now(),
+      client: values.client,
+      company: values.company,
+      type: values.type,
+      date: new Date(values.date).toISOString(),
+      duration: Number(values.duration) || 30,
+      location: values.location,
+      status: 'Scheduled',
+      link: values.link || null,
+    }))
+  }
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
@@ -37,10 +53,34 @@ export default function Meetings() {
         subtitle={`${upcoming.length} upcoming · ${completed.length} completed`}
         breadcrumbs={['Dashboard', 'Meetings']}
         actions={
-          <button className="btn-primary text-sm flex items-center gap-2">
+          <button onClick={() => setMeetingFormOpen(true)} className="btn-primary text-sm flex items-center gap-2">
             <Add fontSize="small" /> Schedule Meeting
           </button>
         }
+      />
+
+      <ActionFormModal
+        open={isMeetingFormOpen}
+        title="Schedule Meeting"
+        subtitle="Create a calendar-ready customer meeting"
+        fields={[
+          { name: 'client', label: 'Client Name', required: true },
+          { name: 'company', label: 'Company', required: true },
+          {
+            name: 'type',
+            label: 'Meeting Type',
+            type: 'select',
+            options: ['Product Demo', 'Discovery Call', 'Proposal Review', 'Negotiation', 'Contract Signing', 'Onboarding', 'Check-in Call'].map((value) => ({ value, label: value })),
+          },
+          { name: 'date', label: 'Date & Time', type: 'datetime-local', required: true },
+          { name: 'duration', label: 'Duration', type: 'number', min: 15, step: 15, required: true },
+          { name: 'location', label: 'Location', required: true },
+          { name: 'link', label: 'Meeting Link', type: 'url', fullWidth: true },
+        ]}
+        initialValues={{ client: '', company: '', type: 'Product Demo', date: '', duration: 30, location: 'Google Meet', link: '' }}
+        submitLabel="Schedule Meeting"
+        onClose={() => setMeetingFormOpen(false)}
+        onSubmit={handleScheduleMeeting}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

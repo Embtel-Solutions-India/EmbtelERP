@@ -1,9 +1,12 @@
-import { useSelector } from 'react-redux'
+import { useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
 import { Add, Edit, Visibility } from '@mui/icons-material'
 import { Tooltip } from '@mui/material'
 import { FaDollarSign, FaBullseye, FaChartLine } from 'react-icons/fa'
 import PageHeader from '../components/common/PageHeader'
+import ActionFormModal from '../components/common/ActionFormModal'
+import { addOpportunity } from '../redux/slices/dashboardSlice'
 import { formatCurrency, formatDate } from '../utils'
 
 const STAGE_COLORS = {
@@ -33,11 +36,24 @@ function ProbabilityBar({ value }) {
 }
 
 export default function Opportunities() {
+  const dispatch = useDispatch()
   const { opportunities } = useSelector((s) => s.dashboard)
+  const [isOpportunityFormOpen, setOpportunityFormOpen] = useState(false)
 
   const totalValue = opportunities.reduce((s, o) => s + o.value, 0)
   const avgProbability = Math.round(opportunities.reduce((s, o) => s + o.probability, 0) / opportunities.length)
   const weightedValue = opportunities.reduce((s, o) => s + (o.value * o.probability / 100), 0)
+  const handleAddOpportunity = (values) => {
+    dispatch(addOpportunity({
+      id: Date.now(),
+      name: values.name,
+      company: values.company,
+      value: Number(values.value) || 0,
+      probability: Number(values.probability) || 0,
+      stage: values.stage,
+      closingDate: new Date(values.closingDate).toISOString(),
+    }))
+  }
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
@@ -45,7 +61,30 @@ export default function Opportunities() {
         title="Opportunities"
         subtitle={`${opportunities.length} active opportunities`}
         breadcrumbs={['Dashboard', 'Opportunities']}
-        actions={<button className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> New Opportunity</button>}
+        actions={<button onClick={() => setOpportunityFormOpen(true)} className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> New Opportunity</button>}
+      />
+
+      <ActionFormModal
+        open={isOpportunityFormOpen}
+        title="New Opportunity"
+        subtitle="Add a deal to the active pipeline"
+        fields={[
+          { name: 'name', label: 'Opportunity Name', required: true },
+          { name: 'company', label: 'Company', required: true },
+          { name: 'value', label: 'Deal Value', type: 'number', min: 0, required: true },
+          { name: 'probability', label: 'Probability', type: 'number', min: 0, max: 100, required: true },
+          {
+            name: 'stage',
+            label: 'Stage',
+            type: 'select',
+            options: ['Qualified', 'Proposal Sent', 'Negotiation', 'Won', 'Lost'].map((value) => ({ value, label: value })),
+          },
+          { name: 'closingDate', label: 'Expected Close', type: 'date', required: true },
+        ]}
+        initialValues={{ name: '', company: '', value: '', probability: 50, stage: 'Qualified', closingDate: '' }}
+        submitLabel="Create Opportunity"
+        onClose={() => setOpportunityFormOpen(false)}
+        onSubmit={handleAddOpportunity}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

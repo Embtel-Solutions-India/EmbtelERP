@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
 import { Add, CheckCircle, RadioButtonUnchecked, DeleteOutline, AccessTime } from '@mui/icons-material'
 import { FaExclamationTriangle, FaCalendarDay, FaArrowRight, FaCheckCircle } from 'react-icons/fa'
-import { toggleTask, deleteTask } from '../redux/slices/taskSlice'
+import { addTask, toggleTask, deleteTask } from '../redux/slices/taskSlice'
 import PageHeader from '../components/common/PageHeader'
+import ActionFormModal from '../components/common/ActionFormModal'
 import { formatDate } from '../utils'
 
 const PRIORITY_MAP = {
@@ -20,6 +22,7 @@ const GROUPS = [
 export default function Tasks() {
   const dispatch = useDispatch()
   const { list: tasks } = useSelector((s) => s.tasks)
+  const [isTaskFormOpen, setTaskFormOpen] = useState(false)
 
   const now = new Date()
   const groups = {
@@ -35,6 +38,19 @@ export default function Tasks() {
     }),
     done: tasks.filter(t => t.status === 'done'),
   }
+  const handleCreateTask = (values) => {
+    const dueDate = new Date(values.dueDate)
+
+    dispatch(addTask({
+      id: Date.now(),
+      title: values.title,
+      priority: values.priority,
+      status: dueDate < new Date() ? 'overdue' : 'todo',
+      dueDate: dueDate.toISOString(),
+      category: values.category,
+      lead: values.lead || null,
+    }))
+  }
 
   return (
     <div className="space-y-6 max-w-[900px] mx-auto">
@@ -42,7 +58,34 @@ export default function Tasks() {
         title="Tasks"
         subtitle={`${tasks.filter(t => t.status !== 'done').length} active tasks`}
         breadcrumbs={['Dashboard', 'Tasks']}
-        actions={<button className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> Create Task</button>}
+        actions={<button onClick={() => setTaskFormOpen(true)} className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> Create Task</button>}
+      />
+
+      <ActionFormModal
+        open={isTaskFormOpen}
+        title="Create Task"
+        subtitle="Add an actionable item to your daily workflow"
+        fields={[
+          { name: 'title', label: 'Task Title', required: true, fullWidth: true },
+          {
+            name: 'priority',
+            label: 'Priority',
+            type: 'select',
+            options: ['urgent', 'high', 'medium', 'low'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
+          },
+          {
+            name: 'category',
+            label: 'Category',
+            type: 'select',
+            options: ['sales', 'followup', 'admin', 'training'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
+          },
+          { name: 'dueDate', label: 'Due Date', type: 'datetime-local', required: true },
+          { name: 'lead', label: 'Related Lead', fullWidth: true },
+        ]}
+        initialValues={{ title: '', priority: 'medium', category: 'sales', dueDate: '', lead: '' }}
+        submitLabel="Create Task"
+        onClose={() => setTaskFormOpen(false)}
+        onSubmit={handleCreateTask}
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
