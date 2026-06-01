@@ -18,41 +18,66 @@ export async function getDataScope(
   userId: string,
   perspectiveEmployeeId: string | null,
 ): Promise<DataScope> {
-  const viewer = await prisma.employee.findUnique({
-    where: { id: userId },
-    include: { role: true },
-  });
+  try {
+    const viewer = await prisma.employee.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        businessId: true,
+        departmentId: true,
+        teamId: true,
+        level: true,
+        role: { select: { level: true } },
+      },
+    });
 
-  if (!viewer) {
-    return {
-      visibleEmployees: [],
-      visibleBusinesses: [],
-      visibleDepartments: [],
-      visibleTeams: [],
-    };
-  }
-
-  const perspectiveTarget = perspectiveEmployeeId
-    ? await prisma.employee.findUnique({ where: { id: perspectiveEmployeeId } })
-    : viewer;
-
-  if (!perspectiveTarget) {
-    return {
-      visibleEmployees: [],
-      visibleBusinesses: [],
-      visibleDepartments: [],
-      visibleTeams: [],
-    };
-  }
-
-  if (viewer.id !== perspectiveTarget.id) {
-    const descendants = await getDescendants(viewer.id);
-    if (!descendants.some((employee) => employee.id === perspectiveTarget.id)) {
-      return getSelfScope(viewer);
+    if (!viewer) {
+      return {
+        visibleEmployees: [],
+        visibleBusinesses: [],
+        visibleDepartments: [],
+        visibleTeams: [],
+      };
     }
-  }
 
-  return buildScope(viewer, perspectiveTarget);
+    const perspectiveTarget = perspectiveEmployeeId
+      ? await prisma.employee.findUnique({
+          where: { id: perspectiveEmployeeId },
+          select: {
+            id: true,
+            businessId: true,
+            departmentId: true,
+            teamId: true,
+          },
+        })
+      : viewer;
+
+    if (!perspectiveTarget) {
+      return {
+        visibleEmployees: [],
+        visibleBusinesses: [],
+        visibleDepartments: [],
+        visibleTeams: [],
+      };
+    }
+
+    if (viewer.id !== perspectiveTarget.id) {
+      const descendants = await getDescendants(viewer.id);
+      if (
+        !descendants.some((employee) => employee.id === perspectiveTarget.id)
+      ) {
+        return getSelfScope(viewer as any);
+      }
+    }
+
+    return buildScope(
+      { ...viewer, level: viewer.level ?? undefined },
+      perspectiveTarget,
+    );
+  } catch (err) {
+    console.error("getDataScope error", err);
+    throw err;
+  }
 }
 
 export async function getScopedEmployees(scope: DataScope) {
@@ -101,6 +126,7 @@ async function buildScope(
     departmentId: string | null;
     teamId: string | null;
     role: { level: number };
+    level?: number;
   },
   perspectiveTarget: {
     id: string;
@@ -115,14 +141,22 @@ async function buildScope(
     ...baseEmployees.map((employee) => employee.id),
   ];
   const businessIds = [perspectiveTarget.businessId];
+  const viewerLevel = viewer.level ?? viewer.role.level;
+
   const departmentIds = await collectDepartmentIds(
     viewer,
     perspectiveTarget,
     employeeIds,
+    viewerLevel,
   );
-  const teamIds = await collectTeamIds(viewer, perspectiveTarget, employeeIds);
+  const teamIds = await collectTeamIds(
+    viewer,
+    perspectiveTarget,
+    employeeIds,
+    viewerLevel,
+  );
 
-  if (viewer.role.level >= 5) {
+  if (viewerLevel >= 5) {
     const businesses = await prisma.business.findMany({ select: { id: true } });
     const departments = await prisma.department.findMany({
       select: { id: true },
@@ -139,7 +173,7 @@ async function buildScope(
     };
   }
 
-  if (viewer.role.level >= 4) {
+  if (viewerLevel >= 4) {
     const employees = await prisma.employee.findMany({
       where: { businessId: viewer.businessId },
       select: { id: true },
@@ -173,6 +207,7 @@ async function collectDepartmentIds(
   viewer: { departmentId: string | null; role: { level: number } },
   perspectiveTarget: { businessId: string },
   employeeIds: string[],
+  viewerLevel: number,
 ): Promise<string[]> {
   const departments = await prisma.department.findMany({
     where: {
@@ -186,15 +221,15 @@ async function collectDepartmentIds(
     select: { id: true },
   });
 
-  if (viewer.role.level >= 4) {
+  if (viewerLevel >= 4) {
     return departments.map((row: { id: string }) => row.id);
   }
 
-  if (viewer.role.level >= 3) {
+  if (viewerLevel >= 3) {
     return departments.map((row: { id: string }) => row.id);
   }
 
-  if (viewer.role.level >= 2) {
+  if (viewerLevel >= 2) {
     return viewer.departmentId ? [viewer.departmentId] : [];
   }
 
@@ -205,6 +240,7 @@ async function collectTeamIds(
   viewer: { teamId: string | null; role: { level: number } },
   perspectiveTarget: { businessId: string },
   employeeIds: string[],
+  viewerLevel: number,
 ): Promise<string[]> {
   const teams = await prisma.team.findMany({
     where: {
@@ -218,15 +254,15 @@ async function collectTeamIds(
     select: { id: true },
   });
 
-  if (viewer.role.level >= 4) {
+  if (viewerLevel >= 4) {
     return teams.map((row: { id: string }) => row.id);
   }
 
-  if (viewer.role.level >= 3) {
+  if (viewerLevel >= 3) {
     return teams.map((row: { id: string }) => row.id);
   }
 
-  if (viewer.role.level >= 2) {
+  if (viewerLevel >= 2) {
     return teams.map((row: { id: string }) => row.id);
   }
 

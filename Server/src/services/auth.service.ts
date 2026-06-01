@@ -23,6 +23,7 @@ export async function login(email: string, password: string) {
     id: employee.id,
     employeeId: employee.id,
     roleLevel: employee.role.level,
+    employeeLevel: employee.level ?? employee.role.level,
     businessId: employee.businessId,
     organizationId: employee.organizationId,
   };
@@ -40,6 +41,7 @@ export async function login(email: string, password: string) {
       name: `${employee.firstName} ${employee.lastName}`,
       email: employee.email,
       roleLevel: employee.role.level,
+      employeeLevel: employee.level ?? employee.role.level,
       businessId: employee.businessId,
     },
     accessToken,

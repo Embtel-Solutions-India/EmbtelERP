@@ -22,27 +22,54 @@ type HierarchyRow = {
 export async function getDescendants(
   employeeId: string,
 ): Promise<HierarchyRow[]> {
-  const rows = await prisma.$queryRaw<HierarchyRow[]>`
+  // use recursive CTE to get descendant ids then fetch full rows via Prisma
+  let ids: string[] | undefined;
+  try {
+    ids = await prisma.$queryRaw<string[]>`
     WITH RECURSIVE hierarchy AS (
-      SELECT e."id", e."firstName", e."lastName", e."businessId", e."departmentId", e."teamId", e."roleId", e."reportsToId"
+      SELECT e."id", COALESCE(e."managerId", e."reportsToId") AS "managerRef"
       FROM "Employee" e
-      WHERE e."reportsToId" = ${employeeId}
+      WHERE COALESCE(e."managerId", e."reportsToId") = ${employeeId}
       UNION ALL
-      SELECT child."id", child."firstName", child."lastName", child."businessId", child."departmentId", child."teamId", child."roleId", child."reportsToId"
+      SELECT child."id", COALESCE(child."managerId", child."reportsToId") AS "managerRef"
       FROM "Employee" child
-      INNER JOIN hierarchy parent ON child."reportsToId" = parent."id"
+      INNER JOIN hierarchy parent ON COALESCE(child."managerId", child."reportsToId") = parent."id"
     )
-    SELECT DISTINCT *
-    FROM hierarchy h
-    ORDER BY h."firstName" ASC
+    SELECT DISTINCT id FROM hierarchy;
   `;
+  } catch (err) {
+    console.error("prisma:$queryRaw getDescendants error", err);
+    throw err;
+  }
 
-  return rows;
+  if (!ids || ids.length === 0) return [];
+  return prisma.employee.findMany({
+    where: { id: { in: ids } },
+    orderBy: { firstName: "asc" },
+  });
 }
 
 export async function getDescendantIds(employeeId: string): Promise<string[]> {
-  const employees = await getDescendants(employeeId);
-  return employees.map((employee) => employee.id);
+  let ids: string[] | undefined;
+  try {
+    ids = await prisma.$queryRaw<string[]>`
+    WITH RECURSIVE hierarchy AS (
+      SELECT e."id", COALESCE(e."managerId", e."reportsToId") AS "managerRef"
+      FROM "Employee" e
+      WHERE COALESCE(e."managerId", e."reportsToId") = ${employeeId}
+      UNION ALL
+      SELECT child."id", COALESCE(child."managerId", child."reportsToId") AS "managerRef"
+      FROM "Employee" child
+      INNER JOIN hierarchy parent ON COALESCE(child."managerId", child."reportsToId") = parent."id"
+    )
+    SELECT DISTINCT id FROM hierarchy;
+  `;
+  } catch (err) {
+    console.error("prisma:$queryRaw getDescendantIds error", err);
+    throw err;
+  }
+
+  return ids ?? [];
 }
 
 export async function isDescendantOf(
@@ -53,28 +80,67 @@ export async function isDescendantOf(
   return descendants.includes(candidateId);
 }
 
+export async function getManagers(employeeId: string): Promise<HierarchyRow[]> {
+  let ids: string[] | undefined;
+  try {
+    ids = await prisma.$queryRaw<string[]>`
+    WITH RECURSIVE managers AS (
+      SELECT COALESCE(e."managerId", e."reportsToId") AS "mgr", 1 AS depth FROM "Employee" e WHERE e.id = ${employeeId} AND COALESCE(e."managerId", e."reportsToId") IS NOT NULL
+      UNION ALL
+      SELECT COALESCE(mgr2."managerId", mgr2."reportsToId") AS "mgr", managers.depth + 1
+      FROM "Employee" mgr2
+      JOIN managers ON mgr2.id = managers.mgr
+      WHERE COALESCE(mgr2."managerId", mgr2."reportsToId") IS NOT NULL
+    )
+    SELECT DISTINCT mgr FROM managers;
+  `;
+  } catch (err) {
+    console.error("prisma:$queryRaw getManagers error", err);
+    throw err;
+  }
+
+  if (!ids || ids.length === 0) return [];
+  return prisma.employee.findMany({
+    where: { id: { in: ids } },
+    orderBy: { firstName: "asc" },
+  });
+}
+
 export async function getHierarchyTree(
   rootEmployeeId: string,
 ): Promise<HierarchyNode | null> {
-  const employees = await prisma.$queryRaw<
-    Array<HierarchyRow & { depth: number }>
-  >`
+  // get all descendant ids including root
+  let ids: string[] | undefined;
+  try {
+    ids = await prisma.$queryRaw<string[]>`
     WITH RECURSIVE hierarchy AS (
-      SELECT e."id", e."firstName", e."lastName", e."businessId", e."departmentId", e."teamId", e."roleId", e."reportsToId", 0 AS depth
+      SELECT e."id", COALESCE(e."managerId", e."reportsToId") AS "managerRef", 0 AS depth
       FROM "Employee" e
       WHERE e."id" = ${rootEmployeeId}
       UNION ALL
-      SELECT child."id", child."firstName", child."lastName", child."businessId", child."departmentId", child."teamId", child."roleId", child."reportsToId", parent.depth + 1 AS depth
+      SELECT child."id", COALESCE(child."managerId", child."reportsToId") AS "managerRef", parent.depth + 1 AS depth
       FROM "Employee" child
-      INNER JOIN hierarchy parent ON child."reportsToId" = parent."id"
+      INNER JOIN hierarchy parent ON COALESCE(child."managerId", child."reportsToId") = parent.id
     )
-    SELECT * FROM hierarchy
-    ORDER BY depth ASC
+    SELECT DISTINCT id FROM hierarchy;
   `;
-
-  if (employees.length === 0) {
-    return null;
+  } catch (err) {
+    console.error("prisma:$queryRaw getHierarchyTree error", err);
+    throw err;
   }
+
+  if (!ids || ids.length === 0) return null;
+
+  const employees = await prisma.employee.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      roleId: true,
+      reportsToId: true,
+    },
+  });
 
   const tree = new Map<string, HierarchyNode>();
   for (const employee of employees) {
@@ -89,9 +155,7 @@ export async function getHierarchyTree(
 
   for (const employee of employees) {
     const node = tree.get(employee.id);
-    if (!node) {
-      continue;
-    }
+    if (!node) continue;
     const managerId = employee.reportsToId;
     if (managerId && tree.has(managerId)) {
       tree.get(managerId)!.children.push(node);

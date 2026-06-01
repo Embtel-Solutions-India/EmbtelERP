@@ -146,6 +146,11 @@ model Employee {
   role               Role             @relation(fields: [roleId], references: [id])
   reportsTo          Employee?        @relation("EmployeeReports", fields: [reportsToId], references: [id])
   directReports      Employee[]       @relation("EmployeeReports")
+
+  // New additive manager fields for staged migration (do not remove `reportsToId` yet)
+  managerId          String?
+  manager            Employee?        @relation("EmployeeReportsByManager", fields: [managerId], references: [id])
+  subordinates       Employee[]       @relation("EmployeeReportsByManager")
   hierarchyAsEmployee EmployeeHierarchy[] @relation("HierarchyEmployee")
   hierarchyAsManager EmployeeHierarchy[] @relation("HierarchyManager")
   perspectivesAsUser Perspective[]
@@ -167,6 +172,7 @@ model Employee {
   @@index([departmentId])
   @@index([teamId])
   @@index([reportsToId])
+  @@index([managerId])
 }
 
 model EmployeeHierarchy {
