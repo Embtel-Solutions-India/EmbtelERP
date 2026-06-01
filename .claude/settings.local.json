@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(cd \"c:\\\\Users\\\\acer\\\\OneDrive\\\\Desktop\\\\CRM-NEW\" && echo '{\"name\":\"crm-sales-dashboard\",\"private\":true,\"version\":\"0.0.0\",\"type\":\"module\",\"scripts\":{\"dev\":\"vite\",\"build\":\"vite build\",\"lint\":\"eslint .\",\"preview\":\"vite preview\"}}' > package.json && echo \"package.json created\")",
+      "Bash(npm install *)",
+      "Bash(npx vite *)",
+      "Bash(node_modules\\\\.bin\\\\vite build *)",
+      "Bash(npm run *)",
+      "PowerShell(ls \"c:\\\\Users\\\\acer\\\\OneDrive\\\\Desktop\\\\CRM-NEW\\\\node_modules\" | Where-Object { $_.Name -match \"^vite\" } | Select-Object Name)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\acer\\\\OneDrive\\\\Desktop\\\\CRM-NEW\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(node -e \"require\\('@hookform/resolvers/zod'\\)\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\acer\\OneDrive\\Desktop\\CRM-NEW"
+    ]
+  }
+}
