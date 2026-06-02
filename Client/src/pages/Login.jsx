@@ -13,11 +13,15 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const isMarketing = form.email.startsWith('marketing')
     dispatch(loginSuccess({
-      id: 1, name: 'Ujjwal Sharma', email: form.email,
-      role: 'Sales Executive', department: 'Sales',
+      id: isMarketing ? 2 : 1,
+      name: isMarketing ? 'Marketing Exec' : 'Ujjwal Sharma',
+      email: form.email,
+      role: isMarketing ? 'Marketing Executive' : 'Sales Executive',
+      department: isMarketing ? 'Marketing' : 'Sales',
     }))
-    navigate('/dashboard')
+    navigate(isMarketing ? '/marketing/dashboard' : '/sales/dashboard')
   }
 
   return (
@@ -79,8 +83,9 @@ export default function Login() {
             </motion.button>
           </form>
 
-          <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-gray-800 text-xs text-slate-500 dark:text-slate-400">
-            <strong>Demo credentials:</strong> ujjwal@crmpro.com / password
+          <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-gray-800 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+            <p><strong>Sales Demo:</strong> ujjwal@crmpro.com / password</p>
+            <p><strong>Marketing Demo:</strong> marketing@crmpro.com / password</p>
           </div>
         </div>
       </motion.div>

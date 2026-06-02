@@ -6,6 +6,12 @@ import meetingReducer      from './slices/meetingSlice'
 import taskReducer         from './slices/taskSlice'
 import notificationReducer from './slices/notificationSlice'
 import themeReducer        from './slices/themeSlice'
+import teamReducer         from './slices/teamSlice'
+
+// Marketing Reducers
+import marketingDashboardReducer from '../modules/marketing/redux/marketingDashboardSlice'
+import marketingTaskReducer      from '../modules/marketing/redux/marketingTaskSlice'
+import marketingEmailReducer     from '../modules/marketing/redux/marketingEmailSlice'
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +22,12 @@ export const store = configureStore({
     tasks:         taskReducer,
     notifications: notificationReducer,
     theme:         themeReducer,
+    team:          teamReducer,
+    
+    // Marketing slices
+    marketingDashboard: marketingDashboardReducer,
+    marketingTasks:     marketingTaskReducer,
+    marketingEmails:    marketingEmailReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

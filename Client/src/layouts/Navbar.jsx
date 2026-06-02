@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Menu as MenuIcon,
@@ -19,16 +19,25 @@ import { Badge, Tooltip } from '@mui/material'
 import {
   FaUserPlus, FaCalendarAlt, FaPhone, FaTasks,
   FaBullseye, FaCommentDots, FaCog,
+  FaBullhorn, FaEnvelope, FaFileUpload, FaRocket,
 } from 'react-icons/fa'
 import { toggleTheme } from '../redux/slices/themeSlice'
 import { markAllRead } from '../redux/slices/notificationSlice'
 import { getInitials, timeAgo } from '../utils'
 
 const QUICK_ACTIONS = [
-  { label: 'Add Lead',         path: '/leads',      Icon: FaUserPlus    },
-  { label: 'Schedule Meeting', path: '/meetings',   Icon: FaCalendarAlt },
-  { label: 'Create Follow Up', path: '/follow-ups', Icon: FaPhone       },
-  { label: 'New Task',         path: '/tasks',      Icon: FaTasks       },
+  { label: 'Add Lead',         path: '/sales/leads',      Icon: FaUserPlus    },
+  { label: 'Schedule Meeting', path: '/sales/meetings',   Icon: FaCalendarAlt },
+  { label: 'Create Follow Up', path: '/sales/follow-ups', Icon: FaPhone       },
+  { label: 'New Task',         path: '/sales/tasks',      Icon: FaTasks       },
+]
+
+const MARKETING_QUICK_ACTIONS = [
+  { label: 'Create Campaign',     path: '/marketing/campaigns',        Icon: FaBullhorn   },
+  { label: 'Schedule Email',      path: '/marketing/email-marketing',  Icon: FaEnvelope   },
+  { label: 'Upload Creative',     path: '/marketing/assets',           Icon: FaFileUpload },
+  { label: 'Create Marketing Task', path: '/marketing/tasks',          Icon: FaTasks      },
+  { label: 'Launch Campaign',     path: '/marketing/campaigns',        Icon: FaRocket     },
 ]
 
 const NOTIFICATION_ICON_MAP = {
@@ -42,6 +51,7 @@ const NOTIFICATION_ICON_MAP = {
 export default function Navbar({ onMenuToggle, onMobileMenuToggle }) {
   const dispatch  = useDispatch()
   const navigate  = useNavigate()
+  const location  = useLocation()
   const { isDark } = useSelector((s) => s.theme)
   const { user }   = useSelector((s) => s.auth)
   const { list: notifications, unreadCount } = useSelector((s) => s.notifications)
@@ -183,16 +193,20 @@ export default function Navbar({ onMenuToggle, onMobileMenuToggle }) {
                 transition={{ duration: 0.15 }}
                 className={`${dropdownClass} w-48`}
               >
-                {QUICK_ACTIONS.map((a) => (
-                  <button
-                    key={a.label}
-                    onClick={() => { navigate(a.path); setShowQuickActions(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-gray-700/50 text-left text-sm text-slate-700 dark:text-slate-300 transition-colors"
-                  >
-                    <a.Icon className="text-slate-400" size={14} />
-                    <span className="font-medium">{a.label}</span>
-                  </button>
-                ))}
+                {(() => {
+                  const isMarketing = user?.role === 'Marketing Executive'
+                  const actionsList = isMarketing ? MARKETING_QUICK_ACTIONS : QUICK_ACTIONS
+                  return actionsList.map((a) => (
+                    <button
+                      key={a.label}
+                      onClick={() => { navigate(a.path); setShowQuickActions(false) }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-gray-700/50 text-left text-sm text-slate-700 dark:text-slate-300 transition-colors"
+                    >
+                      <a.Icon className="text-slate-400" size={14} />
+                      <span className="font-medium">{a.label}</span>
+                    </button>
+                  ))
+                })()}
               </motion.div>
             )}
           </AnimatePresence>
@@ -225,19 +239,23 @@ export default function Navbar({ onMenuToggle, onMobileMenuToggle }) {
                   <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
                   <span className="badge badge-primary mt-1">{user?.role}</span>
                 </div>
-                {[
-                  { icon: <PersonIcon fontSize="small" />, label: 'View Profile', path: '/profile' },
-                  { icon: <SettingsIcon fontSize="small" />, label: 'Settings', path: '/settings' },
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => { navigate(item.path); setShowProfile(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-gray-700/50 text-left text-sm text-slate-700 dark:text-slate-300 transition-colors"
-                  >
-                    <span className="text-slate-400">{item.icon}</span>
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                ))}
+                {(() => {
+                  const activeModule = location.pathname.split('/').filter(Boolean)[0] || 'sales'
+                  const profileItems = [
+                    { icon: <PersonIcon fontSize="small" />, label: 'View Profile', path: `/${activeModule}/profile` },
+                    { icon: <SettingsIcon fontSize="small" />, label: 'Settings', path: `/${activeModule}/settings` },
+                  ]
+                  return profileItems.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => { navigate(item.path); setShowProfile(false) }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-gray-700/50 text-left text-sm text-slate-700 dark:text-slate-300 transition-colors"
+                    >
+                      <span className="text-slate-400">{item.icon}</span>
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  ))
+                })()}
                 <div className="border-t border-slate-100 dark:border-gray-700">
                   <button className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-left text-sm text-red-600 dark:text-red-400 transition-colors">
                     <LogoutIcon fontSize="small" />

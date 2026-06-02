@@ -6,7 +6,16 @@ import {
   RequestQuote, TaskAlt, CalendarMonth, Leaderboard, Assessment,
   AccountCircle, Settings,
 } from '@mui/icons-material'
-import { NAV_ITEMS, APP_NAME } from '../constants'
+import {
+  salesMenu,
+  marketingMenu,
+  productionMenu,
+  evaluationMenu,
+  hrMenu,
+  ownerMenu,
+  adminMenu,
+} from '../config/sidebarConfig'
+import { APP_NAME } from '../constants'
 import { getInitials } from '../utils'
 
 const ICON_MAP = {
@@ -24,7 +33,7 @@ function NavItem({ item, collapsed }) {
   const location = useLocation()
   const isActive =
     location.pathname === item.path ||
-    (item.path !== '/dashboard' && location.pathname.startsWith(item.path))
+    (!item.path.endsWith('/dashboard') && location.pathname.startsWith(item.path))
 
   return (
     <NavLink to={item.path} className="block">
@@ -54,8 +63,34 @@ function NavItem({ item, collapsed }) {
   )
 }
 
+const menuMap = {
+  sales: salesMenu,
+  marketing: marketingMenu,
+  production: productionMenu,
+  evaluation: evaluationMenu,
+  hr: hrMenu,
+  owner: ownerMenu,
+  admin: adminMenu,
+}
+
+const moduleLabelMap = {
+  sales: 'Sales Platform',
+  marketing: 'Marketing Platform',
+  production: 'Production Platform',
+  evaluation: 'Evaluation Platform',
+  hr: 'HR Platform',
+  owner: 'Owner Platform',
+  admin: 'Admin Platform',
+}
+
 export default function Sidebar({ open, mobileOpen, onMobileClose }) {
   const { user } = useSelector((s) => s.auth)
+  const location = useLocation()
+  const pathSegments = location.pathname.split('/').filter(Boolean)
+  const activeModule = pathSegments[0] || 'sales'
+
+  const items = menuMap[activeModule] || salesMenu
+  const platformLabel = moduleLabelMap[activeModule] || 'Sales Platform'
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -75,7 +110,9 @@ export default function Sidebar({ open, mobileOpen, onMobileClose }) {
               <span className="font-bold text-slate-800 dark:text-white text-lg leading-none">
                 {APP_NAME}
               </span>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Sales Platform</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                {platformLabel}
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -83,13 +120,25 @@ export default function Sidebar({ open, mobileOpen, onMobileClose }) {
 
       {/* Nav Items */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.slice(0, 11).map((item) => (
-          <NavItem key={item.id} item={item} collapsed={!open} />
-        ))}
-        <div className="border-t border-slate-100 dark:border-gray-700/50 my-3" />
-        {NAV_ITEMS.slice(11).map((item) => (
-          <NavItem key={item.id} item={item} collapsed={!open} />
-        ))}
+        {(() => {
+          const mainItems = items.filter(item => item.id !== 'profile' && item.id !== 'settings');
+          const bottomItems = items.filter(item => item.id === 'profile' || item.id === 'settings');
+          return (
+            <>
+              {mainItems.map((item) => (
+                <NavItem key={item.id} item={item} collapsed={!open} />
+              ))}
+              {bottomItems.length > 0 && (
+                <>
+                  <div className="border-t border-slate-100 dark:border-gray-700/50 my-3" />
+                  {bottomItems.map((item) => (
+                    <NavItem key={item.id} item={item} collapsed={!open} />
+                  ))}
+                </>
+              )}
+            </>
+          );
+        })()}
       </nav>
 
       {/* User Profile Bottom */}

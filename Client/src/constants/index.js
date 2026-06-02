@@ -31,3 +31,25 @@ export const NAV_ITEMS = [
   { id: 'profile',       label: 'Profile',        icon: 'AccountCircle', path: '/profile'       },
   { id: 'settings',      label: 'Settings',       icon: 'Settings',      path: '/settings'      },
 ]
+
+export const MARKETING_PIPELINE_COLUMNS = [
+  { id: 'Draft',     label: 'Draft',     color: '#6366f1' },
+  { id: 'Active',    label: 'Active',    color: '#10b981' },
+  { id: 'Paused',    label: 'Paused',    color: '#f59e0b' },
+  { id: 'Completed', label: 'Completed', color: '#06b6d4' },
+  { id: 'Archived',  label: 'Archived',  color: '#ef4444' },
+]
+
+export const MARKETING_NAV_ITEMS = [
+  { id: 'dashboard',       label: 'Dashboard',       icon: 'Dashboard',     path: '/marketing/dashboard'       },
+  { id: 'leads',           label: 'Leads',           icon: 'PersonAdd',     path: '/marketing/leads'           },
+  { id: 'activities',      label: 'Activities',      icon: 'PhoneCallback', path: '/marketing/activities'      },
+  { id: 'email-marketing', label: 'Email Marketing', icon: 'VideoCall',     path: '/marketing/email-marketing' },
+  { id: 'assets',          label: 'Asset Library',   icon: 'People',        path: '/marketing/assets'          },
+  { id: 'campaigns',       label: 'Campaigns',       icon: 'TrendingUp',    path: '/marketing/campaigns'       },
+  { id: 'tasks',           label: 'Tasks',           icon: 'TaskAlt',       path: '/marketing/tasks'           },
+  { id: 'performance',     label: 'Performance',     icon: 'Leaderboard',   path: '/marketing/performance'     },
+  { id: 'reports',         label: 'Reports',         icon: 'Assessment',    path: '/marketing/reports'         },
+  { id: 'profile',         label: 'Profile',         icon: 'AccountCircle', path: '/profile'                   },
+  { id: 'settings',        label: 'Settings',        icon: 'Settings',      path: '/settings'                  },
+]
