@@ -1,14 +1,12 @@
+import { ActivityAction } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 import { getDescendants, isDescendantOf } from "./hierarchy.service.js";
-export async function getActivePerspectiveForUser(userId, sessionId) {
-    const active = await prisma.perspectiveSession.findUnique({
-        where: { sessionId },
+export async function getActivePerspectiveForUser(userId) {
+    return prisma.perspective.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
     });
-    if (!active || active.userId !== userId) {
-        return null;
-    }
-    return active;
 }
 export async function getAvailablePerspectives(userId) {
     const viewer = await prisma.employee.findUnique({ where: { id: userId } });
@@ -23,7 +21,7 @@ export async function getAvailablePerspectives(userId) {
         name: `${employee.firstName} ${employee.lastName}`,
     }));
 }
-export async function switchPerspective(userId, sessionId, targetEmployeeId) {
+export async function switchPerspective(userId, targetEmployeeId) {
     const viewer = await prisma.employee.findUnique({ where: { id: userId } });
     const target = await prisma.employee.findUnique({
         where: { id: targetEmployeeId },
@@ -38,37 +36,37 @@ export async function switchPerspective(userId, sessionId, targetEmployeeId) {
         }
     }
     const perspectiveType = viewer.id === target.id ? "SELF" : "DESCENDANT";
-    return prisma.perspectiveSession.upsert({
-        where: { sessionId },
-        update: {
-            userId,
-            currentPerspectiveId: targetEmployeeId,
-            perspectiveType,
-            revokedAt: null,
-        },
-        create: {
-            sessionId,
+    // enforce single active perspective per user by removing any existing entries
+    await prisma.perspective.deleteMany({ where: { userId } });
+    const created = await prisma.perspective.create({
+        data: {
             userId,
             currentPerspectiveId: targetEmployeeId,
             perspectiveType,
         },
-    }).then(async (session) => {
-        await prisma.perspective.upsert({
-            where: {
-                userId_currentPerspectiveId: {
-                    userId,
-                    currentPerspectiveId: targetEmployeeId,
-                },
-            },
-            update: {
-                perspectiveType,
-            },
-            create: {
-                userId,
-                currentPerspectiveId: targetEmployeeId,
-                perspectiveType,
+    });
+    // create an audit log entry for tracking
+    try {
+        await prisma.auditLog.create({
+            data: {
+                businessId: viewer.businessId,
+                actorId: viewer.id,
+                action: ActivityAction.PERSPECTIVE_SWITCH,
+                entityType: "Perspective",
+                entityId: created.id,
+                before: {},
+                after: { userId, currentPerspectiveId: targetEmployeeId },
+                perspectiveId: targetEmployeeId,
             },
         });
-        return session;
-    });
+    }
+    catch (err) {
+        console.error("Failed to create audit log for perspective switch", err);
+    }
+    return created;
+}
+export async function canViewPerspective(viewerId, targetId) {
+    if (viewerId === targetId)
+        return true;
+    return isDescendantOf(targetId, viewerId);
 }

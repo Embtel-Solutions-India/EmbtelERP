@@ -1,13 +1,19 @@
-import { useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import Sidebar from './Sidebar'
-import Navbar from './Navbar'
+import { useState } from "react";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+import Sidebar from "./Sidebar";
+import Navbar from "./Navbar";
 
 export default function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const location = useLocation();
+  const { isAuthenticated } = useSelector((s) => s.auth);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-gray-950">
@@ -42,7 +48,7 @@ export default function MainLayout() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
             >
               <Outlet />
             </motion.div>
@@ -50,5 +56,5 @@ export default function MainLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }

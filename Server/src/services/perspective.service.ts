@@ -1,4 +1,5 @@
 import type { Perspective, PerspectiveType } from "@prisma/client";
+import { ActivityAction } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 import { getDescendants, isDescendantOf } from "./hierarchy.service.js";
@@ -58,20 +59,42 @@ export async function switchPerspective(
   const perspectiveType: PerspectiveType =
     viewer.id === target.id ? "SELF" : "DESCENDANT";
 
-  return prisma.perspective.upsert({
-    where: {
-      userId_currentPerspectiveId: {
-        userId,
-        currentPerspectiveId: targetEmployeeId,
-      },
-    },
-    update: {
-      perspectiveType,
-    },
-    create: {
+  // enforce single active perspective per user by removing any existing entries
+  await prisma.perspective.deleteMany({ where: { userId } });
+
+  const created = await prisma.perspective.create({
+    data: {
       userId,
       currentPerspectiveId: targetEmployeeId,
       perspectiveType,
     },
   });
+
+  // create an audit log entry for tracking
+  try {
+    await prisma.auditLog.create({
+      data: {
+        businessId: viewer.businessId,
+        actorId: viewer.id,
+        action: ActivityAction.PERSPECTIVE_SWITCH,
+        entityType: "Perspective",
+        entityId: created.id,
+        before: {},
+        after: { userId, currentPerspectiveId: targetEmployeeId },
+        perspectiveId: targetEmployeeId,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to create audit log for perspective switch", err);
+  }
+
+  return created;
+}
+
+export async function canViewPerspective(
+  viewerId: string,
+  targetId: string,
+): Promise<boolean> {
+  if (viewerId === targetId) return true;
+  return isDescendantOf(targetId, viewerId);
 }

@@ -6,10 +6,11 @@ import { validateBody } from "../middleware/validate.middleware.js";
 import {
   getAvailablePerspectives,
   switchPerspective,
+  getActivePerspectiveForUser,
 } from "../services/perspective.service.js";
 
 const switchSchema = z.object({
-  currentPerspectiveId: z.string().min(1),
+  targetUserId: z.string().min(1),
 });
 
 export const perspectivesRouter = Router();
@@ -30,8 +31,28 @@ perspectivesRouter.post(
   asyncHandler(async (req, res) => {
     const perspective = await switchPerspective(
       req.user!.employeeId,
-      req.body.currentPerspectiveId,
+      req.body.targetUserId,
     );
+    res.json({ data: perspective });
+  }),
+);
+
+perspectivesRouter.post(
+  "/reset",
+  asyncHandler(async (req, res) => {
+    // reset perspective to self
+    const perspective = await switchPerspective(
+      req.user!.employeeId,
+      req.user!.employeeId,
+    );
+    res.json({ data: perspective });
+  }),
+);
+
+perspectivesRouter.get(
+  "/current",
+  asyncHandler(async (req, res) => {
+    const perspective = await getActivePerspectiveForUser(req.user!.employeeId);
     res.json({ data: perspective });
   }),
 );

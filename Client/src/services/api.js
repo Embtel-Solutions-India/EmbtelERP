@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Base API instance — swap BASE_URL for real backend
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.crmpro.example.com/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000',
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
 })
