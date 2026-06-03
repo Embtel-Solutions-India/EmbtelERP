@@ -10,7 +10,7 @@ export type DataScope = {
 
 export type PerspectiveSession = {
   userId: string;
-  currentPerspectiveId: string;
+  perspectiveTargetId: string;
   perspectiveType: string;
 };
 
@@ -91,7 +91,7 @@ export async function getScopedEmployees(scope: DataScope) {
 export async function getActivePerspectiveForUser(
   userId: string,
 ): Promise<PerspectiveSession | null> {
-  const active = await prisma.perspective.findFirst({
+  const active = await prisma.perspectiveSession.findFirst({
     where: { userId },
     orderBy: { updatedAt: "desc" },
   });
@@ -99,7 +99,7 @@ export async function getActivePerspectiveForUser(
   return active
     ? {
         userId: active.userId,
-        currentPerspectiveId: active.currentPerspectiveId,
+        perspectiveTargetId: active.perspectiveTargetId,
         perspectiveType: active.perspectiveType,
       }
     : null;

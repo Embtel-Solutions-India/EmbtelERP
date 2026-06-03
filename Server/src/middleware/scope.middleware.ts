@@ -19,15 +19,26 @@ export async function attachScope(
 
   // active perspective session (if any) and effective data scope
   req.perspective = await getActivePerspectiveForUser(req.user.employeeId);
+
+  // currentPerspective for dashboard queries - centralized filter logic
+  if (req.perspective) {
+    req.currentPerspective = {
+      type: req.perspective.perspectiveType,
+      targetId: req.perspective.perspectiveTargetId,
+    };
+  } else {
+    req.currentPerspective = null;
+  }
+
   // effectiveUserId: if perspective exists use that id, otherwise viewer's employeeId
   const effectiveId =
-    req.perspective?.currentPerspectiveId ?? req.user.employeeId;
+    req.perspective?.perspectiveTargetId ?? req.user.employeeId;
   req.effectiveUser = { id: effectiveId } as any;
 
   // dataScope for the effective user as seen by the viewer
   req.dataScope = await getDataScope(
     req.user.employeeId,
-    req.perspective?.currentPerspectiveId ?? null,
+    req.perspective?.perspectiveTargetId ?? null,
   );
   // keep legacy alias `scope` for existing code
   req.scope = req.dataScope;

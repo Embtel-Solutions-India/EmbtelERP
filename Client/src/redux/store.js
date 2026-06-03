@@ -7,6 +7,7 @@ import taskReducer from './slices/taskSlice'
 import notificationReducer from './slices/notificationSlice'
 import themeReducer        from './slices/themeSlice'
 import teamReducer         from './slices/teamSlice'
+import perspectiveReducer  from './slices/perspectiveSlice'
 
 // Marketing Reducers
 import marketingDashboardReducer from '../modules/marketing/redux/marketingDashboardSlice'
@@ -23,6 +24,7 @@ export const store = configureStore({
     notifications: notificationReducer,
     theme:         themeReducer,
     team:          teamReducer,
+    perspective:   perspectiveReducer,
     
     // Marketing slices
     marketingDashboard: marketingDashboardReducer,

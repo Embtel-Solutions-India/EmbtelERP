@@ -38,8 +38,10 @@ export default function MainLayout() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          onMobileMenuToggle={() => setMobileSidebarOpen(true)}
+          onToggleSidebar={() => {
+            setSidebarOpen(!sidebarOpen);
+            setMobileSidebarOpen(true);
+          }}
         />
         <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8">
           <motion.div

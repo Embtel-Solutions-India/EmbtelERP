@@ -16,8 +16,7 @@ hierarchyRouter.use(authenticate, attachScope);
 hierarchyRouter.get(
   "/tree",
   asyncHandler(async (req, res) => {
-    const rootId =
-      req.perspective?.currentPerspectiveId ?? req.user!.employeeId;
+    const rootId = req.perspective?.perspectiveTargetId ?? req.user!.employeeId;
     const tree = await getHierarchyTree(rootId);
     res.json({ data: tree });
   }),

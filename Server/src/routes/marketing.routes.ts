@@ -1,0 +1,69 @@
+import { Router } from "express";
+import { authenticate } from "../middleware/auth.middleware.js";
+import { attachScope } from "../middleware/scope.middleware.js";
+import { validateBody } from "../middleware/validate.middleware.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import {
+  createActivity,
+  createCampaign,
+  createKPI,
+  createLead,
+  createTask,
+  executiveDashboard,
+  getCampaign,
+  getTask,
+  internDashboard,
+  listActivities,
+  listCampaigns,
+  listKPIs,
+  listLeads,
+  listTasks,
+  managerDashboard,
+  updateActivity,
+  updateCampaign,
+  updateKPI,
+  updateLead,
+  updateTask,
+} from "../controllers/marketing.controller.js";
+import {
+  createMarketingActivitySchema,
+  createMarketingCampaignSchema,
+  createMarketingKPISchema,
+  createMarketingLeadSchema,
+  createMarketingTaskSchema,
+  updateMarketingActivitySchema,
+  updateMarketingCampaignSchema,
+  updateMarketingKPISchema,
+  updateMarketingLeadSchema,
+  updateMarketingTaskSchema,
+} from "../validations/marketing.validation.js";
+
+export const marketingRouter = Router();
+
+marketingRouter.use(authenticate, attachScope);
+
+marketingRouter.get("/dashboard/manager", asyncHandler(managerDashboard));
+marketingRouter.get("/dashboard/executive", asyncHandler(executiveDashboard));
+marketingRouter.get("/dashboard/intern", asyncHandler(internDashboard));
+
+marketingRouter.get("/campaigns", asyncHandler(listCampaigns));
+marketingRouter.post("/campaigns", validateBody(createMarketingCampaignSchema), asyncHandler(createCampaign));
+marketingRouter.get("/campaigns/:id", asyncHandler(getCampaign));
+marketingRouter.patch("/campaigns/:id", validateBody(updateMarketingCampaignSchema), asyncHandler(updateCampaign));
+
+marketingRouter.get("/tasks", asyncHandler(listTasks));
+marketingRouter.post("/tasks", validateBody(createMarketingTaskSchema), asyncHandler(createTask));
+marketingRouter.get("/tasks/:id", asyncHandler(getTask));
+marketingRouter.patch("/tasks/:id", validateBody(updateMarketingTaskSchema), asyncHandler(updateTask));
+
+marketingRouter.get("/leads", asyncHandler(listLeads));
+marketingRouter.post("/leads", validateBody(createMarketingLeadSchema), asyncHandler(createLead));
+marketingRouter.patch("/leads/:id", validateBody(updateMarketingLeadSchema), asyncHandler(updateLead));
+
+marketingRouter.get("/activities", asyncHandler(listActivities));
+marketingRouter.post("/activities", validateBody(createMarketingActivitySchema), asyncHandler(createActivity));
+marketingRouter.patch("/activities/:id", validateBody(updateMarketingActivitySchema), asyncHandler(updateActivity));
+
+marketingRouter.get("/kpis", asyncHandler(listKPIs));
+marketingRouter.post("/kpis", validateBody(createMarketingKPISchema), asyncHandler(createKPI));
+marketingRouter.patch("/kpis/:id", validateBody(updateMarketingKPISchema), asyncHandler(updateKPI));

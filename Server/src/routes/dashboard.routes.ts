@@ -11,7 +11,10 @@ dashboardRouter.use(authenticate, attachScope);
 dashboardRouter.get(
   "/summary",
   asyncHandler(async (req, res) => {
-    const summary = await getDashboardSummary(req.scope!);
+    const summary = await getDashboardSummary(
+      req.scope!,
+      req.currentPerspective ?? undefined,
+    );
     res.json({ data: summary });
   }),
 );
