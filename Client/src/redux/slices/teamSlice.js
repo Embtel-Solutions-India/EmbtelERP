@@ -1,0 +1,162 @@
+import { createSlice } from '@reduxjs/toolkit'
+
+const initialSalesTeam = [
+  {
+    id: 1,
+    full_name: 'Aman Sharma',
+    employee_id: 'EMP-S001',
+    email: 'aman@crmpro.com',
+    phone: '+91 98765 00001',
+    department: 'Sales',
+    designation: 'Sales Executive',
+    reporting_manager: 'Vikram Nair',
+    joining_date: '2025-01-15',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb'
+  },
+  {
+    id: 2,
+    full_name: 'Rahul Verma',
+    employee_id: 'EMP-S002',
+    email: 'rahul@crmpro.com',
+    phone: '+91 98765 00002',
+    department: 'Sales',
+    designation: 'Sales Executive',
+    reporting_manager: 'Vikram Nair',
+    joining_date: '2025-03-10',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'
+  },
+  {
+    id: 3,
+    full_name: 'Priya Singh',
+    employee_id: 'EMP-S003',
+    email: 'priya@crmpro.com',
+    phone: '+91 98765 00003',
+    department: 'Sales',
+    designation: 'Sales Intern',
+    reporting_manager: 'Aman Sharma',
+    joining_date: '2026-02-01',
+    status: 'On Leave',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330'
+  },
+  {
+    id: 4,
+    full_name: 'Neha Gupta',
+    employee_id: 'EMP-S004',
+    email: 'neha@crmpro.com',
+    phone: '+91 98765 00004',
+    department: 'Sales',
+    designation: 'Sales Intern',
+    reporting_manager: 'Rahul Verma',
+    joining_date: '2026-05-01',
+    status: 'Inactive',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80'
+  }
+]
+
+const initialMarketingTeam = [
+  {
+    id: 5,
+    full_name: 'Riya Kapoor',
+    employee_id: 'EMP-M001',
+    email: 'riya@crmpro.com',
+    phone: '+91 98765 00011',
+    department: 'Marketing',
+    designation: 'Marketing Executive',
+    reporting_manager: 'Ananya Roy',
+    joining_date: '2025-02-20',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'
+  },
+  {
+    id: 6,
+    full_name: 'Arjun Mehta',
+    employee_id: 'EMP-M002',
+    email: 'arjun@crmpro.com',
+    phone: '+91 98765 00012',
+    department: 'Marketing',
+    designation: 'Marketing Executive',
+    reporting_manager: 'Ananya Roy',
+    joining_date: '2025-05-12',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e'
+  },
+  {
+    id: 7,
+    full_name: 'Karan Malhotra',
+    employee_id: 'EMP-M003',
+    email: 'karan@crmpro.com',
+    phone: '+91 98765 00013',
+    department: 'Marketing',
+    designation: 'Marketing Intern',
+    reporting_manager: 'Riya Kapoor',
+    joining_date: '2026-01-10',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e'
+  },
+  {
+    id: 8,
+    full_name: 'Sneha Jain',
+    employee_id: 'EMP-M004',
+    email: 'sneha@crmpro.com',
+    phone: '+91 98765 00014',
+    department: 'Marketing',
+    designation: 'Marketing Intern',
+    reporting_manager: 'Arjun Mehta',
+    joining_date: '2026-04-15',
+    status: 'On Leave',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9'
+  }
+]
+
+const teamSlice = createSlice({
+  name: 'team',
+  initialState: {
+    sales: initialSalesTeam,
+    marketing: initialMarketingTeam,
+    loading: false
+  },
+  reducers: {
+    addTeamMember(state, { payload: { department, member } }) {
+      const targetList = department.toLowerCase() === 'sales' ? 'sales' : 'marketing'
+      state[targetList].unshift(member)
+    },
+    updateTeamMember(state, { payload: { department, member } }) {
+      const targetList = department.toLowerCase() === 'sales' ? 'sales' : 'marketing'
+      const idx = state[targetList].findIndex(m => m.id === member.id)
+      if (idx !== -1) {
+        state[targetList][idx] = { ...state[targetList][idx], ...member }
+      }
+    },
+    deleteTeamMember(state, { payload: { department, id } }) {
+      const targetList = department.toLowerCase() === 'sales' ? 'sales' : 'marketing'
+      state[targetList] = state[targetList].filter(m => m.id !== id)
+    },
+    bulkDelete(state, { payload: { department, ids } }) {
+      const targetList = department.toLowerCase() === 'sales' ? 'sales' : 'marketing'
+      state[targetList] = state[targetList].filter(m => !ids.includes(m.id))
+    },
+    bulkUpdateStatus(state, { payload: { department, ids, status } }) {
+      const targetList = department.toLowerCase() === 'sales' ? 'sales' : 'marketing'
+      state[targetList].forEach(m => {
+        if (ids.includes(m.id)) {
+          m.status = status
+        }
+      })
+    }
+  }
+})
+
+export const {
+  addTeamMember,
+  updateTeamMember,
+  deleteTeamMember,
+  bulkDelete,
+  bulkUpdateStatus
+} = teamSlice.actions
+
+export const bulkDeleteMembers = bulkDelete
+export const bulkUpdateMemberStatus = bulkUpdateStatus
+
+export default teamSlice.reducer

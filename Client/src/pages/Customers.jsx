@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { FaUsers, FaCheckCircle, FaUserPlus, FaExclamationTriangle, FaStar } from 'react-icons/fa'
 import { Add } from '@mui/icons-material'
 import PageHeader from '../components/common/PageHeader'
+import ActionFormModal from '../components/common/ActionFormModal'
 import { getInitials, formatCurrency } from '../utils'
 
-const customers = [
+const INITIAL_CUSTOMERS = [
   { id: 1, name: 'Kavita Sharma',  company: 'Oracle India',     email: 'kavita.s@oracle.com',    phone: '+91 43210 98765', value: 450000, status: 'Active',    satisfaction: 5, since: '2023-01-15', deals: 3 },
   { id: 2, name: 'Vikram Nair',    company: 'TCS',              email: 'vikram.n@tcs.com',        phone: '+91 54321 09876', value: 175000, status: 'Active',    satisfaction: 4, since: '2023-05-20', deals: 2 },
   { id: 3, name: 'Ananya Roy',     company: 'IBM India',        email: 'ananya.r@ibm.com',        phone: '+91 87654 22334', value: 320000, status: 'Active',    satisfaction: 5, since: '2022-11-10', deals: 4 },
@@ -22,25 +24,71 @@ const STATUS_COLORS = {
   'At Risk':   'badge-error',
 }
 
-const STAT_ICONS = [
-  { label: 'Total',   value: customers.length,                                Icon: FaUsers,                color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20' },
-  { label: 'Active',  value: customers.filter(c => c.status==='Active').length, Icon: FaCheckCircle,          color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  { label: 'New',     value: customers.filter(c => c.status==='New').length,    Icon: FaUserPlus,             color: 'text-cyan-600',    bg: 'bg-cyan-50 dark:bg-cyan-900/20'       },
-  { label: 'At Risk', value: customers.filter(c => c.status==='At Risk').length,Icon: FaExclamationTriangle,  color: 'text-red-600',     bg: 'bg-red-50 dark:bg-red-900/20'         },
-]
-
 export default function Customers() {
+  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS)
+  const [isCustomerFormOpen, setCustomerFormOpen] = useState(false)
+  const stats = [
+    { label: 'Total',   value: customers.length,                                  Icon: FaUsers,               color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20' },
+    { label: 'Active',  value: customers.filter(c => c.status==='Active').length,  Icon: FaCheckCircle,         color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+    { label: 'New',     value: customers.filter(c => c.status==='New').length,     Icon: FaUserPlus,            color: 'text-cyan-600',    bg: 'bg-cyan-50 dark:bg-cyan-900/20'       },
+    { label: 'At Risk', value: customers.filter(c => c.status==='At Risk').length, Icon: FaExclamationTriangle, color: 'text-red-600',     bg: 'bg-red-50 dark:bg-red-900/20'         },
+  ]
+
+  const handleAddCustomer = (values) => {
+    setCustomers((current) => [
+      {
+        id: Date.now(),
+        name: values.name,
+        company: values.company,
+        email: values.email,
+        phone: values.phone,
+        value: Number(values.value) || 0,
+        status: values.status,
+        satisfaction: Number(values.satisfaction) || 4,
+        since: values.since || new Date().toISOString(),
+        deals: Number(values.deals) || 1,
+      },
+      ...current,
+    ])
+  }
+
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <PageHeader
         title="Customers"
         subtitle="Manage your customer relationships"
         breadcrumbs={['Dashboard', 'Customers']}
-        actions={<button className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> Add Customer</button>}
+        actions={<button onClick={() => setCustomerFormOpen(true)} className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> Add Customer</button>}
+      />
+
+      <ActionFormModal
+        open={isCustomerFormOpen}
+        title="Add Customer"
+        subtitle="Create a customer record with value and health"
+        fields={[
+          { name: 'name', label: 'Customer Name', required: true },
+          { name: 'company', label: 'Company', required: true },
+          { name: 'email', label: 'Email', type: 'email', required: true },
+          { name: 'phone', label: 'Phone', type: 'tel', required: true },
+          { name: 'value', label: 'Total Value', type: 'number', min: 0, required: true },
+          {
+            name: 'status',
+            label: 'Status',
+            type: 'select',
+            options: ['Active', 'New', 'Returning', 'At Risk'].map((value) => ({ value, label: value })),
+          },
+          { name: 'satisfaction', label: 'Satisfaction', type: 'number', min: 1, max: 5, required: true },
+          { name: 'deals', label: 'Deals', type: 'number', min: 1, required: true },
+          { name: 'since', label: 'Customer Since', type: 'date', fullWidth: true },
+        ]}
+        initialValues={{ name: '', company: '', email: '', phone: '', value: '', status: 'New', satisfaction: 4, deals: 1, since: '' }}
+        submitLabel="Add Customer"
+        onClose={() => setCustomerFormOpen(false)}
+        onSubmit={handleAddCustomer}
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {STAT_ICONS.map((s) => (
+        {stats.map((s) => (
           <div key={s.label} className={`card p-4 flex items-center gap-3 ${s.bg}`}>
             <div className={`w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center ${s.color}`}>
               <s.Icon size={18} />

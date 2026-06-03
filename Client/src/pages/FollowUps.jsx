@@ -1,19 +1,36 @@
-import { useSelector } from 'react-redux'
+import { useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
 import { Add, Phone, Email, WhatsApp, Visibility } from '@mui/icons-material'
 import { Tooltip } from '@mui/material'
 import { FaExclamationTriangle, FaPhone, FaCalendarAlt } from 'react-icons/fa'
 import PageHeader from '../components/common/PageHeader'
+import ActionFormModal from '../components/common/ActionFormModal'
 import PriorityBadge from '../components/common/PriorityBadge'
+import { updateLead } from '../redux/slices/leadSlice'
 import { formatDate, getDueBadge, getInitials } from '../utils'
 
 export default function FollowUps() {
+  const dispatch = useDispatch()
   const { list: leads } = useSelector((s) => s.leads)
+  const [isFollowUpFormOpen, setFollowUpFormOpen] = useState(false)
   const followUps = leads.filter(l => l.nextFollowUp && l.status !== 'won' && l.status !== 'lost')
 
   const overdue   = followUps.filter(l => getDueBadge(l.nextFollowUp).color === 'error')
   const today     = followUps.filter(l => getDueBadge(l.nextFollowUp).color === 'warning')
   const upcoming  = followUps.filter(l => !['error','warning'].includes(getDueBadge(l.nextFollowUp).color))
+  const leadOptions = leads.map((lead) => ({ value: String(lead.id), label: `${lead.name} - ${lead.company}` }))
+
+  const handleCreateFollowUp = (values) => {
+    const lead = leads.find((item) => String(item.id) === values.leadId)
+    if (!lead) return
+
+    dispatch(updateLead({
+      ...lead,
+      nextFollowUp: new Date(values.nextFollowUp).toISOString(),
+      lastContact: new Date().toISOString(),
+    }))
+  }
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
@@ -22,10 +39,31 @@ export default function FollowUps() {
         subtitle={`${followUps.length} follow-ups tracked`}
         breadcrumbs={['Dashboard', 'Follow Ups']}
         actions={
-          <button className="btn-primary text-sm flex items-center gap-2">
+          <button onClick={() => setFollowUpFormOpen(true)} className="btn-primary text-sm flex items-center gap-2">
             <Add fontSize="small" /> Create Follow Up
           </button>
         }
+      />
+
+      <ActionFormModal
+        open={isFollowUpFormOpen}
+        title="Create Follow Up"
+        subtitle="Pick a lead and set the next follow-up time"
+        fields={[
+          { name: 'leadId', label: 'Lead', type: 'select', options: leadOptions, required: true, fullWidth: true },
+          { name: 'nextFollowUp', label: 'Follow Up Date', type: 'datetime-local', required: true },
+          {
+            name: 'channel',
+            label: 'Channel',
+            type: 'select',
+            options: ['Phone', 'Email', 'WhatsApp', 'Video Call'].map((value) => ({ value, label: value })),
+          },
+          { name: 'notes', label: 'Notes', type: 'textarea', fullWidth: true },
+        ]}
+        initialValues={{ leadId: leadOptions[0]?.value || '', nextFollowUp: '', channel: 'Phone', notes: '' }}
+        submitLabel="Create Follow Up"
+        onClose={() => setFollowUpFormOpen(false)}
+        onSubmit={handleCreateFollowUp}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

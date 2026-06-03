@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Add, Search, FilterList, Phone, Email, WhatsApp, Visibility, Edit } from '@mui/icons-material'
 import { Tooltip } from '@mui/material'
 import PageHeader from '../components/common/PageHeader'
+import ActionFormModal from '../components/common/ActionFormModal'
 import PriorityBadge from '../components/common/PriorityBadge'
-import { setFilter } from '../redux/slices/leadSlice'
+import { addLead, setFilter } from '../redux/slices/leadSlice'
 import { formatCurrency, formatDate, getInitials } from '../utils'
 
 const STATUS_COLORS = {
@@ -13,14 +14,72 @@ const STATUS_COLORS = {
   proposal: 'badge-purple', negotiation: 'badge-warning', won: 'badge-success', lost: 'badge-error',
 }
 
+const LEAD_FIELDS = [
+  { name: 'name', label: 'Lead Name', required: true },
+  { name: 'company', label: 'Company', required: true },
+  { name: 'email', label: 'Email', type: 'email', required: true },
+  { name: 'phone', label: 'Phone', type: 'tel', required: true },
+  { name: 'value', label: 'Deal Value', type: 'number', min: 0, required: true },
+  {
+    name: 'source',
+    label: 'Source',
+    type: 'select',
+    options: ['LinkedIn', 'Website', 'Referral', 'Cold Call', 'Event'].map((value) => ({ value, label: value })),
+  },
+  {
+    name: 'status',
+    label: 'Status',
+    type: 'select',
+    options: ['new', 'contacted', 'qualified', 'proposal', 'negotiation'].map((value) => ({
+      value,
+      label: value.charAt(0).toUpperCase() + value.slice(1),
+    })),
+  },
+  {
+    name: 'priority',
+    label: 'Priority',
+    type: 'select',
+    options: ['hot', 'warm', 'cold'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
+  },
+  { name: 'nextFollowUp', label: 'Next Follow Up', type: 'datetime-local', fullWidth: true },
+]
+
+const LEAD_INITIAL_VALUES = {
+  name: '',
+  company: '',
+  email: '',
+  phone: '',
+  value: '',
+  source: 'LinkedIn',
+  status: 'new',
+  priority: 'warm',
+  nextFollowUp: '',
+}
+
 export default function Leads() {
   const dispatch = useDispatch()
   const { filteredList: leads, filters } = useSelector((s) => s.leads)
   const [viewMode, setViewMode] = useState('table')
+  const [isLeadFormOpen, setLeadFormOpen] = useState(false)
 
   const handleSearch = (e) => dispatch(setFilter({ search: e.target.value }))
   const handleStatusFilter = (e) => dispatch(setFilter({ status: e.target.value }))
   const handlePriorityFilter = (e) => dispatch(setFilter({ priority: e.target.value }))
+  const handleAddLead = (values) => {
+    dispatch(addLead({
+      id: Date.now(),
+      name: values.name,
+      company: values.company,
+      email: values.email,
+      phone: values.phone,
+      value: Number(values.value) || 0,
+      source: values.source,
+      status: values.status,
+      priority: values.priority,
+      nextFollowUp: values.nextFollowUp ? new Date(values.nextFollowUp).toISOString() : null,
+      lastContact: new Date().toISOString(),
+    }))
+  }
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -33,11 +92,22 @@ export default function Leads() {
             <button className="btn-secondary text-sm flex items-center gap-2">
               <FilterList fontSize="small" /> Filter
             </button>
-            <button className="btn-primary text-sm flex items-center gap-2">
+            <button onClick={() => setLeadFormOpen(true)} className="btn-primary text-sm flex items-center gap-2">
               <Add fontSize="small" /> Add Lead
             </button>
           </>
         }
+      />
+
+      <ActionFormModal
+        open={isLeadFormOpen}
+        title="Add Lead"
+        subtitle="Capture contact details and pipeline priority"
+        fields={LEAD_FIELDS}
+        initialValues={LEAD_INITIAL_VALUES}
+        submitLabel="Add Lead"
+        onClose={() => setLeadFormOpen(false)}
+        onSubmit={handleAddLead}
       />
 
       {/* Filters */}

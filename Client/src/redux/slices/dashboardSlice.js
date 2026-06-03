@@ -81,11 +81,12 @@ const dashboardSlice = createSlice({
     loading: false,
   },
   reducers: {
+    addOpportunity(state, { payload }) { state.opportunities.unshift(payload) },
     setChartPeriod(state, { payload }) { state.chartPeriod = payload },
     setLoading(state, { payload }) { state.loading = payload },
     refreshStats(state) { state.kpiStats.newLeadsToday += 1 },
   },
 })
 
-export const { setChartPeriod, setLoading, refreshStats } = dashboardSlice.actions
+export const { addOpportunity, setChartPeriod, setLoading, refreshStats } = dashboardSlice.actions
 export default dashboardSlice.reducer

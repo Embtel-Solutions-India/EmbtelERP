@@ -6,13 +6,29 @@ export const formatCurrency = (amount, currency = 'USD') =>
 export const formatNumber = (n) =>
   new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n)
 
-export const formatDate = (date) => format(new Date(date), 'MMM dd, yyyy')
+export const formatDate = (date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return d && !isNaN(d.getTime()) ? format(d, 'MMM dd, yyyy') : '-'
+}
 
-export const formatTime = (date) => format(new Date(date), 'hh:mm a')
+export const formatTime = (date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return d && !isNaN(d.getTime()) ? format(d, 'hh:mm a') : '-'
+}
 
-export const formatDateTime = (date) => format(new Date(date), 'MMM dd, yyyy hh:mm a')
+export const formatDateTime = (date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return d && !isNaN(d.getTime()) ? format(d, 'MMM dd, yyyy hh:mm a') : '-'
+}
 
-export const timeAgo = (date) => formatDistanceToNow(new Date(date), { addSuffix: true })
+export const timeAgo = (date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return d && !isNaN(d.getTime()) ? formatDistanceToNow(d, { addSuffix: true }) : '-'
+}
 
 export const getGreeting = () => {
   const h = new Date().getHours()
