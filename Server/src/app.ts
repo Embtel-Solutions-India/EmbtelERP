@@ -11,6 +11,7 @@ import { perspectivesRouter } from "./routes/perspectives.routes.js";
 import { dashboardRouter } from "./routes/dashboard.routes.js";
 import { activitiesRouter } from "./routes/activities.routes.js";
 import { auditRouter } from "./routes/audit.routes.js";
+import { marketingRouter } from "./routes/marketing.routes.js";
 
 export function createApp() {
   const app = express();
@@ -35,6 +36,7 @@ export function createApp() {
   app.use("/dashboard", dashboardRouter);
   app.use("/activities", activitiesRouter);
   app.use("/audit-logs", auditRouter);
+  app.use("/marketing", marketingRouter);
 
   app.use(errorHandler);
   return app;

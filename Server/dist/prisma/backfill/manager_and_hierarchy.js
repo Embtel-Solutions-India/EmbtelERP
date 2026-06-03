@@ -1,13 +1,13 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 async function main() {
-    console.log('Ensuring pgcrypto extension...');
+    console.log("Ensuring pgcrypto extension...");
     await prisma.$executeRaw `CREATE EXTENSION IF NOT EXISTS pgcrypto;`;
-    console.log('Backfilling managerId from reportsToId...');
+    console.log("Backfilling managerId from reportsToId...");
     await prisma.$executeRaw `
     UPDATE "Employee" SET "managerId" = "reportsToId" WHERE "managerId" IS NULL AND "reportsToId" IS NOT NULL;
   `;
-    console.log('Populating EmployeeHierarchy (transitive closure) ...');
+    console.log("Populating EmployeeHierarchy (transitive closure) ...");
     const employees = await prisma.employee.findMany({ select: { id: true } });
     for (const { id } of employees) {
         const insertSql = `
@@ -26,7 +26,7 @@ async function main() {
     `;
         await prisma.$executeRawUnsafe(insertSql, id);
     }
-    console.log('EmployeeHierarchy backfill complete');
+    console.log("EmployeeHierarchy backfill complete");
 }
 main()
     .catch((e) => {
