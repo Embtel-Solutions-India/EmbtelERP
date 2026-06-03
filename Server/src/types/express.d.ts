@@ -14,6 +14,10 @@ declare global {
       perspective?: PerspectiveSession | null;
       viewer?: AuthUser;
       effectiveUser?: { id: string } | null;
+      currentPerspective?: {
+        type: string;
+        targetId: string;
+      } | null;
     }
   }
 

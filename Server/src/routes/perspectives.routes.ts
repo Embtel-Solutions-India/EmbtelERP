@@ -6,53 +6,62 @@ import { validateBody } from "../middleware/validate.middleware.js";
 import {
   getAvailablePerspectives,
   switchPerspective,
-  getActivePerspectiveForUser,
+  clearPerspective,
+  getPerspectiveInfo,
 } from "../services/perspective.service.js";
 
 const switchSchema = z.object({
-  targetUserId: z.string().min(1),
+  targetType: z.enum([
+    "ORGANIZATION",
+    "BUSINESS",
+    "DEPARTMENT",
+    "TEAM",
+    "EMPLOYEE",
+  ]),
+  targetId: z.string().min(1),
 });
 
 export const perspectivesRouter = Router();
 
 perspectivesRouter.use(authenticate);
 
+// GET /api/perspectives - Returns current perspective and available perspectives tree
 perspectivesRouter.get(
-  "/available",
+  "/",
   asyncHandler(async (req, res) => {
-    const perspectives = await getAvailablePerspectives(req.user!.employeeId);
-    res.json({ data: perspectives });
+    const result = await getAvailablePerspectives(req.user!.employeeId);
+    res.json({ data: result });
   }),
 );
 
+// GET /api/perspectives/current - Returns current perspective info with breadcrumb
+perspectivesRouter.get(
+  "/current",
+  asyncHandler(async (req, res) => {
+    const info = await getPerspectiveInfo(req.user!.employeeId);
+    res.json({ data: info });
+  }),
+);
+
+// POST /api/perspectives/switch - Switch to a different perspective
 perspectivesRouter.post(
   "/switch",
   validateBody(switchSchema),
   asyncHandler(async (req, res) => {
-    const perspective = await switchPerspective(
+    const session = await switchPerspective(
       req.user!.employeeId,
-      req.body.targetUserId,
+      req.body.targetType,
+      req.body.targetId,
     );
-    res.json({ data: perspective });
+    res.json({ data: session });
   }),
 );
 
+// POST /api/perspectives/reset - Reset perspective to self
 perspectivesRouter.post(
   "/reset",
   asyncHandler(async (req, res) => {
-    // reset perspective to self
-    const perspective = await switchPerspective(
-      req.user!.employeeId,
-      req.user!.employeeId,
-    );
-    res.json({ data: perspective });
-  }),
-);
-
-perspectivesRouter.get(
-  "/current",
-  asyncHandler(async (req, res) => {
-    const perspective = await getActivePerspectiveForUser(req.user!.employeeId);
-    res.json({ data: perspective });
+    await clearPerspective(req.user!.employeeId);
+    res.json({ data: { message: "Perspective reset to self" } });
   }),
 );
