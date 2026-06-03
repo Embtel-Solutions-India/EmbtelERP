@@ -23,6 +23,7 @@ export const marketingMenu = [
   { id: 'tasks',           label: 'Tasks',           icon: 'TaskAlt',       path: '/marketing/tasks'           },
   { id: 'performance',     label: 'Performance',     icon: 'Leaderboard',   path: '/marketing/performance'     },
   { id: 'reports',         label: 'Reports',         icon: 'Assessment',    path: '/marketing/reports'         },
+  { id: 'profile',         label: 'Profile',         icon: 'AccountCircle', path: '/marketing/profile'         },
 ]
 
 export const productionMenu = [

@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion'
 import { useSelector } from 'react-redux'
+import { useLocation } from 'react-router-dom'
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts'
 import { FaBullseye } from 'react-icons/fa'
 import { formatCurrency } from '../../utils'
 import SectionCard from '../common/SectionCard'
 
 export default function TargetProgress() {
-  const { kpiStats } = useSelector((s) => s.dashboard)
+  const location = useLocation()
+  const isMarketing = location.pathname.startsWith('/marketing')
+  const { kpiStats } = useSelector((s) => isMarketing ? s.marketingDashboard : s.dashboard)
   const { monthlyTarget, monthlyRevenue, targetAchievement } = kpiStats
   const remaining = monthlyTarget - monthlyRevenue
   const projectedDays = Math.round((remaining / monthlyRevenue) * 30)
@@ -16,7 +19,7 @@ export default function TargetProgress() {
   ]
 
   return (
-    <SectionCard title="Sales Target" subtitle="Monthly performance tracker" delay={0.2}>
+    <SectionCard title={isMarketing ? "Marketing Target" : "Sales Target"} subtitle="Monthly performance tracker" delay={0.2}>
       <div className="flex items-center gap-6">
         <div className="relative flex-shrink-0" style={{ width: 120, height: 104 }}>
           <ResponsiveContainer width="100%" height="100%">
