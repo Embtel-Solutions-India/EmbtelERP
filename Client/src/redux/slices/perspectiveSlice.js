@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { perspectiveService } from '../../services/perspectiveService'
 
-export const fetchAvailablePerspectives = createAsyncThunk(
-    'perspective/fetchAvailable',
+export const fetchPerspectives = createAsyncThunk(
+    'perspective/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await perspectiveService.getAvailable()
+            const res = await perspectiveService.getPerspectives()
             return res.data
         } catch (err) {
             return rejectWithValue(err.message)
@@ -15,9 +15,9 @@ export const fetchAvailablePerspectives = createAsyncThunk(
 
 export const switchPerspective = createAsyncThunk(
     'perspective/switch',
-    async (targetUserId, { rejectWithValue }) => {
+    async ({ targetType, targetId }, { rejectWithValue }) => {
         try {
-            const res = await perspectiveService.switchTo(targetUserId)
+            const res = await perspectiveService.switchTo(targetType, targetId)
             return res.data
         } catch (err) {
             return rejectWithValue(err.message)
@@ -50,8 +50,9 @@ export const fetchCurrentPerspective = createAsyncThunk(
 )
 
 const initialState = {
-    available: [],
+    availablePerspectives: [],
     current: null,
+    currentInfo: null,
     loading: false,
     error: null,
 }
@@ -62,22 +63,24 @@ const perspectiveSlice = createSlice({
     reducers: {
         clearPerspective(state) {
             state.current = null
-            state.available = []
+            state.currentInfo = null
+            state.availablePerspectives = []
             state.error = null
         },
     },
     extraReducers: (builder) => {
         builder
-            // Fetch available perspectives
-            .addCase(fetchAvailablePerspectives.pending, (state) => {
+            // Fetch all perspectives
+            .addCase(fetchPerspectives.pending, (state) => {
                 state.loading = true
                 state.error = null
             })
-            .addCase(fetchAvailablePerspectives.fulfilled, (state, action) => {
+            .addCase(fetchPerspectives.fulfilled, (state, action) => {
                 state.loading = false
-                state.available = action.payload
+                state.availablePerspectives = action.payload.availablePerspectives || []
+                state.current = action.payload.currentPerspective || null
             })
-            .addCase(fetchAvailablePerspectives.rejected, (state, action) => {
+            .addCase(fetchPerspectives.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload
             })
@@ -95,12 +98,13 @@ const perspectiveSlice = createSlice({
                 state.error = action.payload
             })
             // Reset perspective
-            .addCase(resetPerspective.fulfilled, (state, action) => {
-                state.current = action.payload
+            .addCase(resetPerspective.fulfilled, (state) => {
+                state.current = null
+                state.currentInfo = null
             })
-            // Fetch current perspective
+            // Fetch current perspective info
             .addCase(fetchCurrentPerspective.fulfilled, (state, action) => {
-                state.current = action.payload
+                state.currentInfo = action.payload
             })
     },
 })

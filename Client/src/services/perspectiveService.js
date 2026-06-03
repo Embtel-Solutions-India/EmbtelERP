@@ -1,8 +1,8 @@
 import api from './api'
 
 export const perspectiveService = {
-    getAvailable: () => api.get('/perspectives/available'),
-    switchTo: (targetUserId) => api.post('/perspectives/switch', { targetUserId }),
-    reset: () => api.post('/perspectives/reset'),
+    getPerspectives: () => api.get('/perspectives'),
     getCurrent: () => api.get('/perspectives/current'),
+    switchTo: (targetType, targetId) => api.post('/perspectives/switch', { targetType, targetId }),
+    reset: () => api.post('/perspectives/reset'),
 }

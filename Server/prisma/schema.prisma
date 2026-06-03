@@ -27,6 +27,14 @@ enum PerspectiveType {
   ALL
 }
 
+enum PerspectiveTargetType {
+  ORGANIZATION
+  BUSINESS
+  DEPARTMENT
+  TEAM
+  EMPLOYEE
+}
+
 enum MarketingCampaignStatus {
   DRAFT
   ACTIVE
@@ -213,7 +221,6 @@ model Employee {
   perspectivesAsUser Perspective[]
   perspectivesAsTarget Perspective[] @relation("PerspectiveTarget")
   perspectiveSessionsAsUser PerspectiveSession[] @relation("PerspectiveSessionUser")
-  perspectiveSessionsAsTarget PerspectiveSession[] @relation("PerspectiveSessionTarget")
   sessions           Session[] @relation("SessionUser")
   notificationsAsActor Notification[] @relation("NotificationActor")
   notificationsAsRecipient Notification[] @relation("NotificationRecipient")
@@ -271,18 +278,17 @@ model Perspective {
 
 // Additive models for non-destructive migration: session, notification, perspective sessions
 model PerspectiveSession {
-  id             String    @id @default(cuid())
-  userId         String
+  id                  String                @id @default(cuid())
+  userId              String
+  perspectiveType     PerspectiveTargetType
+  perspectiveTargetId String
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
 
-  perspectiveId  String
-  expiresAt      DateTime?
-  createdAt      DateTime  @default(now())
-
-  user           Employee  @relation("PerspectiveSessionUser", fields: [userId], references: [id])
-  perspective    Employee  @relation("PerspectiveSessionTarget", fields: [perspectiveId], references: [id])
+  user                Employee              @relation("PerspectiveSessionUser", fields: [userId], references: [id])
 
   @@index([userId])
-  @@index([perspectiveId])
+  @@index([perspectiveTargetId])
 }
 
 model Session {
