@@ -2,11 +2,11 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import {
-<<<<<<< HEAD
   Dashboard, PersonAdd, PhoneCallback, VideoCall, People, TrendingUp,
   RequestQuote, TaskAlt, CalendarMonth, Leaderboard, Assessment,
   AccountCircle, Settings,
 } from '@mui/icons-material'
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   salesMenu,
   marketingMenu,
@@ -18,25 +18,6 @@ import {
 } from '../config/sidebarConfig'
 import { APP_NAME } from '../constants'
 import { getInitials } from '../utils'
-=======
-  Dashboard,
-  PersonAdd,
-  PhoneCallback,
-  VideoCall,
-  People,
-  TrendingUp,
-  RequestQuote,
-  TaskAlt,
-  CalendarMonth,
-  Leaderboard,
-  Assessment,
-  AccountCircle,
-  Settings,
-  Visibility as VisibilityIcon,
-} from "@mui/icons-material";
-import { NAV_ITEMS, APP_NAME } from "../constants";
-import { getInitials } from "../utils";
->>>>>>> main
 
 const ICON_MAP = {
   Dashboard,
@@ -63,11 +44,7 @@ function NavItem({ item, collapsed }) {
   const location = useLocation();
   const isActive =
     location.pathname === item.path ||
-<<<<<<< HEAD
     (!item.path.endsWith('/dashboard') && location.pathname.startsWith(item.path))
-=======
-    (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
->>>>>>> main
 
   return (
     <NavLink to={item.path} className="block">
@@ -118,7 +95,6 @@ const moduleLabelMap = {
 }
 
 export default function Sidebar({ open, mobileOpen, onMobileClose }) {
-<<<<<<< HEAD
   const { user } = useSelector((s) => s.auth)
   const location = useLocation()
   const pathSegments = location.pathname.split('/').filter(Boolean)
@@ -126,15 +102,9 @@ export default function Sidebar({ open, mobileOpen, onMobileClose }) {
 
   const items = menuMap[activeModule] || salesMenu
   const platformLabel = moduleLabelMap[activeModule] || 'Sales Platform'
-=======
-  const { user } = useSelector((s) => s.auth);
-  const { current: activePerspective } = useSelector((s) => s.perspective);
 
-  const isViewingOther =
-    activePerspective &&
-    activePerspective.currentPerspectiveId &&
-    activePerspective.currentPerspectiveId !== user?.id;
->>>>>>> main
+  const isViewingOther = false;
+const activePerspective = null;
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -155,11 +125,7 @@ export default function Sidebar({ open, mobileOpen, onMobileClose }) {
                 {APP_NAME}
               </span>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-<<<<<<< HEAD
                 {platformLabel}
-=======
-                Sales Platform
->>>>>>> main
               </p>
             </motion.div>
           )}

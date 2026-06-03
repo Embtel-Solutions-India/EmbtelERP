@@ -5,7 +5,6 @@ import leadReducer from './slices/leadSlice'
 import meetingReducer from './slices/meetingSlice'
 import taskReducer from './slices/taskSlice'
 import notificationReducer from './slices/notificationSlice'
-<<<<<<< HEAD
 import themeReducer        from './slices/themeSlice'
 import teamReducer         from './slices/teamSlice'
 
@@ -13,10 +12,6 @@ import teamReducer         from './slices/teamSlice'
 import marketingDashboardReducer from '../modules/marketing/redux/marketingDashboardSlice'
 import marketingTaskReducer      from '../modules/marketing/redux/marketingTaskSlice'
 import marketingEmailReducer     from '../modules/marketing/redux/marketingEmailSlice'
-=======
-import themeReducer from './slices/themeSlice'
-import perspectiveReducer from './slices/perspectiveSlice'
->>>>>>> main
 
 export const store = configureStore({
   reducer: {
@@ -26,7 +21,6 @@ export const store = configureStore({
     meetings: meetingReducer,
     tasks: taskReducer,
     notifications: notificationReducer,
-<<<<<<< HEAD
     theme:         themeReducer,
     team:          teamReducer,
     
@@ -34,10 +28,6 @@ export const store = configureStore({
     marketingDashboard: marketingDashboardReducer,
     marketingTasks:     marketingTaskReducer,
     marketingEmails:    marketingEmailReducer,
-=======
-    theme: themeReducer,
-    perspective: perspectiveReducer,
->>>>>>> main
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

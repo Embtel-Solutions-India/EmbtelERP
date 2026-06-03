@@ -17,7 +17,6 @@ export default function Login() {
   });
   const [error, setError] = useState("");
 
-<<<<<<< HEAD
   const handleSubmit = (e) => {
     e.preventDefault()
     const isMarketing = form.email.startsWith('marketing')
@@ -30,22 +29,6 @@ export default function Login() {
     }))
     navigate(isMarketing ? '/marketing/dashboard' : '/sales/dashboard')
   }
-=======
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    dispatch(setLoading(true));
-    try {
-      const data = await api.post("/auth/login", form);
-      dispatch(loginSuccess(data));
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.message || "Login failed");
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
->>>>>>> main
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-indigo-700 to-purple-800 flex items-center justify-center p-4">
@@ -167,15 +150,9 @@ export default function Login() {
             </motion.button>
           </form>
 
-<<<<<<< HEAD
           <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-gray-800 text-xs text-slate-500 dark:text-slate-400 space-y-1">
             <p><strong>Sales Demo:</strong> ujjwal@crmpro.com / password</p>
             <p><strong>Marketing Demo:</strong> marketing@crmpro.com / password</p>
-=======
-          <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-gray-800 text-xs text-slate-500 dark:text-slate-400">
-            <strong>Demo credentials:</strong> owner@embtelerp.com /
-            Password@123
->>>>>>> main
           </div>
         </div>
       </motion.div>
