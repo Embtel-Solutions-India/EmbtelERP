@@ -26,6 +26,11 @@ const departments = [
 async function main() {
   await prisma.auditLog.deleteMany();
   await prisma.activity.deleteMany();
+  await prisma.marketingKPI.deleteMany();
+  await prisma.marketingActivity.deleteMany();
+  await prisma.marketingLead.deleteMany();
+  await prisma.marketingTask.deleteMany();
+  await prisma.marketingCampaign.deleteMany();
   await prisma.task.deleteMany();
   await prisma.document.deleteMany();
   await prisma.perspective.deleteMany();
@@ -61,6 +66,9 @@ async function main() {
     prisma.permission.create({ data: { code: "task.read" } }),
     prisma.permission.create({ data: { code: "task.write" } }),
     prisma.permission.create({ data: { code: "audit.read" } }),
+    prisma.permission.create({ data: { code: "marketing.read" } }),
+    prisma.permission.create({ data: { code: "marketing.write" } }),
+    prisma.permission.create({ data: { code: "marketing.dashboard" } }),
   ]);
 
   await prisma.rolePermission.createMany({
@@ -68,6 +76,20 @@ async function main() {
       { roleId: roles[4].id, permissionId: permissions[0].id },
       { roleId: roles[4].id, permissionId: permissions[1].id },
       { roleId: roles[5].id, permissionId: permissions[4].id },
+      { roleId: roles[0].id, permissionId: permissions[5].id },
+      { roleId: roles[1].id, permissionId: permissions[5].id },
+      { roleId: roles[1].id, permissionId: permissions[6].id },
+      { roleId: roles[1].id, permissionId: permissions[7].id },
+      { roleId: roles[2].id, permissionId: permissions[5].id },
+      { roleId: roles[2].id, permissionId: permissions[6].id },
+      { roleId: roles[2].id, permissionId: permissions[7].id },
+      { roleId: roles[3].id, permissionId: permissions[5].id },
+      { roleId: roles[3].id, permissionId: permissions[7].id },
+      { roleId: roles[4].id, permissionId: permissions[5].id },
+      { roleId: roles[4].id, permissionId: permissions[7].id },
+      { roleId: roles[5].id, permissionId: permissions[5].id },
+      { roleId: roles[5].id, permissionId: permissions[6].id },
+      { roleId: roles[5].id, permissionId: permissions[7].id },
     ],
   });
 
