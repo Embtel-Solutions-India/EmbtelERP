@@ -117,7 +117,7 @@ describe("Dashboard Service", () => {
       expect(result.businessKpis!.employeeCount).toBe(10);
       expect(result.perspective).not.toBeNull();
       expect(result.perspective!.type).toBe("BUSINESS");
-      expect(result.perspective!.aggregationLevel).toBe("BUSINESS");
+      expect(result.perspective!.aggregationLevel).toBe("BUSINESS_OWNER");
     });
 
     it("returns employee KPIs when perspective is EMPLOYEE", async () => {

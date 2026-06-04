@@ -15,7 +15,12 @@ export type AggregationLevel =
   | "DEPARTMENT"
   | "BUSINESS"
   | "DESCENDANT"
-  | "ALL";
+  | "ALL"
+  | "BUSINESS_OWNER"
+  | "HEAD"
+  | "VERTICAL"
+  | "TEAM_MANAGER"
+  | "EMPLOYEE";
 
 export type DashboardOverview = {
   employeeCount: number;
@@ -64,12 +69,39 @@ export type BusinessKpiSummary = {
   businessName: string;
   departmentCount: number;
   teamCount: number;
+  verticalCount: number;
   employeeCount: number;
   totalTasks: number;
   completedTasks: number;
   pendingTasks: number;
   overdueTasks: number;
   targetAchievement: number;
+};
+
+export type BusinessAnalytics = {
+  businessId: string;
+  businessName: string;
+  businessCode: string;
+  employeeCount: number;
+  teamCount: number;
+  verticalCount: number;
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  overdueTasks: number;
+  completionRate: number;
+  targetAchievement: number;
+  leadsGenerated: number;
+  conversions: number;
+  revenue: number;
+  teams: {
+    id: string;
+    name: string;
+    memberCount: number;
+    completedTasks: number;
+    pendingTasks: number;
+    completionRate: number;
+  }[];
 };
 
 export type DashboardPerformance = {
@@ -125,6 +157,20 @@ async function getPerspectiveLabel(
       });
       return d?.name ?? "Unknown Department";
     }
+    case "VERTICAL": {
+      const v = await prisma.vertical.findUnique({
+        where: { id: targetId },
+        select: { name: true },
+      });
+      return v?.name ?? "Unknown Vertical";
+    }
+    case "HEAD": {
+      const e = await prisma.employee.findUnique({
+        where: { id: targetId },
+        select: { firstName: true, lastName: true },
+      });
+      return e ? `${e.firstName} ${e.lastName}` : "Unknown Head";
+    }
     case "TEAM": {
       const t = await prisma.team.findUnique({
         where: { id: targetId },
@@ -150,14 +196,20 @@ function determineAggregationLevel(
 ): AggregationLevel {
   if (viewerRoleLevel >= 5) return "ALL";
   switch (type) {
+    case "ORGANIZATION":
+      return "ALL";
     case "BUSINESS":
-      return "BUSINESS";
+      return viewerRoleLevel >= 4 ? "BUSINESS_OWNER" : "BUSINESS";
+    case "HEAD":
+      return "HEAD";
+    case "VERTICAL":
+      return "VERTICAL";
     case "DEPARTMENT":
       return "DEPARTMENT";
     case "TEAM":
-      return "TEAM";
+      return viewerRoleLevel >= 2 ? "TEAM_MANAGER" : "TEAM";
     case "EMPLOYEE":
-      return "DESCENDANT";
+      return viewerRoleLevel >= 1 ? "DESCENDANT" : "EMPLOYEE";
     default:
       return "SELF";
   }
@@ -365,7 +417,14 @@ export async function getDashboardOverview(
       select: {
         id: true,
         name: true,
-        _count: { select: { departments: true, teams: true, employees: true } },
+        _count: {
+          select: {
+            departments: true,
+            teams: true,
+            verticals: true,
+            employees: true,
+          },
+        },
       },
     });
     if (business) {
@@ -373,6 +432,7 @@ export async function getDashboardOverview(
         businessName: business.name,
         departmentCount: business._count.departments,
         teamCount: business._count.teams,
+        verticalCount: business._count.verticals,
         employeeCount: business._count.employees,
         totalTasks: taskStats.total,
         completedTasks: taskStats.completed,

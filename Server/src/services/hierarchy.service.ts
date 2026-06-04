@@ -5,7 +5,43 @@ export type HierarchyNode = {
   name: string;
   employeeId: string;
   roleLevel: number;
+  designation?: string;
+  nodeType: "employee" | "business" | "vertical" | "team";
+  businessId?: string;
+  verticalId?: string;
+  teamId?: string;
   children: HierarchyNode[];
+};
+
+export type OrganizationTree = {
+  businesses: BusinessTreeNode[];
+};
+
+export type BusinessTreeNode = {
+  id: string;
+  name: string;
+  code: string;
+  nodeType: "business";
+  head?: HierarchyNode;
+  verticals: VerticalTreeNode[];
+};
+
+export type VerticalTreeNode = {
+  id: string;
+  name: string;
+  code: string;
+  nodeType: "vertical";
+  manager?: HierarchyNode;
+  teams: TeamTreeNode[];
+};
+
+export type TeamTreeNode = {
+  id: string;
+  name: string;
+  code: string;
+  nodeType: "team";
+  manager?: HierarchyNode;
+  members: HierarchyNode[];
 };
 
 type HierarchyRow = {
@@ -15,8 +51,10 @@ type HierarchyRow = {
   businessId: string;
   departmentId: string | null;
   teamId: string | null;
+  verticalId: string | null;
   roleId: string;
   reportsToId: string | null;
+  designation: string | null;
 };
 
 type IdRow = {
@@ -202,6 +240,10 @@ export async function getHierarchyTree(
       lastName: true,
       roleId: true,
       reportsToId: true,
+      designation: true,
+      teamId: true,
+      verticalId: true,
+      businessId: true,
     },
   });
 
@@ -213,6 +255,11 @@ export async function getHierarchyTree(
       employeeId: employee.id,
       name: `${employee.firstName} ${employee.lastName}`,
       roleLevel: 0,
+      designation: employee.designation ?? undefined,
+      nodeType: "employee",
+      businessId: employee.businessId,
+      verticalId: employee.verticalId ?? undefined,
+      teamId: employee.teamId ?? undefined,
       children: [],
     });
   }
@@ -230,4 +277,395 @@ export async function getHierarchyTree(
   }
 
   return tree.get(rootEmployeeId) ?? null;
+}
+
+/**
+ * Get the full organization tree starting from Business Owner level.
+ * Shows all businesses, verticals, teams, and their heads/managers.
+ */
+export async function getFullOrganizationTree(): Promise<OrganizationTree> {
+  const businesses = await prisma.business.findMany({
+    where: { isActive: true },
+    include: {
+      verticals: {
+        where: { isActive: true },
+        include: {
+          teams: {
+            where: { isActive: true },
+            include: {
+              employees: {
+                where: { isActive: true },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  designation: true,
+                  reportsToId: true,
+                  roleId: true,
+                  level: true,
+                },
+                orderBy: { firstName: "asc" },
+              },
+            },
+          },
+          employees: {
+            where: { isActive: true, teamId: null },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              designation: true,
+              reportsToId: true,
+              roleId: true,
+              level: true,
+            },
+          },
+        },
+      },
+      employees: {
+        where: { isActive: true, verticalId: null, teamId: null },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          designation: true,
+          reportsToId: true,
+          roleId: true,
+          level: true,
+        },
+      },
+    },
+  });
+
+  const businessNodes: BusinessTreeNode[] = businesses.map((business) => {
+    // Find the head of this business (employee with level 3 who reports to business owner)
+    const head = business.employees.find((e) => e.level === 3);
+
+    const verticalNodes: VerticalTreeNode[] = business.verticals.map(
+      (vertical) => {
+        // Find the vertical manager (employee with designation "Vertical Manager" in this vertical)
+        const manager = vertical.employees.find(
+          (e) => e.designation === "Vertical Manager",
+        );
+
+        const teamNodes: TeamTreeNode[] = vertical.teams.map((team) => {
+          // Find team manager (highest level employee in the team)
+          const teamManager = team.employees.find(
+            (e) =>
+              e.level === 2 ||
+              e.designation?.includes("Head") ||
+              e.designation?.includes("Manager") ||
+              e.designation?.includes("Lead"),
+          );
+
+          const members: HierarchyNode[] = team.employees
+            .filter((e) => e.id !== teamManager?.id)
+            .map((e) => ({
+              id: e.id,
+              employeeId: e.id,
+              name: `${e.firstName} ${e.lastName}`,
+              roleLevel: e.level ?? 0,
+              designation: e.designation ?? undefined,
+              nodeType: "employee" as const,
+              children: [],
+            }));
+
+          return {
+            id: team.id,
+            name: team.name,
+            code: team.code,
+            nodeType: "team" as const,
+            manager: teamManager
+              ? {
+                  id: teamManager.id,
+                  employeeId: teamManager.id,
+                  name: `${teamManager.firstName} ${teamManager.lastName}`,
+                  roleLevel: teamManager.level ?? 0,
+                  designation: teamManager.designation ?? undefined,
+                  nodeType: "employee" as const,
+                  children: [],
+                }
+              : undefined,
+            members,
+          };
+        });
+
+        return {
+          id: vertical.id,
+          name: vertical.name,
+          code: vertical.code,
+          nodeType: "vertical" as const,
+          manager: manager
+            ? {
+                id: manager.id,
+                employeeId: manager.id,
+                name: `${manager.firstName} ${manager.lastName}`,
+                roleLevel: manager.level ?? 0,
+                designation: manager.designation ?? undefined,
+                nodeType: "employee" as const,
+                children: [],
+              }
+            : undefined,
+          teams: teamNodes,
+        };
+      },
+    );
+
+    return {
+      id: business.id,
+      name: business.name,
+      code: business.code,
+      nodeType: "business" as const,
+      head: head
+        ? {
+            id: head.id,
+            employeeId: head.id,
+            name: `${head.firstName} ${head.lastName}`,
+            roleLevel: head.level ?? 0,
+            designation: head.designation ?? undefined,
+            nodeType: "employee" as const,
+            children: [],
+          }
+        : undefined,
+      verticals: verticalNodes,
+    };
+  });
+
+  return { businesses: businessNodes };
+}
+
+/**
+ * Get hierarchy tree for a specific business.
+ */
+export async function getBusinessHierarchyTree(
+  businessId: string,
+): Promise<BusinessTreeNode | null> {
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    include: {
+      verticals: {
+        where: { isActive: true },
+        include: {
+          teams: {
+            where: { isActive: true },
+            include: {
+              employees: {
+                where: { isActive: true },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  designation: true,
+                  reportsToId: true,
+                  roleId: true,
+                  level: true,
+                },
+                orderBy: { firstName: "asc" },
+              },
+            },
+          },
+          employees: {
+            where: { isActive: true, teamId: null },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              designation: true,
+              reportsToId: true,
+              roleId: true,
+              level: true,
+            },
+          },
+        },
+      },
+      employees: {
+        where: { isActive: true, verticalId: null, teamId: null },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          designation: true,
+          reportsToId: true,
+          roleId: true,
+          level: true,
+        },
+      },
+    },
+  });
+
+  if (!business) return null;
+
+  const head = business.employees.find((e) => e.level === 3);
+
+  const verticalNodes: VerticalTreeNode[] = business.verticals.map(
+    (vertical) => {
+      const manager = vertical.employees.find(
+        (e) => e.designation === "Vertical Manager",
+      );
+
+      const teamNodes: TeamTreeNode[] = vertical.teams.map((team) => {
+        const teamManager = team.employees.find(
+          (e) =>
+            e.level === 2 ||
+            e.designation?.includes("Head") ||
+            e.designation?.includes("Manager") ||
+            e.designation?.includes("Lead"),
+        );
+
+        const members: HierarchyNode[] = team.employees
+          .filter((e) => e.id !== teamManager?.id)
+          .map((e) => ({
+            id: e.id,
+            employeeId: e.id,
+            name: `${e.firstName} ${e.lastName}`,
+            roleLevel: e.level ?? 0,
+            designation: e.designation ?? undefined,
+            nodeType: "employee" as const,
+            children: [],
+          }));
+
+        return {
+          id: team.id,
+          name: team.name,
+          code: team.code,
+          nodeType: "team" as const,
+          manager: teamManager
+            ? {
+                id: teamManager.id,
+                employeeId: teamManager.id,
+                name: `${teamManager.firstName} ${teamManager.lastName}`,
+                roleLevel: teamManager.level ?? 0,
+                designation: teamManager.designation ?? undefined,
+                nodeType: "employee" as const,
+                children: [],
+              }
+            : undefined,
+          members,
+        };
+      });
+
+      return {
+        id: vertical.id,
+        name: vertical.name,
+        code: vertical.code,
+        nodeType: "vertical" as const,
+        manager: manager
+          ? {
+              id: manager.id,
+              employeeId: manager.id,
+              name: `${manager.firstName} ${manager.lastName}`,
+              roleLevel: manager.level ?? 0,
+              designation: manager.designation ?? undefined,
+              nodeType: "employee" as const,
+              children: [],
+            }
+          : undefined,
+        teams: teamNodes,
+      };
+    },
+  );
+
+  return {
+    id: business.id,
+    name: business.name,
+    code: business.code,
+    nodeType: "business" as const,
+    head: head
+      ? {
+          id: head.id,
+          employeeId: head.id,
+          name: `${head.firstName} ${head.lastName}`,
+          roleLevel: head.level ?? 0,
+          designation: head.designation ?? undefined,
+          nodeType: "employee" as const,
+          children: [],
+        }
+      : undefined,
+    verticals: verticalNodes,
+  };
+}
+
+/**
+ * Get all ancestors of an employee (chain up to Business Owner).
+ */
+export async function getNodeAncestors(
+  employeeId: string,
+): Promise<HierarchyNode[]> {
+  const ancestors: HierarchyNode[] = [];
+  let currentId: string | null = employeeId;
+
+  while (currentId) {
+    const employee = await prisma.employee.findUnique({
+      where: { id: currentId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        designation: true,
+        reportsToId: true,
+        level: true,
+        businessId: true,
+        verticalId: true,
+        teamId: true,
+      },
+    });
+
+    if (!employee) break;
+
+    ancestors.unshift({
+      id: employee.id,
+      employeeId: employee.id,
+      name: `${employee.firstName} ${employee.lastName}`,
+      roleLevel: employee.level ?? 0,
+      designation: employee.designation ?? undefined,
+      nodeType: "employee",
+      businessId: employee.businessId,
+      verticalId: employee.verticalId ?? undefined,
+      teamId: employee.teamId ?? undefined,
+      children: [],
+    });
+
+    currentId = employee.reportsToId;
+  }
+
+  return ancestors;
+}
+
+/**
+ * Get all descendants of a node (employee) with full details.
+ */
+export async function getNodeDescendants(
+  employeeId: string,
+): Promise<HierarchyNode[]> {
+  const descendantIds = await getDescendantIds(employeeId);
+
+  if (descendantIds.length === 0) return [];
+
+  const employees = await prisma.employee.findMany({
+    where: { id: { in: descendantIds } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      designation: true,
+      level: true,
+      businessId: true,
+      verticalId: true,
+      teamId: true,
+      reportsToId: true,
+    },
+  });
+
+  return employees.map((e) => ({
+    id: e.id,
+    employeeId: e.id,
+    name: `${e.firstName} ${e.lastName}`,
+    roleLevel: e.level ?? 0,
+    designation: e.designation ?? undefined,
+    nodeType: "employee" as const,
+    businessId: e.businessId,
+    verticalId: e.verticalId ?? undefined,
+    teamId: e.teamId ?? undefined,
+    children: [],
+  }));
 }

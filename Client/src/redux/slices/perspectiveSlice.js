@@ -49,10 +49,36 @@ export const fetchCurrentPerspective = createAsyncThunk(
     }
 )
 
+export const fetchOrganizationTree = createAsyncThunk(
+    'perspective/fetchOrgTree',
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await perspectiveService.getOrganizationTree()
+            return res.data
+        } catch (err) {
+            return rejectWithValue(err.message)
+        }
+    }
+)
+
+export const fetchBusinessTree = createAsyncThunk(
+    'perspective/fetchBusinessTree',
+    async (businessId, { rejectWithValue }) => {
+        try {
+            const res = await perspectiveService.getBusinessTree(businessId)
+            return res.data
+        } catch (err) {
+            return rejectWithValue(err.message)
+        }
+    }
+)
+
 const initialState = {
     availablePerspectives: [],
     current: null,
     currentInfo: null,
+    organizationTree: null,
+    businessTree: null,
     loading: false,
     error: null,
 }
@@ -105,6 +131,30 @@ const perspectiveSlice = createSlice({
             // Fetch current perspective info
             .addCase(fetchCurrentPerspective.fulfilled, (state, action) => {
                 state.currentInfo = action.payload
+            })
+            // Fetch organization tree
+            .addCase(fetchOrganizationTree.pending, (state) => {
+                state.loading = true
+            })
+            .addCase(fetchOrganizationTree.fulfilled, (state, action) => {
+                state.loading = false
+                state.organizationTree = action.payload
+            })
+            .addCase(fetchOrganizationTree.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload
+            })
+            // Fetch business tree
+            .addCase(fetchBusinessTree.pending, (state) => {
+                state.loading = true
+            })
+            .addCase(fetchBusinessTree.fulfilled, (state, action) => {
+                state.loading = false
+                state.businessTree = action.payload
+            })
+            .addCase(fetchBusinessTree.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload
             })
     },
 })

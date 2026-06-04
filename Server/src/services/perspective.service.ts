@@ -17,10 +17,11 @@ export type PerspectiveSessionData = {
 
 export type PerspectiveNode = {
   id: string;
-  type: "BUSINESS" | "TEAM" | "EMPLOYEE";
+  type: "BUSINESS" | "VERTICAL" | "TEAM" | "EMPLOYEE" | "HEAD";
   label: string;
   children?: PerspectiveNode[];
   memberCount?: number;
+  designation?: string;
 };
 
 export type AvailablePerspectivesResponse = {
@@ -226,6 +227,31 @@ export async function validatePerspectiveAccess(
       return true;
     }
 
+    case "VERTICAL": {
+      const vertical = await prisma.vertical.findUnique({
+        where: { id: targetId },
+        select: { businessId: true },
+      });
+      if (!vertical) throw new ApiError(404, "Vertical not found");
+      if (vertical.businessId !== viewer.businessId) {
+        throw new ApiError(403, "Access denied: cross-business access");
+      }
+      return true;
+    }
+
+    case "HEAD": {
+      // HEAD perspective is like BUSINESS scope but for a specific head
+      const headEmployee = await prisma.employee.findUnique({
+        where: { id: targetId },
+        select: { businessId: true, level: true },
+      });
+      if (!headEmployee) throw new ApiError(404, "Head employee not found");
+      if (headEmployee.businessId !== viewer.businessId) {
+        throw new ApiError(403, "Access denied: cross-business access");
+      }
+      return true;
+    }
+
     case "TEAM": {
       const team = await prisma.team.findUnique({
         where: { id: targetId },
@@ -327,16 +353,11 @@ async function buildHierarchyTree(
       children: [],
     };
 
-    // Get teams in this business that have visible employees
-    const teams = await prisma.team.findMany({
+    // Get verticals in this business
+    const verticals = await prisma.vertical.findMany({
       where: {
         businessId: business.id,
         isActive: true,
-        employees: {
-          some: {
-            id: { in: visibleEmployeeIds },
-          },
-        },
       },
       select: {
         id: true,
@@ -346,39 +367,72 @@ async function buildHierarchyTree(
       orderBy: { name: "asc" },
     });
 
-    for (const team of teams) {
-      const teamNode: PerspectiveNode = {
-        id: team.id,
-        type: "TEAM",
-        label: team.name,
-        memberCount: team._count.employees,
+    for (const vertical of verticals) {
+      const verticalNode: PerspectiveNode = {
+        id: vertical.id,
+        type: "VERTICAL",
+        label: vertical.name,
+        memberCount: vertical._count.employees,
         children: [],
       };
 
-      // Get employees in this team that are visible to the viewer
-      const employees = await prisma.employee.findMany({
+      // Get teams in this vertical
+      const teams = await prisma.team.findMany({
         where: {
-          teamId: team.id,
-          id: { in: visibleEmployeeIds },
+          verticalId: vertical.id,
           isActive: true,
+          employees: {
+            some: {
+              id: { in: visibleEmployeeIds },
+            },
+          },
         },
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
+          _count: { select: { employees: true } },
         },
-        orderBy: { firstName: "asc" },
+        orderBy: { name: "asc" },
       });
 
-      for (const employee of employees) {
-        teamNode.children!.push({
-          id: employee.id,
-          type: "EMPLOYEE",
-          label: `${employee.firstName} ${employee.lastName}`,
+      for (const team of teams) {
+        const teamNode: PerspectiveNode = {
+          id: team.id,
+          type: "TEAM",
+          label: team.name,
+          memberCount: team._count.employees,
+          children: [],
+        };
+
+        // Get employees in this team that are visible to the viewer
+        const employees = await prisma.employee.findMany({
+          where: {
+            teamId: team.id,
+            id: { in: visibleEmployeeIds },
+            isActive: true,
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            designation: true,
+          },
+          orderBy: { firstName: "asc" },
         });
+
+        for (const employee of employees) {
+          teamNode.children!.push({
+            id: employee.id,
+            type: "EMPLOYEE",
+            label: `${employee.firstName} ${employee.lastName}`,
+            designation: employee.designation ?? undefined,
+          });
+        }
+
+        verticalNode.children!.push(teamNode);
       }
 
-      businessNode.children!.push(teamNode);
+      businessNode.children!.push(verticalNode);
     }
 
     tree.push(businessNode);
@@ -444,6 +498,55 @@ async function buildBreadcrumb(
       break;
     }
 
+    case "VERTICAL": {
+      const vertical = await prisma.vertical.findUnique({
+        where: { id: targetId },
+        select: {
+          id: true,
+          name: true,
+          business: { select: { id: true, name: true } },
+        },
+      });
+      if (vertical) {
+        breadcrumb.push({
+          type: "BUSINESS",
+          id: vertical.business.id,
+          label: vertical.business.name,
+        });
+        breadcrumb.push({
+          type: "VERTICAL",
+          id: vertical.id,
+          label: vertical.name,
+        });
+      }
+      break;
+    }
+
+    case "HEAD": {
+      const headEmployee = await prisma.employee.findUnique({
+        where: { id: targetId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          business: { select: { id: true, name: true } },
+        },
+      });
+      if (headEmployee) {
+        breadcrumb.push({
+          type: "BUSINESS",
+          id: headEmployee.business.id,
+          label: headEmployee.business.name,
+        });
+        breadcrumb.push({
+          type: "HEAD",
+          id: headEmployee.id,
+          label: `${headEmployee.firstName} ${headEmployee.lastName}`,
+        });
+      }
+      break;
+    }
+
     case "TEAM": {
       const team = await prisma.team.findUnique({
         where: { id: targetId },
@@ -451,6 +554,7 @@ async function buildBreadcrumb(
           id: true,
           name: true,
           business: { select: { id: true, name: true } },
+          vertical: { select: { id: true, name: true } },
         },
       });
       if (team) {
@@ -459,6 +563,13 @@ async function buildBreadcrumb(
           id: team.business.id,
           label: team.business.name,
         });
+        if (team.vertical) {
+          breadcrumb.push({
+            type: "VERTICAL",
+            id: team.vertical.id,
+            label: team.vertical.name,
+          });
+        }
         breadcrumb.push({ type: "TEAM", id: team.id, label: team.name });
       }
       break;
@@ -476,6 +587,7 @@ async function buildBreadcrumb(
               id: true,
               name: true,
               business: { select: { id: true, name: true } },
+              vertical: { select: { id: true, name: true } },
             },
           },
         },
@@ -487,6 +599,13 @@ async function buildBreadcrumb(
             id: employee.team.business.id,
             label: employee.team.business.name,
           });
+          if (employee.team.vertical) {
+            breadcrumb.push({
+              type: "VERTICAL",
+              id: employee.team.vertical.id,
+              label: employee.team.vertical.name,
+            });
+          }
           breadcrumb.push({
             type: "TEAM",
             id: employee.team.id,
