@@ -1,8 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import {
-  getDataScope,
-  getActivePerspectiveForUser,
-} from "../services/scope.service.js";
+import { getDataScope } from "../services/scope.service.js";
+import { getActivePerspectiveForUser } from "../services/perspective.service.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export async function attachScope(

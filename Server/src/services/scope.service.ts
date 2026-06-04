@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { getDescendants } from "./hierarchy.service.js";
+import { getActivePerspectiveForUser } from "./perspective.service.js";
 
 export type DataScope = {
   visibleEmployees: string[];
@@ -86,23 +87,6 @@ export async function getScopedEmployees(scope: DataScope) {
       id: { in: scope.visibleEmployees },
     },
   });
-}
-
-export async function getActivePerspectiveForUser(
-  userId: string,
-): Promise<PerspectiveSession | null> {
-  const active = await prisma.perspectiveSession.findFirst({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
-  });
-
-  return active
-    ? {
-        userId: active.userId,
-        perspectiveTargetId: active.perspectiveTargetId,
-        perspectiveType: active.perspectiveType,
-      }
-    : null;
 }
 
 function getSelfScope(employee: {

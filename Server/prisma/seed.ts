@@ -271,6 +271,185 @@ async function main() {
     }
   }
 
+  // ─── Seed Tasks ──────────────────────────────────────────────────────────────
+  const taskStatuses = ["pending", "in_progress", "completed", "cancelled"];
+  const taskPriorities = ["low", "medium", "high", "urgent"];
+  const taskTitles = [
+    "Review client application documents",
+    "Prepare visa submission package",
+    "Conduct credential evaluation",
+    "Update employee records",
+    "Process payroll for current month",
+    "Schedule team meeting",
+    "Prepare monthly report",
+    "Follow up with client",
+    "Complete training module",
+    "Update project documentation",
+    "Review code changes",
+    "Test new feature deployment",
+    "Prepare marketing materials",
+    "Analyze sales data",
+    "Create onboarding plan",
+  ];
+
+  const allTaskableEmployees = [...managers, ...executives, ...interns];
+  const tasksCreated: string[] = [];
+  for (let i = 0; i < 60; i += 1) {
+    const assignee = allTaskableEmployees[i % allTaskableEmployees.length];
+    const status = taskStatuses[i % taskStatuses.length];
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + (i % 30) - 10); // Some overdue, some future
+
+    const task = await prisma.task.create({
+      data: {
+        businessId: assignee.businessId,
+        departmentId: assignee.departmentId,
+        teamId: assignee.teamId,
+        assigneeId: assignee.id,
+        createdById: assignee.reportsToId ?? owner.id,
+        title: taskTitles[i % taskTitles.length],
+        description: `Task #${i + 1} for ${assignee.firstName} ${assignee.lastName}`,
+        status,
+        priority: taskPriorities[i % taskPriorities.length],
+        dueDate,
+      },
+    });
+    tasksCreated.push(task.id);
+  }
+
+  // ─── Seed Marketing Campaigns ────────────────────────────────────────────────
+  const campaignChannels = [
+    "email",
+    "social_media",
+    "linkedin",
+    "google_ads",
+    "referral",
+  ];
+  const campaignStatuses = [
+    "DRAFT",
+    "ACTIVE",
+    "PAUSED",
+    "COMPLETED",
+    "CANCELLED",
+  ];
+
+  for (let i = 0; i < 12; i += 1) {
+    const business = businesses[i % businesses.length];
+    const team = businessTeams.get(business.id)?.[i % 4];
+    const head = heads[i % heads.length];
+
+    const campaign = await prisma.marketingCampaign.create({
+      data: {
+        organizationId: organization.id,
+        businessId: business.id,
+        teamId: team?.id ?? null,
+        createdById: head.id,
+        assignedToId: head.id,
+        name: `Campaign ${i + 1} - ${business.name}`,
+        description: `Marketing campaign for ${business.name}`,
+        channel: campaignChannels[i % campaignChannels.length],
+        status: campaignStatuses[i % campaignStatuses.length] as any,
+        startDate: new Date(2025, i % 12, 1),
+        endDate: new Date(2025, (i % 12) + 1, 1),
+        budget: Math.round(50000 + Math.random() * 200000),
+        budgetSpent: Math.round(30000 + Math.random() * 150000),
+        targetLeads: 50 + Math.round(Math.random() * 200),
+        actualLeads: 30 + Math.round(Math.random() * 180),
+      },
+    });
+
+    // ─── Seed Marketing KPIs for each campaign ────────────────────────────────
+    const kpiTypes = [
+      "LEADS_GENERATED",
+      "CAMPAIGN_SUCCESS",
+      "TASK_COMPLETION",
+      "PRODUCTIVITY",
+      "BUDGET_UTILIZATION",
+    ];
+    for (let k = 0; k < kpiTypes.length; k += 1) {
+      const target = 50 + Math.round(Math.random() * 200);
+      const value = Math.round(target * (0.3 + Math.random() * 0.8));
+      await prisma.marketingKPI.create({
+        data: {
+          organizationId: organization.id,
+          businessId: business.id,
+          teamId: team?.id ?? null,
+          employeeId: head.id,
+          campaignId: campaign.id,
+          metricType: kpiTypes[k] as any,
+          name: `${kpiTypes[k].replace(/_/g, " ").toLowerCase()}`,
+          value,
+          target,
+          periodStart: new Date(2025, i % 12, 1),
+          periodEnd: new Date(2025, (i % 12) + 1, 1),
+        },
+      });
+    }
+
+    // ─── Seed Marketing Leads ────────────────────────────────────────────────
+    const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"];
+    for (let l = 0; l < 5; l += 1) {
+      await prisma.marketingLead.create({
+        data: {
+          organizationId: organization.id,
+          businessId: business.id,
+          teamId: team?.id ?? null,
+          campaignId: campaign.id,
+          createdById: head.id,
+          assignedToId: head.id,
+          name: `Lead ${i * 5 + l + 1} - ${business.name}`,
+          email: `lead${i * 5 + l + 1}@example.com`,
+          source: campaignChannels[l % campaignChannels.length],
+          status: leadStatuses[l % leadStatuses.length] as any,
+          estimatedValue: Math.round(10000 + Math.random() * 100000),
+        },
+      });
+    }
+
+    // ─── Seed Marketing Tasks ────────────────────────────────────────────────
+    const marketingTaskStatuses = [
+      "TODO",
+      "IN_PROGRESS",
+      "BLOCKED",
+      "COMPLETED",
+      "CANCELLED",
+    ];
+    for (let t = 0; t < 3; t += 1) {
+      await prisma.marketingTask.create({
+        data: {
+          organizationId: organization.id,
+          businessId: business.id,
+          teamId: team?.id ?? null,
+          campaignId: campaign.id,
+          assignedToId: head.id,
+          createdById: head.id,
+          title: `Marketing Task ${t + 1} for Campaign ${i + 1}`,
+          description: `Task for campaign ${campaign.name}`,
+          status: marketingTaskStatuses[
+            t % marketingTaskStatuses.length
+          ] as any,
+          priority: ["low", "medium", "high"][t % 3],
+          dueDate: new Date(2025, (i % 12) + 1, 15),
+        },
+      });
+    }
+  }
+
+  // ─── Seed Activities ────────────────────────────────────────────────────────
+  for (let i = 0; i < 30; i += 1) {
+    const actor = allTaskableEmployees[i % allTaskableEmployees.length];
+    await prisma.activity.create({
+      data: {
+        businessId: actor.businessId,
+        actorId: actor.id,
+        targetType: "TASK",
+        targetId: tasksCreated[i % tasksCreated.length] ?? null,
+        action: "CREATE",
+        metadata: { description: `Activity #${i + 1}` },
+      },
+    });
+  }
+
   await prisma.perspective.create({
     data: {
       userId: owner.id,
