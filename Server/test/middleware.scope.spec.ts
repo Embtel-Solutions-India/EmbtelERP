@@ -1,16 +1,17 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // Mock service methods used by attachScope
-vi.mock("../src/services/scope.service.js", () => ({
+vi.mock("../src/services/perspective.service.js", () => ({
   getActivePerspectiveForUser: vi.fn(),
+}));
+
+vi.mock("../src/services/scope.service.js", () => ({
   getDataScope: vi.fn(),
 }));
 
 import { attachScope } from "../src/middleware/scope.middleware.js";
-import {
-  getActivePerspectiveForUser,
-  getDataScope,
-} from "../src/services/scope.service.js";
+import { getActivePerspectiveForUser } from "../src/services/perspective.service.js";
+import { getDataScope } from "../src/services/scope.service.js";
 
 describe("Scope Middleware", () => {
   beforeEach(() => {
@@ -24,7 +25,7 @@ describe("Scope Middleware", () => {
 
     (getActivePerspectiveForUser as any).mockResolvedValue({
       userId: "u1",
-      currentPerspectiveId: "target1",
+      perspectiveTargetId: "target1",
     });
     (getDataScope as any).mockResolvedValue({
       visibleEmployees: ["target1"],
