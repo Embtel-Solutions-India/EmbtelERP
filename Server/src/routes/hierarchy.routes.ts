@@ -3,15 +3,21 @@ import { authenticate } from "../middleware/auth.middleware.js";
 import { attachScope } from "../middleware/scope.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
+  requireRole,
+  requireEmployeeScope,
+  requireBusinessScope,
+  ROLE_LEVEL,
+} from "../middleware/rbac.middleware.js";
+import {
   getDescendants,
-  getHierarchyTree,
   getFullOrganizationTree,
   getBusinessHierarchyTree,
   getNodeAncestors,
   getNodeDescendants,
+  getManagers,
 } from "../services/hierarchy.service.js";
-import { getManagers } from "../services/hierarchy.service.js";
 import { getAvailablePerspectives } from "../services/perspective.service.js";
+import { getHierarchyTreeHandler } from "../controllers/hierarchy.controller.js";
 
 export const hierarchyRouter = Router();
 
@@ -19,24 +25,18 @@ hierarchyRouter.use(authenticate, attachScope);
 
 /**
  * GET /hierarchy/tree
- * Get the full organization tree (all businesses, verticals, teams).
+ * Returns the full org role tree: Business → Head → Vertical Manager → Manager → Executive → Intern.
  */
-hierarchyRouter.get(
-  "/tree",
-  asyncHandler(async (req, res) => {
-    const rootId = req.perspective?.perspectiveTargetId ?? req.user!.employeeId;
-    const tree = await getHierarchyTree(rootId);
-    res.json({ data: tree });
-  }),
-);
+hierarchyRouter.get("/tree", asyncHandler(getHierarchyTreeHandler));
 
 /**
  * GET /hierarchy/organization-tree
- * Get the full organization tree for the business owner dashboard.
+ * Full org tree — Business Owner (4) and Super Admin (5) only.
  */
 hierarchyRouter.get(
   "/organization-tree",
-  asyncHandler(async (req, res) => {
+  requireRole(ROLE_LEVEL.BUSINESS_OWNER),
+  asyncHandler(async (_req, res) => {
     const tree = await getFullOrganizationTree();
     res.json({ data: tree });
   }),
@@ -44,10 +44,12 @@ hierarchyRouter.get(
 
 /**
  * GET /hierarchy/business/:businessId/tree
- * Get hierarchy tree for a specific business.
+ * Business-scoped tree — Head (3)+ with business scope check.
  */
 hierarchyRouter.get(
   "/business/:businessId/tree",
+  requireRole(ROLE_LEVEL.HEAD),
+  requireBusinessScope("businessId"),
   asyncHandler(async (req, res) => {
     const tree = await getBusinessHierarchyTree(String(req.params.businessId));
     res.json({ data: tree });
@@ -56,10 +58,11 @@ hierarchyRouter.get(
 
 /**
  * GET /hierarchy/descendants/:id
- * Get all descendants of an employee.
+ * Descendants — caller must have :id in their employee scope.
  */
 hierarchyRouter.get(
   "/descendants/:id",
+  requireEmployeeScope("id"),
   asyncHandler(async (req, res) => {
     const descendants = await getDescendants(String(req.params.id));
     res.json({ data: descendants });
@@ -68,10 +71,11 @@ hierarchyRouter.get(
 
 /**
  * GET /hierarchy/ancestors/:id
- * Get all ancestors (chain up) of an employee.
+ * Ancestors — caller must have :id in their employee scope.
  */
 hierarchyRouter.get(
   "/ancestors/:id",
+  requireEmployeeScope("id"),
   asyncHandler(async (req, res) => {
     const ancestors = await getNodeAncestors(String(req.params.id));
     res.json({ data: ancestors });
@@ -80,10 +84,11 @@ hierarchyRouter.get(
 
 /**
  * GET /hierarchy/node-descendants/:id
- * Get all descendants of a node with full details.
+ * Node descendants — caller must have :id in their employee scope.
  */
 hierarchyRouter.get(
   "/node-descendants/:id",
+  requireEmployeeScope("id"),
   asyncHandler(async (req, res) => {
     const descendants = await getNodeDescendants(String(req.params.id));
     res.json({ data: descendants });
@@ -92,7 +97,7 @@ hierarchyRouter.get(
 
 /**
  * GET /hierarchy/available-perspectives
- * Get available perspectives for the current user.
+ * Any authenticated user may list their own available perspectives.
  */
 hierarchyRouter.get(
   "/available-perspectives",
@@ -104,10 +109,11 @@ hierarchyRouter.get(
 
 /**
  * GET /hierarchy/managers/:id
- * Get all managers above an employee.
+ * Managers chain — caller must have :id in their employee scope.
  */
 hierarchyRouter.get(
   "/managers/:id",
+  requireEmployeeScope("id"),
   asyncHandler(async (req, res) => {
     const managers = await getManagers(String(req.params.id));
     res.json({ data: managers });

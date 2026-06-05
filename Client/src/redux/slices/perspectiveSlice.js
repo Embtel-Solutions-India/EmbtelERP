@@ -73,12 +73,25 @@ export const fetchBusinessTree = createAsyncThunk(
     }
 )
 
+export const fetchHierarchyTree = createAsyncThunk(
+    'perspective/fetchHierarchyTree',
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await perspectiveService.getHierarchyTree()
+            return res.data
+        } catch (err) {
+            return rejectWithValue(err.message)
+        }
+    }
+)
+
 const initialState = {
     availablePerspectives: [],
     current: null,
     currentInfo: null,
     organizationTree: null,
     businessTree: null,
+    hierarchyTree: [],
     loading: false,
     error: null,
 }
@@ -91,6 +104,7 @@ const perspectiveSlice = createSlice({
             state.current = null
             state.currentInfo = null
             state.availablePerspectives = []
+            state.hierarchyTree = []
             state.error = null
         },
     },
@@ -153,6 +167,18 @@ const perspectiveSlice = createSlice({
                 state.businessTree = action.payload
             })
             .addCase(fetchBusinessTree.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload
+            })
+            // Fetch role hierarchy tree (reporting chain)
+            .addCase(fetchHierarchyTree.pending, (state) => {
+                state.loading = true
+            })
+            .addCase(fetchHierarchyTree.fulfilled, (state, action) => {
+                state.loading = false
+                state.hierarchyTree = action.payload?.data || []
+            })
+            .addCase(fetchHierarchyTree.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload
             })

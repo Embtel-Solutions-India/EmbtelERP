@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum ActivityAction {
@@ -35,11 +36,14 @@ enum PerspectiveType {
 enum PerspectiveTargetType {
   ORGANIZATION
   BUSINESS
+  BUSINESS_OWNER
   DEPARTMENT
   TEAM
   EMPLOYEE
   VERTICAL
   HEAD
+  MANAGER
+  INTERN
 }
 
 enum MarketingCampaignStatus {

@@ -26,6 +26,8 @@ import {
   Home as HomeIcon,
   AccountTree as VerticalIcon,
   SupervisedUserCircle as HeadIcon,
+  ManageAccounts as ManagerIcon,
+  School as InternIcon,
 } from "@mui/icons-material";
 import {
   salesMenu,
@@ -43,7 +45,14 @@ import {
   switchPerspective,
   resetPerspective,
   fetchCurrentPerspective,
+  fetchHierarchyTree,
 } from "../redux/slices/perspectiveSlice";
+import {
+  fetchDashboardOverview,
+  fetchDashboardPerformance,
+  fetchDashboardInsights,
+  fetchDashboardTeam,
+} from "../redux/slices/dashboardSlice";
 
 const ICON_MAP = {
   Dashboard,
@@ -121,8 +130,28 @@ function NavItem({ item, collapsed }) {
   );
 }
 
+function roleLevelToType(level) {
+  if (level === 3) return "HEAD";
+  if (level === 2) return "MANAGER";
+  if (level === 1) return "EMPLOYEE";
+  if (level === 0) return "INTERN";
+  return "EMPLOYEE";
+}
+
+function mapRoleTree(node) {
+  const type =
+    node.nodeType === "business" ? "BUSINESS" : roleLevelToType(node.roleLevel);
+  return {
+    id: node.id,
+    type,
+    label: node.name,
+    designation: node.designation,
+    children: (node.children || []).map(mapRoleTree),
+  };
+}
+
 function TreeNode({ node, depth = 0, collapsed, onSelect, activeId }) {
-  const [expanded, setExpanded] = useState(depth < 1);
+  const [expanded, setExpanded] = useState(depth < 3);
   const hasChildren = node.children && node.children.length > 0;
   const isActive = activeId === node.id;
 
@@ -147,6 +176,14 @@ function TreeNode({ node, depth = 0, collapsed, onSelect, activeId }) {
       case "EMPLOYEE":
         return (
           <PersonIcon style={{ fontSize: 16 }} className="text-purple-500" />
+        );
+      case "MANAGER":
+        return (
+          <ManagerIcon style={{ fontSize: 16 }} className="text-green-500" />
+        );
+      case "INTERN":
+        return (
+          <InternIcon style={{ fontSize: 16 }} className="text-pink-400" />
         );
       default:
         return null;
@@ -272,7 +309,7 @@ export default function Sidebar({ open, mobileOpen }) {
   const {
     current: activePerspective,
     currentInfo,
-    availablePerspectives,
+    hierarchyTree,
     loading: perspectiveLoading,
   } = useSelector((s) => s.perspective);
   const location = useLocation();
@@ -286,20 +323,25 @@ export default function Sidebar({ open, mobileOpen }) {
   useEffect(() => {
     dispatch(fetchPerspectives());
     dispatch(fetchCurrentPerspective());
+    dispatch(fetchHierarchyTree());
   }, [dispatch]);
 
+  const refreshAfterSwitch = () => {
+    dispatch(fetchPerspectives());
+    dispatch(fetchCurrentPerspective());
+    dispatch(fetchHierarchyTree());
+    dispatch(fetchDashboardOverview());
+    dispatch(fetchDashboardPerformance());
+    dispatch(fetchDashboardInsights());
+    dispatch(fetchDashboardTeam());
+  };
+
   const handlePerspectiveSelect = (targetType, targetId) => {
-    dispatch(switchPerspective({ targetType, targetId })).then(() => {
-      dispatch(fetchPerspectives());
-      dispatch(fetchCurrentPerspective());
-    });
+    dispatch(switchPerspective({ targetType, targetId })).then(refreshAfterSwitch);
   };
 
   const handleResetPerspective = () => {
-    dispatch(resetPerspective()).then(() => {
-      dispatch(fetchPerspectives());
-      dispatch(fetchCurrentPerspective());
-    });
+    dispatch(resetPerspective()).then(refreshAfterSwitch);
   };
 
   const sidebarContent = (
@@ -368,7 +410,7 @@ export default function Sidebar({ open, mobileOpen }) {
         <div className="border-b border-slate-100 dark:border-gray-700/50">
           <div className="px-4 py-2 flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Hierarchy Explorer
+              Hierarchy
             </span>
             {isViewingOther && (
               <button
@@ -380,17 +422,17 @@ export default function Sidebar({ open, mobileOpen }) {
               </button>
             )}
           </div>
-          <div className="pb-2 max-h-48 overflow-y-auto">
+          <div className="pb-2 max-h-64 overflow-y-auto">
             {perspectiveLoading ? (
               <div className="px-4 py-3 text-xs text-slate-400 text-center">
                 Loading...
               </div>
-            ) : availablePerspectives.length === 0 ? (
+            ) : hierarchyTree.length === 0 ? (
               <div className="px-4 py-3 text-xs text-slate-400 text-center">
-                No subordinates
+                No hierarchy data
               </div>
             ) : (
-              availablePerspectives.map((business) => (
+              hierarchyTree.map(mapRoleTree).map((business) => (
                 <TreeNode
                   key={business.id}
                   node={business}

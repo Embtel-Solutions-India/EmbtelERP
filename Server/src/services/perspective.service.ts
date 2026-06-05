@@ -17,7 +17,15 @@ export type PerspectiveSessionData = {
 
 export type PerspectiveNode = {
   id: string;
-  type: "BUSINESS" | "VERTICAL" | "TEAM" | "EMPLOYEE" | "HEAD";
+  type:
+    | "BUSINESS"
+    | "BUSINESS_OWNER"
+    | "VERTICAL"
+    | "TEAM"
+    | "HEAD"
+    | "MANAGER"
+    | "EMPLOYEE"
+    | "INTERN";
   label: string;
   children?: PerspectiveNode[];
   memberCount?: number;
@@ -273,6 +281,43 @@ export async function validatePerspectiveAccess(
       return true;
     }
 
+    case "BUSINESS_OWNER": {
+      // Only Business Owner (4) or Super Admin (5) may use this perspective type
+      if (viewer.role.level < 4) {
+        throw new ApiError(
+          403,
+          "Access denied: Business Owner perspective requires level 4+",
+        );
+      }
+      const business = await prisma.business.findUnique({
+        where: { id: targetId },
+        select: { organizationId: true },
+      });
+      if (!business) throw new ApiError(404, "Business not found");
+      if (business.organizationId !== viewer.organizationId) {
+        throw new ApiError(403, "Access denied: cross-organization access");
+      }
+      return true;
+    }
+
+    case "MANAGER": {
+      if (userId === targetId) return true;
+      const allowed = await isDescendantOf(targetId, userId);
+      if (!allowed) {
+        throw new ApiError(403, "Access denied: can only view descendants");
+      }
+      return true;
+    }
+
+    case "INTERN": {
+      if (userId === targetId) return true;
+      const allowed = await isDescendantOf(targetId, userId);
+      if (!allowed) {
+        throw new ApiError(403, "Access denied: can only view descendants");
+      }
+      return true;
+    }
+
     default:
       throw new ApiError(400, "Invalid perspective type");
   }
@@ -326,6 +371,13 @@ async function getViewerBusinessIds(viewer: {
   return [viewer.businessId];
 }
 
+function employeeNodeType(level: number | null): PerspectiveNode["type"] {
+  if (level === 3) return "HEAD";
+  if (level === 2) return "MANAGER";
+  if (level === 0) return "INTERN";
+  return "EMPLOYEE";
+}
+
 async function buildHierarchyTree(
   viewer: {
     id: string;
@@ -337,8 +389,8 @@ async function buildHierarchyTree(
   visibleEmployeeIds: string[],
 ): Promise<PerspectiveNode[]> {
   const tree: PerspectiveNode[] = [];
+  const viewerLevel = viewer.role.level;
 
-  // Get businesses
   const businesses = await prisma.business.findMany({
     where: { id: { in: businessIds }, isActive: true },
     select: { id: true, name: true },
@@ -346,19 +398,48 @@ async function buildHierarchyTree(
   });
 
   for (const business of businesses) {
+    // Business owners see the business node as BUSINESS_OWNER so clicking it
+    // switches to that role-scoped perspective; all others use BUSINESS.
+    const businessNodeType: PerspectiveNode["type"] =
+      viewerLevel >= 4 ? "BUSINESS_OWNER" : "BUSINESS";
+
     const businessNode: PerspectiveNode = {
       id: business.id,
-      type: "BUSINESS",
+      type: businessNodeType,
       label: business.name,
       children: [],
     };
 
-    // Get verticals in this business
-    const verticals = await prisma.vertical.findMany({
+    // HEAD employees belong to the business but are not assigned to a team;
+    // surface them directly under the business node.
+    const headEmployees = await prisma.employee.findMany({
       where: {
         businessId: business.id,
+        id: { in: visibleEmployeeIds },
         isActive: true,
+        level: 3,
+        teamId: null,
       },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        designation: true,
+      },
+      orderBy: { firstName: "asc" },
+    });
+
+    for (const head of headEmployees) {
+      businessNode.children!.push({
+        id: head.id,
+        type: "HEAD",
+        label: `${head.firstName} ${head.lastName}`,
+        designation: head.designation ?? undefined,
+      });
+    }
+
+    const verticals = await prisma.vertical.findMany({
+      where: { businessId: business.id, isActive: true },
       select: {
         id: true,
         name: true,
@@ -376,16 +457,38 @@ async function buildHierarchyTree(
         children: [],
       };
 
-      // Get teams in this vertical
+      // Vertical-level employees not assigned to a team (e.g. Vertical Managers)
+      const verticalManagers = await prisma.employee.findMany({
+        where: {
+          verticalId: vertical.id,
+          id: { in: visibleEmployeeIds },
+          isActive: true,
+          teamId: null,
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          designation: true,
+          level: true,
+        },
+        orderBy: { firstName: "asc" },
+      });
+
+      for (const vm of verticalManagers) {
+        verticalNode.children!.push({
+          id: vm.id,
+          type: employeeNodeType(vm.level),
+          label: `${vm.firstName} ${vm.lastName}`,
+          designation: vm.designation ?? undefined,
+        });
+      }
+
       const teams = await prisma.team.findMany({
         where: {
           verticalId: vertical.id,
           isActive: true,
-          employees: {
-            some: {
-              id: { in: visibleEmployeeIds },
-            },
-          },
+          employees: { some: { id: { in: visibleEmployeeIds } } },
         },
         select: {
           id: true,
@@ -404,7 +507,6 @@ async function buildHierarchyTree(
           children: [],
         };
 
-        // Get employees in this team that are visible to the viewer
         const employees = await prisma.employee.findMany({
           where: {
             teamId: team.id,
@@ -416,6 +518,7 @@ async function buildHierarchyTree(
             firstName: true,
             lastName: true,
             designation: true,
+            level: true,
           },
           orderBy: { firstName: "asc" },
         });
@@ -423,7 +526,7 @@ async function buildHierarchyTree(
         for (const employee of employees) {
           teamNode.children!.push({
             id: employee.id,
-            type: "EMPLOYEE",
+            type: employeeNodeType(employee.level),
             label: `${employee.firstName} ${employee.lastName}`,
             designation: employee.designation ?? undefined,
           });
@@ -575,7 +678,26 @@ async function buildBreadcrumb(
       break;
     }
 
-    case "EMPLOYEE": {
+    case "BUSINESS_OWNER": {
+      const business = await prisma.business.findUnique({
+        where: { id: targetId },
+        select: { id: true, name: true },
+      });
+      if (business) {
+        breadcrumb.push({
+          type: "BUSINESS_OWNER",
+          id: business.id,
+          label: business.name,
+        });
+      }
+      break;
+    }
+
+    // EMPLOYEE, MANAGER, and INTERN all share the same team → employee crumb structure.
+    // The only difference is the type label on the final node.
+    case "EMPLOYEE":
+    case "MANAGER":
+    case "INTERN": {
       const employee = await prisma.employee.findUnique({
         where: { id: targetId },
         select: {
@@ -613,7 +735,7 @@ async function buildBreadcrumb(
           });
         }
         breadcrumb.push({
-          type: "EMPLOYEE",
+          type,
           id: employee.id,
           label: `${employee.firstName} ${employee.lastName}`,
         });

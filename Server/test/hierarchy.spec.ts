@@ -31,6 +31,7 @@ import {
   getNodeAncestors,
   getNodeDescendants,
   isDescendantOf,
+  getOrgRoleTree,
 } from "../src/services/hierarchy.service.js";
 
 describe("Hierarchy Service", () => {
@@ -350,6 +351,219 @@ describe("Hierarchy Service", () => {
       expect(result[0].name).toBe("Manager User");
       expect(result[1].name).toBe("Executive User");
       expect(result[2].name).toBe("Intern User");
+    });
+  });
+
+  describe("getOrgRoleTree", () => {
+    it("returns empty array when no businesses exist", async () => {
+      (prisma.business.findMany as any).mockResolvedValue([]);
+
+      const result = await getOrgRoleTree();
+      expect(result).toHaveLength(0);
+    });
+
+    it("builds Business → Head → Vertical Manager → Manager → Executive → Intern", async () => {
+      (prisma.business.findMany as any).mockResolvedValue([
+        {
+          id: "b1",
+          name: "Immigration Business",
+          isActive: true,
+          employees: [
+            {
+              id: "head1",
+              firstName: "Head",
+              lastName: "User",
+              designation: "Head of Immigration",
+              reportsToId: null,
+              level: 3,
+            },
+            {
+              id: "vm1",
+              firstName: "Vertical",
+              lastName: "Manager",
+              designation: "Vertical Manager",
+              reportsToId: "head1",
+              level: 2,
+            },
+            {
+              id: "mgr1",
+              firstName: "Sales",
+              lastName: "Manager",
+              designation: "Sales Manager",
+              reportsToId: "vm1",
+              level: 2,
+            },
+            {
+              id: "exec1",
+              firstName: "Sales",
+              lastName: "Executive",
+              designation: "Sales Executive",
+              reportsToId: "mgr1",
+              level: 1,
+            },
+            {
+              id: "intern1",
+              firstName: "HR",
+              lastName: "Intern",
+              designation: "Intern",
+              reportsToId: "exec1",
+              level: 0,
+            },
+          ],
+        },
+      ]);
+
+      const result = await getOrgRoleTree();
+      expect(result).toHaveLength(1);
+
+      const business = result[0];
+      expect(business.nodeType).toBe("business");
+      expect(business.name).toBe("Immigration Business");
+      expect(business.children).toHaveLength(1);
+
+      const head = business.children[0];
+      expect(head.designation).toBe("Head of Immigration");
+      expect(head.roleLevel).toBe(3);
+      expect(head.children).toHaveLength(1);
+
+      const vm = head.children[0];
+      expect(vm.designation).toBe("Vertical Manager");
+      expect(vm.roleLevel).toBe(2);
+      expect(vm.children).toHaveLength(1);
+
+      const mgr = vm.children[0];
+      expect(mgr.designation).toBe("Sales Manager");
+      expect(mgr.roleLevel).toBe(2);
+      expect(mgr.children).toHaveLength(1);
+
+      const exec = mgr.children[0];
+      expect(exec.designation).toBe("Sales Executive");
+      expect(exec.roleLevel).toBe(1);
+      expect(exec.children).toHaveLength(1);
+
+      const intern = exec.children[0];
+      expect(intern.designation).toBe("Intern");
+      expect(intern.roleLevel).toBe(0);
+      expect(intern.children).toHaveLength(0);
+    });
+
+    it("filters businesses by businessIds when provided", async () => {
+      (prisma.business.findMany as any).mockResolvedValue([
+        {
+          id: "b2",
+          name: "Scoped Business",
+          isActive: true,
+          employees: [
+            {
+              id: "head1",
+              firstName: "Head",
+              lastName: "User",
+              designation: "Head",
+              reportsToId: null,
+              level: 3,
+            },
+          ],
+        },
+      ]);
+
+      const result = await getOrgRoleTree({ businessIds: ["b2"] });
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("b2");
+    });
+
+    it("filters employees by employeeIds when provided (Manager scope)", async () => {
+      (prisma.business.findMany as any).mockResolvedValue([
+        {
+          id: "b1",
+          name: "Immigration Business",
+          isActive: true,
+          employees: [
+            {
+              id: "mgr1",
+              firstName: "Sales",
+              lastName: "Manager",
+              designation: "Sales Manager",
+              reportsToId: null,
+              level: 2,
+            },
+            {
+              id: "exec1",
+              firstName: "Sales",
+              lastName: "Executive",
+              designation: "Sales Executive",
+              reportsToId: "mgr1",
+              level: 1,
+            },
+          ],
+        },
+      ]);
+
+      const result = await getOrgRoleTree({
+        businessIds: ["b1"],
+        employeeIds: ["mgr1", "exec1"],
+      });
+      expect(result[0].children).toHaveLength(1);
+      expect(result[0].children[0].id).toBe("mgr1");
+      expect(result[0].children[0].children[0].id).toBe("exec1");
+    });
+
+    it("returns only self node for Executive/Intern scope", async () => {
+      (prisma.business.findMany as any).mockResolvedValue([
+        {
+          id: "b1",
+          name: "Immigration Business",
+          isActive: true,
+          employees: [
+            {
+              id: "exec1",
+              firstName: "Self",
+              lastName: "User",
+              designation: "Executive",
+              reportsToId: null,
+              level: 1,
+            },
+          ],
+        },
+      ]);
+
+      const result = await getOrgRoleTree({
+        businessIds: ["b1"],
+        employeeIds: ["exec1"],
+      });
+      expect(result[0].children).toHaveLength(1);
+      expect(result[0].children[0].id).toBe("exec1");
+      expect(result[0].children[0].children).toHaveLength(0);
+    });
+
+    it("treats employees whose manager is outside business scope as root children", async () => {
+      (prisma.business.findMany as any).mockResolvedValue([
+        {
+          id: "b1",
+          name: "Immigration Business",
+          isActive: true,
+          employees: [
+            {
+              id: "head1",
+              firstName: "Head",
+              lastName: "One",
+              designation: "Head",
+              reportsToId: "owner_outside_scope",
+              level: 3,
+            },
+            {
+              id: "head2",
+              firstName: "Head",
+              lastName: "Two",
+              designation: "Head",
+              reportsToId: null,
+              level: 3,
+            },
+          ],
+        },
+      ]);
+
+      const result = await getOrgRoleTree();
+      expect(result[0].children).toHaveLength(2);
     });
   });
 

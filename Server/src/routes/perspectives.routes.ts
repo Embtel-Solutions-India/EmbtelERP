@@ -14,9 +14,14 @@ const switchSchema = z.object({
   targetType: z.enum([
     "ORGANIZATION",
     "BUSINESS",
+    "BUSINESS_OWNER",
     "DEPARTMENT",
+    "VERTICAL",
+    "HEAD",
     "TEAM",
+    "MANAGER",
     "EMPLOYEE",
+    "INTERN",
   ]),
   targetId: z.string().min(1),
 });

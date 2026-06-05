@@ -1,33 +1,36 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useDispatch, useSelector } from "react-redux";
-import { Email, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
-import { loginSuccess, setLoading } from "../redux/slices/authSlice";
-import api from "../services/api";
+import { useState } from 'react'
+import { useNavigate, Navigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { useDispatch, useSelector } from 'react-redux'
+import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material'
+import { loginAsync, clearError } from '../redux/slices/authSlice'
+import { getHomePath } from '../utils/roleRoutes'
 
 export default function Login() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { loading } = useSelector((s) => s.auth);
-  const [showPw, setShowPw] = useState(false);
-  const [form, setForm] = useState({
-    email: "owner@embtelerp.com",
-    password: "Password@123",
-  });
-  const [error, setError] = useState("");
+  const navigate  = useNavigate()
+  const dispatch  = useDispatch()
+  const { loading, error, isAuthenticated, user } = useSelector((s) => s.auth)
 
-  const handleSubmit = (e) => {
+  const [showPw, setShowPw] = useState(false)
+  const [form,   setForm]   = useState({ email: '', password: '' })
+
+  // Already authenticated — skip login page
+  if (isAuthenticated && user) {
+    return <Navigate to={getHomePath(user.roleLevel)} replace />
+  }
+
+  const handleChange = (e) => {
+    dispatch(clearError())
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const isMarketing = form.email.startsWith('marketing')
-    dispatch(loginSuccess({
-      id: isMarketing ? 2 : 1,
-      name: isMarketing ? 'Marketing Exec' : 'Ujjwal Sharma',
-      email: form.email,
-      role: isMarketing ? 'Marketing Executive' : 'Sales Executive',
-      department: isMarketing ? 'Marketing' : 'Sales',
-    }))
-    navigate(isMarketing ? '/marketing/dashboard' : '/sales/dashboard')
+    const result = await dispatch(loginAsync({ email: form.email, password: form.password }))
+    if (loginAsync.fulfilled.match(result)) {
+      const { roleLevel } = result.payload.employee
+      navigate(getHomePath(roleLevel), { replace: true })
+    }
   }
 
   return (
@@ -40,15 +43,15 @@ export default function Login() {
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden"
       >
         <div className="bg-gradient-to-br from-primary-600 to-purple-700 p-8 text-white">
           <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
-            <span className="font-bold text-xl">C</span>
+            <span className="font-bold text-xl">E</span>
           </div>
-          <h1 className="text-2xl font-bold">CRM Pro</h1>
-          <p className="text-white/70 mt-1">Sales Executive Dashboard</p>
+          <h1 className="text-2xl font-bold">EmbtelERP</h1>
+          <p className="text-white/70 mt-1">Sign in to your workspace</p>
         </div>
 
         <div className="p-8">
@@ -56,7 +59,7 @@ export default function Login() {
             Welcome back
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-            Sign in to your dashboard
+            Enter your credentials to continue
           </p>
 
           {error && (
@@ -73,27 +76,34 @@ export default function Login() {
               />
               <input
                 type="email"
+                name="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={handleChange}
                 className="input-field pl-10"
                 placeholder="Email address"
+                required
+                autoComplete="email"
               />
             </div>
+
             <div className="relative">
               <Lock
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 style={{ fontSize: 20 }}
               />
               <input
-                type={showPw ? "text" : "password"}
+                type={showPw ? 'text' : 'password'}
+                name="password"
                 value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                onChange={handleChange}
                 className="input-field pl-10 pr-10"
                 placeholder="Password"
+                required
+                autoComplete="current-password"
               />
               <button
                 type="button"
-                onClick={() => setShowPw(!showPw)}
+                onClick={() => setShowPw((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 {showPw ? (
@@ -106,7 +116,7 @@ export default function Login() {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
-                <input type="checkbox" className="rounded" defaultChecked />{" "}
+                <input type="checkbox" className="rounded" defaultChecked />
                 Remember me
               </label>
               <a
@@ -129,12 +139,8 @@ export default function Login() {
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
+                      cx="12" cy="12" r="10"
+                      stroke="currentColor" strokeWidth="4" fill="none"
                     />
                     <path
                       className="opacity-75"
@@ -142,20 +148,15 @@ export default function Login() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Signing in...
+                  Signing in…
                 </span>
               ) : (
-                "Sign In to Dashboard"
+                'Sign In'
               )}
             </motion.button>
           </form>
-
-          <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-gray-800 text-xs text-slate-500 dark:text-slate-400 space-y-1">
-            <p><strong>Sales Demo:</strong> ujjwal@crmpro.com / password</p>
-            <p><strong>Marketing Demo:</strong> marketing@crmpro.com / password</p>
-          </div>
         </div>
       </motion.div>
     </div>
-  );
+  )
 }

@@ -1,5 +1,14 @@
 import { prisma } from "../config/prisma.js";
 
+export type RoleTreeNode = {
+  id: string;
+  name: string;
+  nodeType: "business" | "employee";
+  designation?: string;
+  roleLevel?: number;
+  children: RoleTreeNode[];
+};
+
 export type HierarchyNode = {
   id: string;
   name: string;
@@ -595,7 +604,17 @@ export async function getNodeAncestors(
   let currentId: string | null = employeeId;
 
   while (currentId) {
-    const employee = await prisma.employee.findUnique({
+    const employee: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      designation: string | null;
+      reportsToId: string | null;
+      level: number | null;
+      businessId: string;
+      verticalId: string | null;
+      teamId: string | null;
+    } | null = await prisma.employee.findUnique({
       where: { id: currentId },
       select: {
         id: true,
@@ -629,6 +648,76 @@ export async function getNodeAncestors(
   }
 
   return ancestors;
+}
+
+/**
+ * Get full org role tree: Business → Head → Vertical Manager → Manager → Executive → Intern.
+ * Uses reportsToId to build the tree; employees whose manager is outside the business
+ * scope are placed as direct children of the business node.
+ *
+ * Pass `businessIds` / `employeeIds` to restrict results to a caller's data scope.
+ */
+export async function getOrgRoleTree(opts?: {
+  businessIds?: string[];
+  employeeIds?: string[];
+}): Promise<RoleTreeNode[]> {
+  const businessFilter = opts?.businessIds?.length
+    ? { id: { in: opts.businessIds }, isActive: true }
+    : { isActive: true };
+
+  const employeeFilter =
+    opts?.employeeIds?.length
+      ? { isActive: true, id: { in: opts.employeeIds } }
+      : { isActive: true };
+
+  const businesses = await prisma.business.findMany({
+    where: businessFilter,
+    include: {
+      employees: {
+        where: employeeFilter,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          designation: true,
+          reportsToId: true,
+          level: true,
+        },
+        orderBy: { firstName: "asc" },
+      },
+    },
+  });
+
+  return businesses.map((business) => {
+    const nodeMap = new Map<string, RoleTreeNode>();
+    for (const e of business.employees) {
+      nodeMap.set(e.id, {
+        id: e.id,
+        name: `${e.firstName} ${e.lastName}`,
+        nodeType: "employee",
+        designation: e.designation ?? undefined,
+        roleLevel: e.level ?? 0,
+        children: [],
+      });
+    }
+
+    const roots: RoleTreeNode[] = [];
+    for (const e of business.employees) {
+      const node = nodeMap.get(e.id)!;
+      if (e.reportsToId && nodeMap.has(e.reportsToId)) {
+        nodeMap.get(e.reportsToId)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+
+    return {
+      id: business.id,
+      name: business.name,
+      nodeType: "business",
+      children: roots,
+    };
+  });
 }
 
 /**

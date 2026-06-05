@@ -1,74 +1,10 @@
 import bcrypt from "bcryptjs";
-import { PrismaClient, PerspectiveType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const passwordHash = await bcrypt.hash("Password@123", 12);
 
 const organizationName = "Embtel ERP";
-
-// ─── Business Definitions ─────────────────────────────────────────────────────
-const businessDefinitions = [
-  { name: "Immigration Business", code: "immigration" },
-  { name: "Credential Evaluation", code: "credential-evaluation" },
-  { name: "HR Department", code: "hr" },
-  { name: "IT Services & Inhouse Team", code: "it-services" },
-];
-
-// ─── Vertical Definitions per Business ─────────────────────────────────────────
-// Immigration: Sales, Marketing, Documentation
-// Credential Evaluation: Sales, Marketing, Documentation, Professors
-// HR: Recruitment
-// IT: Sales, Marketing, Development
-const verticalDefinitions: Record<string, { name: string; code: string }[]> = {
-  immigration: [{ name: "Immigration Operations", code: "imm-ops" }],
-  "credential-evaluation": [
-    { name: "Evaluation Operations", code: "eval-ops" },
-  ],
-  hr: [{ name: "HR Operations", code: "hr-ops" }],
-  "it-services": [{ name: "IT Operations", code: "it-ops" }],
-};
-
-// ─── Team Definitions per Vertical ────────────────────────────────────────────
-const teamDefinitions: Record<string, { name: string; code: string }[]> = {
-  "imm-ops": [
-    { name: "Sales Team", code: "imm-sales" },
-    { name: "Marketing Team", code: "imm-marketing" },
-    { name: "Documentation Team", code: "imm-docs" },
-  ],
-  "eval-ops": [
-    { name: "Sales Team", code: "eval-sales" },
-    { name: "Marketing Team", code: "eval-marketing" },
-    { name: "Documentation Team", code: "eval-docs" },
-    { name: "Professors Team", code: "eval-professors" },
-  ],
-  "hr-ops": [{ name: "Recruitment Team", code: "hr-recruitment" }],
-  "it-ops": [
-    { name: "Sales Team", code: "it-sales" },
-    { name: "Marketing Team", code: "it-marketing" },
-    { name: "Development Team", code: "it-dev" },
-  ],
-};
-
-// ─── Designation Templates ────────────────────────────────────────────────────
-const designationTemplates: Record<string, string> = {
-  "Head of Immigration": "Head of Immigration",
-  "Head of Evaluation": "Head of Evaluation",
-  "HR Manager": "HR Manager",
-  "IT Head": "IT Head",
-  "Vertical Manager": "Vertical Manager",
-  "Sales Head": "Sales Head",
-  "Marketing Manager": "Marketing Manager",
-  "Documentation Manager": "Documentation Manager",
-  "Sales Executive": "Sales Executive",
-  "Marketing Executive": "Marketing Executive",
-  "Documentation Executive": "Documentation Executive",
-  "Recruitment Executive": "Recruitment Executive",
-  "Sales Intern": "Sales Intern",
-  "Marketing Intern": "Marketing Intern",
-  "Documentation Intern": "Documentation Intern",
-  "HR Intern": "HR Intern",
-  Professor: "Professor",
-};
 
 async function main() {
   // ─── Clean existing data ──────────────────────────────────────────────────
@@ -163,117 +99,62 @@ async function main() {
     ],
   });
 
-  // ─── Create Businesses ────────────────────────────────────────────────────
-  const businesses = await Promise.all(
-    businessDefinitions.map((business) =>
-      prisma.business.create({
-        data: {
-          organizationId: organization.id,
-          name: business.name,
-          code: business.code,
-        },
-      }),
-    ),
-  );
+  // ─── Create Business ──────────────────────────────────────────────────────
+  const business = await prisma.business.create({
+    data: {
+      organizationId: organization.id,
+      name: "Immigration Business",
+      code: "immigration",
+    },
+  });
 
-  const businessMap = new Map(businesses.map((b) => [b.code, b]));
-
-  // ─── Create Verticals ─────────────────────────────────────────────────────
-  const verticalMap = new Map<
-    string,
-    { id: string; code: string; businessId: string }[]
-  >();
-
-  for (const [businessCode, verticals] of Object.entries(verticalDefinitions)) {
-    const business = businessMap.get(businessCode);
-    if (!business) continue;
-
-    const createdVerticals: { id: string; code: string; businessId: string }[] =
-      [];
-    for (const vertical of verticals) {
-      const v = await prisma.vertical.create({
-        data: {
-          businessId: business.id,
-          name: vertical.name,
-          code: vertical.code,
-        },
-      });
-      createdVerticals.push({
-        id: v.id,
-        code: v.code,
-        businessId: business.id,
-      });
-    }
-    verticalMap.set(businessCode, createdVerticals);
-  }
+  // ─── Create Vertical ──────────────────────────────────────────────────────
+  const vertical = await prisma.vertical.create({
+    data: {
+      businessId: business.id,
+      name: "Immigration Operations",
+      code: "imm-ops",
+    },
+  });
 
   // ─── Create Teams ─────────────────────────────────────────────────────────
-  const teamMap = new Map<
-    string,
-    { id: string; code: string; verticalId: string; businessId: string }[]
-  >();
+  const salesTeam = await prisma.team.create({
+    data: {
+      businessId: business.id,
+      verticalId: vertical.id,
+      name: "Sales Team",
+      code: "imm-sales",
+    },
+  });
 
-  for (const [verticalCode, teams] of Object.entries(teamDefinitions)) {
-    // Find which business this vertical belongs to
-    let verticalId: string | null = null;
-    let businessId: string | null = null;
-    for (const [, verticals] of verticalMap) {
-      const found = verticals.find((v) => v.code === verticalCode);
-      if (found) {
-        verticalId = found.id;
-        businessId = found.businessId;
-        break;
-      }
-    }
-    if (!verticalId || !businessId) continue;
+  const marketingTeam = await prisma.team.create({
+    data: {
+      businessId: business.id,
+      verticalId: vertical.id,
+      name: "Marketing Team",
+      code: "imm-marketing",
+    },
+  });
 
-    const createdTeams: {
-      id: string;
-      code: string;
-      verticalId: string;
-      businessId: string;
-    }[] = [];
-    for (const team of teams) {
-      const t = await prisma.team.create({
-        data: {
-          businessId,
-          verticalId,
-          name: team.name,
-          code: team.code,
-        },
-      });
-      createdTeams.push({ id: t.id, code: t.code, verticalId, businessId });
-    }
-    teamMap.set(verticalCode, createdTeams);
-  }
-
-  // ─── Helper: Get team by code ─────────────────────────────────────────────
-  function getTeamByCode(code: string) {
-    for (const [, teams] of teamMap) {
-      const found = teams.find((t) => t.code === code);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  function getVerticalByCode(code: string) {
-    for (const [, verticals] of verticalMap) {
-      const found = verticals.find((v) => v.code === code);
-      if (found) return found;
-    }
-    return null;
-  }
+  const documentationTeam = await prisma.team.create({
+    data: {
+      businessId: business.id,
+      verticalId: vertical.id,
+      name: "Documentation Team",
+      code: "imm-docs",
+    },
+  });
 
   // ─── Create Employees (Hierarchy) ─────────────────────────────────────────
   // Level 5: Super Admin
   const superAdmin = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: businessMap.get("immigration")!.id,
+      businessId: business.id,
       roleId: roles[5].id,
       firstName: "Super",
       lastName: "Admin",
-      email: "superadmin@embtelerp.com",
+      email: "superadmin@demo.com",
       passwordHash,
       designation: "Super Admin",
       level: 5,
@@ -284,530 +165,228 @@ async function main() {
   const businessOwner = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: businessMap.get("immigration")!.id,
+      businessId: business.id,
       roleId: roles[4].id,
       reportsToId: superAdmin.id,
-      firstName: "Amina",
-      lastName: "Khan",
-      email: "owner@embtelerp.com",
+      firstName: "Business",
+      lastName: "Owner",
+      email: "owner@demo.com",
       passwordHash,
       designation: "Business Owner",
       level: 4,
     },
   });
 
-  // ─── Immigration Business Hierarchy ───────────────────────────────────────
-  const immBusiness = businessMap.get("immigration")!;
-  const immVertical = getVerticalByCode("imm-ops")!;
-
-  // Head of Immigration
+  // Level 3: Head of Immigration
   const headImmigration = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: immBusiness.id,
+      businessId: business.id,
       roleId: roles[3].id,
       reportsToId: businessOwner.id,
-      firstName: "Rajesh",
-      lastName: "Kumar",
-      email: "head.immigration@embtelerp.com",
+      firstName: "Immigration",
+      lastName: "Head",
+      email: "immigration.head@demo.com",
       passwordHash,
       designation: "Head of Immigration",
       level: 3,
     },
   });
 
-  // Vertical Manager - Immigration
-  const verticalManagerImm = await prisma.employee.create({
+  // Level 2: Vertical Manager
+  const verticalManager = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: immBusiness.id,
-      verticalId: immVertical.id,
+      businessId: business.id,
+      verticalId: vertical.id,
       roleId: roles[2].id,
       reportsToId: headImmigration.id,
-      firstName: "Priya",
-      lastName: "Sharma",
-      email: "vm.immigration@embtelerp.com",
+      firstName: "Immigration",
+      lastName: "Vertical",
+      email: "immigration.vertical@demo.com",
       passwordHash,
       designation: "Vertical Manager",
       level: 2,
     },
   });
 
-  // Sales Head - Immigration
-  const immSalesTeam = getTeamByCode("imm-sales")!;
-  const salesHeadImm = await prisma.employee.create({
+  // Level 2: Sales Head
+  const salesHead = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: immBusiness.id,
-      teamId: immSalesTeam.id,
-      verticalId: immVertical.id,
+      businessId: business.id,
+      teamId: salesTeam.id,
+      verticalId: vertical.id,
       roleId: roles[2].id,
-      reportsToId: verticalManagerImm.id,
-      firstName: "Amit",
-      lastName: "Patel",
-      email: "sales.head.imm@embtelerp.com",
+      reportsToId: verticalManager.id,
+      firstName: "Sales",
+      lastName: "Head",
+      email: "sales.head@demo.com",
       passwordHash,
       designation: "Sales Head",
       level: 2,
     },
   });
 
-  // Marketing Manager - Immigration
-  const immMarketingTeam = getTeamByCode("imm-marketing")!;
-  const marketingMgrImm = await prisma.employee.create({
+  // Level 2: Marketing Manager
+  const marketingManager = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: immBusiness.id,
-      teamId: immMarketingTeam.id,
-      verticalId: immVertical.id,
+      businessId: business.id,
+      teamId: marketingTeam.id,
+      verticalId: vertical.id,
       roleId: roles[2].id,
-      reportsToId: verticalManagerImm.id,
-      firstName: "Neha",
-      lastName: "Gupta",
-      email: "marketing.mgr.imm@embtelerp.com",
+      reportsToId: verticalManager.id,
+      firstName: "Marketing",
+      lastName: "Manager",
+      email: "marketing.manager@demo.com",
       passwordHash,
       designation: "Marketing Manager",
       level: 2,
     },
   });
 
-  // Documentation Manager - Immigration
-  const immDocsTeam = getTeamByCode("imm-docs")!;
-  const docsMgrImm = await prisma.employee.create({
+  // Level 2: Documentation Manager
+  const documentationManager = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: immBusiness.id,
-      teamId: immDocsTeam.id,
-      verticalId: immVertical.id,
+      businessId: business.id,
+      teamId: documentationTeam.id,
+      verticalId: vertical.id,
       roleId: roles[2].id,
-      reportsToId: verticalManagerImm.id,
-      firstName: "Suresh",
-      lastName: "Reddy",
-      email: "docs.mgr.imm@embtelerp.com",
+      reportsToId: verticalManager.id,
+      firstName: "Documentation",
+      lastName: "Manager",
+      email: "documentation.manager@demo.com",
       passwordHash,
       designation: "Documentation Manager",
       level: 2,
     },
   });
 
-  // ─── Credential Evaluation Business Hierarchy ─────────────────────────────
-  const evalBusiness = businessMap.get("credential-evaluation")!;
-  const evalVertical = getVerticalByCode("eval-ops")!;
-
-  // Head of Evaluation
-  const headEvaluation = await prisma.employee.create({
+  // Level 1: Sales Executive
+  const salesExecutive = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: evalBusiness.id,
-      roleId: roles[3].id,
-      reportsToId: businessOwner.id,
-      firstName: "Dr. Meera",
-      lastName: "Iyer",
-      email: "head.evaluation@embtelerp.com",
-      passwordHash,
-      designation: "Head of Evaluation",
-      level: 3,
-    },
-  });
-
-  // Vertical Manager - Evaluation
-  const verticalManagerEval = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: evalBusiness.id,
-      verticalId: evalVertical.id,
-      roleId: roles[2].id,
-      reportsToId: headEvaluation.id,
-      firstName: "Karthik",
-      lastName: "Nair",
-      email: "vm.evaluation@embtelerp.com",
-      passwordHash,
-      designation: "Vertical Manager",
-      level: 2,
-    },
-  });
-
-  // Sales Head - Evaluation
-  const evalSalesTeam = getTeamByCode("eval-sales")!;
-  const salesHeadEval = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: evalBusiness.id,
-      teamId: evalSalesTeam.id,
-      verticalId: evalVertical.id,
-      roleId: roles[2].id,
-      reportsToId: verticalManagerEval.id,
-      firstName: "Vikram",
-      lastName: "Singh",
-      email: "sales.head.eval@embtelerp.com",
-      passwordHash,
-      designation: "Sales Head",
-      level: 2,
-    },
-  });
-
-  // Marketing Manager - Evaluation
-  const evalMarketingTeam = getTeamByCode("eval-marketing")!;
-  const marketingMgrEval = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: evalBusiness.id,
-      teamId: evalMarketingTeam.id,
-      verticalId: evalVertical.id,
-      roleId: roles[2].id,
-      reportsToId: verticalManagerEval.id,
-      firstName: "Ananya",
-      lastName: "Das",
-      email: "marketing.mgr.eval@embtelerp.com",
-      passwordHash,
-      designation: "Marketing Manager",
-      level: 2,
-    },
-  });
-
-  // Documentation Manager - Evaluation
-  const evalDocsTeam = getTeamByCode("eval-docs")!;
-  const docsMgrEval = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: evalBusiness.id,
-      teamId: evalDocsTeam.id,
-      verticalId: evalVertical.id,
-      roleId: roles[2].id,
-      reportsToId: verticalManagerEval.id,
-      firstName: "Lakshmi",
-      lastName: "Rao",
-      email: "docs.mgr.eval@embtelerp.com",
-      passwordHash,
-      designation: "Documentation Manager",
-      level: 2,
-    },
-  });
-
-  // Professors - Evaluation
-  const evalProfessorsTeam = getTeamByCode("eval-professors")!;
-  const professorEval = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: evalBusiness.id,
-      teamId: evalProfessorsTeam.id,
-      verticalId: evalVertical.id,
-      roleId: roles[2].id,
-      reportsToId: verticalManagerEval.id,
-      firstName: "Dr. Ramesh",
-      lastName: "Joshi",
-      email: "professor.eval@embtelerp.com",
-      passwordHash,
-      designation: "Professor",
-      level: 2,
-    },
-  });
-
-  // ─── HR Department Hierarchy ──────────────────────────────────────────────
-  const hrBusiness = businessMap.get("hr")!;
-  const hrVertical = getVerticalByCode("hr-ops")!;
-
-  // HR Manager
-  const hrManager = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: hrBusiness.id,
-      roleId: roles[3].id,
-      reportsToId: businessOwner.id,
-      firstName: "Sunita",
-      lastName: "Verma",
-      email: "hr.manager@embtelerp.com",
-      passwordHash,
-      designation: "HR Manager",
-      level: 3,
-    },
-  });
-
-  // HR Executive
-  const hrRecruitmentTeam = getTeamByCode("hr-recruitment")!;
-  const hrExecutive = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: hrBusiness.id,
-      teamId: hrRecruitmentTeam.id,
-      verticalId: hrVertical.id,
+      businessId: business.id,
+      teamId: salesTeam.id,
+      verticalId: vertical.id,
       roleId: roles[1].id,
-      reportsToId: hrManager.id,
-      firstName: "Pooja",
-      lastName: "Malhotra",
-      email: "hr.executive@embtelerp.com",
+      reportsToId: salesHead.id,
+      firstName: "Sales",
+      lastName: "Exec",
+      email: "sales.exec@demo.com",
       passwordHash,
-      designation: "HR Executive",
+      designation: "Sales Executive",
       level: 1,
     },
   });
 
-  // Recruitment Executive
-  const recruitmentExecutive = await prisma.employee.create({
+  // Level 1: Marketing Executive
+  const marketingExecutive = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: hrBusiness.id,
-      teamId: hrRecruitmentTeam.id,
-      verticalId: hrVertical.id,
+      businessId: business.id,
+      teamId: marketingTeam.id,
+      verticalId: vertical.id,
       roleId: roles[1].id,
-      reportsToId: hrExecutive.id,
-      firstName: "Rahul",
-      lastName: "Kapoor",
-      email: "recruitment.exec@embtelerp.com",
+      reportsToId: marketingManager.id,
+      firstName: "Marketing",
+      lastName: "Exec",
+      email: "marketing.exec@demo.com",
       passwordHash,
-      designation: "Recruitment Executive",
+      designation: "Marketing Executive",
       level: 1,
     },
   });
 
-  // ─── IT Services Hierarchy ────────────────────────────────────────────────
-  const itBusiness = businessMap.get("it-services")!;
-  const itVertical = getVerticalByCode("it-ops")!;
-
-  // IT Head
-  const itHead = await prisma.employee.create({
+  // Level 1: Documentation Executive
+  const documentationExecutive = await prisma.employee.create({
     data: {
       organizationId: organization.id,
-      businessId: itBusiness.id,
-      roleId: roles[3].id,
-      reportsToId: businessOwner.id,
-      firstName: "Arun",
-      lastName: "Menon",
-      email: "it.head@embtelerp.com",
+      businessId: business.id,
+      teamId: documentationTeam.id,
+      verticalId: vertical.id,
+      roleId: roles[1].id,
+      reportsToId: documentationManager.id,
+      firstName: "Documentation",
+      lastName: "Exec",
+      email: "documentation.exec@demo.com",
       passwordHash,
-      designation: "IT Head",
-      level: 3,
-    },
-  });
-
-  // IT Sales Team Lead
-  const itSalesTeam = getTeamByCode("it-sales")!;
-  const itSalesLead = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: itBusiness.id,
-      teamId: itSalesTeam.id,
-      verticalId: itVertical.id,
-      roleId: roles[2].id,
-      reportsToId: itHead.id,
-      firstName: "Deepak",
-      lastName: "Chopra",
-      email: "it.sales.lead@embtelerp.com",
-      passwordHash,
-      designation: "Sales Team Lead",
-      level: 2,
-    },
-  });
-
-  // IT Marketing Team Lead
-  const itMarketingTeam = getTeamByCode("it-marketing")!;
-  const itMarketingLead = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: itBusiness.id,
-      teamId: itMarketingTeam.id,
-      verticalId: itVertical.id,
-      roleId: roles[2].id,
-      reportsToId: itHead.id,
-      firstName: "Kavita",
-      lastName: "Bose",
-      email: "it.marketing.lead@embtelerp.com",
-      passwordHash,
-      designation: "Marketing Team Lead",
-      level: 2,
-    },
-  });
-
-  // IT Development Team Lead
-  const itDevTeam = getTeamByCode("it-dev")!;
-  const itDevLead = await prisma.employee.create({
-    data: {
-      organizationId: organization.id,
-      businessId: itBusiness.id,
-      teamId: itDevTeam.id,
-      verticalId: itVertical.id,
-      roleId: roles[2].id,
-      reportsToId: itHead.id,
-      firstName: "Sandeep",
-      lastName: "Agarwal",
-      email: "it.dev.lead@embtelerp.com",
-      passwordHash,
-      designation: "Development Team Lead",
-      level: 2,
-    },
-  });
-
-  // ─── Create Executives ────────────────────────────────────────────────────
-  const teamManagers = [
-    salesHeadImm,
-    marketingMgrImm,
-    docsMgrImm,
-    salesHeadEval,
-    marketingMgrEval,
-    docsMgrEval,
-    professorEval,
-    hrExecutive,
-    recruitmentExecutive,
-    itSalesLead,
-    itMarketingLead,
-    itDevLead,
-  ];
-
-  const executives: Awaited<ReturnType<typeof prisma.employee.create>>[] = [];
-  const execTemplates = [
-    {
-      mgr: salesHeadImm,
-      team: immSalesTeam,
-      vertical: immVertical,
-      business: immBusiness,
-      prefix: "Sales Exec Imm",
-      email: "sales.exec.imm",
-      designation: "Sales Executive",
-    },
-    {
-      mgr: marketingMgrImm,
-      team: immMarketingTeam,
-      vertical: immVertical,
-      business: immBusiness,
-      prefix: "Marketing Exec Imm",
-      email: "marketing.exec.imm",
-      designation: "Marketing Executive",
-    },
-    {
-      mgr: docsMgrImm,
-      team: immDocsTeam,
-      vertical: immVertical,
-      business: immBusiness,
-      prefix: "Docs Exec Imm",
-      email: "docs.exec.imm",
       designation: "Documentation Executive",
+      level: 1,
     },
-    {
-      mgr: salesHeadEval,
-      team: evalSalesTeam,
-      vertical: evalVertical,
-      business: evalBusiness,
-      prefix: "Sales Exec Eval",
-      email: "sales.exec.eval",
-      designation: "Sales Executive",
-    },
-    {
-      mgr: marketingMgrEval,
-      team: evalMarketingTeam,
-      vertical: evalVertical,
-      business: evalBusiness,
-      prefix: "Marketing Exec Eval",
-      email: "marketing.exec.eval",
-      designation: "Marketing Executive",
-    },
-    {
-      mgr: docsMgrEval,
-      team: evalDocsTeam,
-      vertical: evalVertical,
-      business: evalBusiness,
-      prefix: "Docs Exec Eval",
-      email: "docs.exec.eval",
-      designation: "Documentation Executive",
-    },
-    {
-      mgr: itSalesLead,
-      team: itSalesTeam,
-      vertical: itVertical,
-      business: itBusiness,
-      prefix: "IT Sales Exec",
-      email: "it.sales.exec",
-      designation: "Sales Executive",
-    },
-    {
-      mgr: itMarketingLead,
-      team: itMarketingTeam,
-      vertical: itVertical,
-      business: itBusiness,
-      prefix: "IT Marketing Exec",
-      email: "it.marketing.exec",
-      designation: "Marketing Executive",
-    },
-    {
-      mgr: itDevLead,
-      team: itDevTeam,
-      vertical: itVertical,
-      business: itBusiness,
-      prefix: "IT Dev",
-      email: "it.dev",
-      designation: "Developer",
-    },
-  ];
+  });
 
-  for (let i = 0; i < execTemplates.length; i++) {
-    const t = execTemplates[i];
-    for (let j = 0; j < 2; j++) {
-      const exec = await prisma.employee.create({
-        data: {
-          organizationId: organization.id,
-          businessId: t.business.id,
-          teamId: t.team.id,
-          verticalId: t.vertical.id,
-          roleId: roles[1].id,
-          reportsToId: t.mgr.id,
-          firstName: `${t.prefix} ${j + 1}`,
-          lastName: "Staff",
-          email: `${t.email}${j + 1}@embtelerp.com`,
-          passwordHash,
-          designation: t.designation,
-          level: 1,
-        },
-      });
-      executives.push(exec);
-    }
-  }
+  // Level 0: Sales Intern
+  const salesIntern = await prisma.employee.create({
+    data: {
+      organizationId: organization.id,
+      businessId: business.id,
+      teamId: salesTeam.id,
+      verticalId: vertical.id,
+      roleId: roles[0].id,
+      reportsToId: salesExecutive.id,
+      firstName: "Sales",
+      lastName: "Intern",
+      email: "sales.intern@demo.com",
+      passwordHash,
+      designation: "Sales Intern",
+      level: 0,
+    },
+  });
 
-  // ─── Create Interns ───────────────────────────────────────────────────────
-  const interns: Awaited<ReturnType<typeof prisma.employee.create>>[] = [];
-  for (let i = 0; i < executives.length; i++) {
-    const parent = executives[i];
-    const intern = await prisma.employee.create({
-      data: {
-        organizationId: organization.id,
-        businessId: parent.businessId,
-        teamId: parent.teamId,
-        verticalId: parent.verticalId,
-        roleId: roles[0].id,
-        reportsToId: parent.id,
-        firstName: `Intern ${i + 1}`,
-        lastName: "Trainee",
-        email: `intern${i + 1}@embtelerp.com`,
-        passwordHash,
-        designation: `${parent.designation?.replace("Executive", "Intern") ?? "Intern"}`,
-        level: 0,
-      },
-    });
-    interns.push(intern);
-  }
+  // Level 0: Marketing Intern
+  const marketingIntern = await prisma.employee.create({
+    data: {
+      organizationId: organization.id,
+      businessId: business.id,
+      teamId: marketingTeam.id,
+      verticalId: vertical.id,
+      roleId: roles[0].id,
+      reportsToId: marketingExecutive.id,
+      firstName: "Marketing",
+      lastName: "Intern",
+      email: "marketing.intern@demo.com",
+      passwordHash,
+      designation: "Marketing Intern",
+      level: 0,
+    },
+  });
+
+  // Level 0: Documentation Intern
+  const documentationIntern = await prisma.employee.create({
+    data: {
+      organizationId: organization.id,
+      businessId: business.id,
+      teamId: documentationTeam.id,
+      verticalId: vertical.id,
+      roleId: roles[0].id,
+      reportsToId: documentationExecutive.id,
+      firstName: "Documentation",
+      lastName: "Intern",
+      email: "documentation.intern@demo.com",
+      passwordHash,
+      designation: "Documentation Intern",
+      level: 0,
+    },
+  });
 
   // ─── Build EmployeeHierarchy records ──────────────────────────────────────
   const allEmployees = [
     superAdmin,
     businessOwner,
     headImmigration,
-    verticalManagerImm,
-    salesHeadImm,
-    marketingMgrImm,
-    docsMgrImm,
-    headEvaluation,
-    verticalManagerEval,
-    salesHeadEval,
-    marketingMgrEval,
-    docsMgrEval,
-    professorEval,
-    hrManager,
-    hrExecutive,
-    recruitmentExecutive,
-    itHead,
-    itSalesLead,
-    itMarketingLead,
-    itDevLead,
-    ...executives,
-    ...interns,
+    verticalManager,
+    salesHead,
+    marketingManager,
+    documentationManager,
+    salesExecutive,
+    marketingExecutive,
+    documentationExecutive,
+    salesIntern,
+    marketingIntern,
+    documentationIntern,
   ];
 
   for (const employee of allEmployees) {
@@ -824,221 +403,115 @@ async function main() {
         },
       });
 
-      const manager = await prisma.employee.findUnique({
-        where: { id: currentManagerId },
-      });
+      const manager: { id: string; reportsToId: string | null } | null =
+        await prisma.employee.findUnique({
+          where: { id: currentManagerId },
+          select: { id: true, reportsToId: true },
+        });
       currentManagerId = manager?.reportsToId ?? null;
       depth += 1;
     }
   }
 
-  // ─── Seed Tasks ───────────────────────────────────────────────────────────
-  const taskStatuses = ["pending", "in_progress", "completed", "cancelled"];
-  const taskPriorities = ["low", "medium", "high", "urgent"];
-  const taskTitles = [
-    "Review client application documents",
-    "Prepare visa submission package",
-    "Conduct credential evaluation",
-    "Update employee records",
-    "Process payroll for current month",
-    "Schedule team meeting",
-    "Prepare monthly report",
-    "Follow up with client",
-    "Complete training module",
-    "Update project documentation",
-    "Review code changes",
-    "Test new feature deployment",
-    "Prepare marketing materials",
-    "Analyze sales data",
-    "Create onboarding plan",
-    "Draft social media campaign",
-    "Evaluate professor credentials",
-    "Screen candidate resumes",
-    "Deploy server updates",
-    "Generate sales pipeline report",
-  ];
+  // ─── Tasks ────────────────────────────────────────────────────────────────
+  const now = new Date();
+  const past = (daysAgo: number) =>
+    new Date(now.getTime() - daysAgo * 86_400_000);
+  const future = (daysAhead: number) =>
+    new Date(now.getTime() + daysAhead * 86_400_000);
 
-  const allTaskableEmployees = [...teamManagers, ...executives, ...interns];
-  const tasksCreated: string[] = [];
-  for (let i = 0; i < 80; i += 1) {
-    const assignee = allTaskableEmployees[i % allTaskableEmployees.length];
-    const status = taskStatuses[i % taskStatuses.length];
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + (i % 30) - 10);
+  await prisma.task.createMany({
+    data: [
+      // ── Sales Head ──
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesHead.id, createdById: salesHead.id, title: "Review Q1 sales pipeline", status: "completed", priority: "high", dueDate: past(10) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesHead.id, createdById: salesHead.id, title: "Update CRM lead statuses", status: "completed", priority: "medium", dueDate: past(5) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesHead.id, createdById: salesHead.id, title: "Prepare team performance report", status: "in_progress", priority: "high", dueDate: future(3) },
+      // ── Sales Executive ──
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesExecutive.id, createdById: salesHead.id, title: "Follow up with 10 leads", status: "completed", priority: "high", dueDate: past(8) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesExecutive.id, createdById: salesHead.id, title: "Submit daily sales log", status: "completed", priority: "low", dueDate: past(3) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesExecutive.id, createdById: salesHead.id, title: "Schedule client demo calls", status: "completed", priority: "medium", dueDate: past(1) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesExecutive.id, createdById: salesHead.id, title: "Research competitor pricing", status: "in_progress", priority: "medium", dueDate: future(5) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesExecutive.id, createdById: salesHead.id, title: "Update proposal templates", status: "pending", priority: "low", dueDate: past(2) },
+      // ── Sales Intern ──
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesIntern.id, createdById: salesExecutive.id, title: "Compile lead contact list", status: "completed", priority: "medium", dueDate: past(6) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesIntern.id, createdById: salesExecutive.id, title: "Data entry in CRM", status: "in_progress", priority: "low", dueDate: future(2) },
+      { businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, assigneeId: salesIntern.id, createdById: salesExecutive.id, title: "Shadow executive on calls", status: "pending", priority: "low", dueDate: past(1) },
+      // ── Marketing Manager ──
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingManager.id, createdById: marketingManager.id, title: "Plan Q2 campaign calendar", status: "completed", priority: "high", dueDate: past(7) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingManager.id, createdById: marketingManager.id, title: "Review social media analytics", status: "completed", priority: "medium", dueDate: past(4) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingManager.id, createdById: marketingManager.id, title: "Approve campaign creatives", status: "in_progress", priority: "high", dueDate: future(2) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingManager.id, createdById: marketingManager.id, title: "Submit budget utilization report", status: "pending", priority: "medium", dueDate: past(1) },
+      // ── Marketing Executive ──
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingExecutive.id, createdById: marketingManager.id, title: "Create Instagram content batch", status: "completed", priority: "medium", dueDate: past(9) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingExecutive.id, createdById: marketingManager.id, title: "Run email outreach campaign", status: "completed", priority: "high", dueDate: past(5) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingExecutive.id, createdById: marketingManager.id, title: "Analyse campaign CTR", status: "in_progress", priority: "medium", dueDate: future(4) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingExecutive.id, createdById: marketingManager.id, title: "Write blog post draft", status: "pending", priority: "low", dueDate: past(3) },
+      // ── Marketing Intern ──
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingIntern.id, createdById: marketingExecutive.id, title: "Schedule social media posts", status: "completed", priority: "low", dueDate: past(4) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingIntern.id, createdById: marketingExecutive.id, title: "Collect competitor social stats", status: "in_progress", priority: "low", dueDate: future(3) },
+      { businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, assigneeId: marketingIntern.id, createdById: marketingExecutive.id, title: "Resize banner assets", status: "pending", priority: "low", dueDate: past(2) },
+      // ── Documentation Manager ──
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationManager.id, createdById: documentationManager.id, title: "Review visa process documents", status: "completed", priority: "high", dueDate: past(8) },
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationManager.id, createdById: documentationManager.id, title: "Update SOP templates", status: "completed", priority: "medium", dueDate: past(5) },
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationManager.id, createdById: documentationManager.id, title: "Audit submitted client files", status: "in_progress", priority: "high", dueDate: future(1) },
+      // ── Documentation Executive ──
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationExecutive.id, createdById: documentationManager.id, title: "Prepare client file packages", status: "completed", priority: "high", dueDate: past(6) },
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationExecutive.id, createdById: documentationManager.id, title: "Index archive folders", status: "completed", priority: "medium", dueDate: past(3) },
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationExecutive.id, createdById: documentationManager.id, title: "Cross-check application forms", status: "completed", priority: "high", dueDate: past(1) },
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationExecutive.id, createdById: documentationManager.id, title: "Courier pending documents", status: "pending", priority: "medium", dueDate: past(2) },
+      // ── Documentation Intern ──
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationIntern.id, createdById: documentationExecutive.id, title: "Scan and upload client IDs", status: "completed", priority: "low", dueDate: past(5) },
+      { businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, assigneeId: documentationIntern.id, createdById: documentationExecutive.id, title: "Sort physical file cabinet", status: "in_progress", priority: "low", dueDate: future(2) },
+    ],
+  });
 
-    const task = await prisma.task.create({
-      data: {
-        businessId: assignee.businessId,
-        teamId: assignee.teamId,
-        verticalId: assignee.verticalId,
-        assigneeId: assignee.id,
-        createdById: assignee.reportsToId ?? businessOwner.id,
-        title: taskTitles[i % taskTitles.length],
-        description: `Task #${i + 1} for ${assignee.firstName} ${assignee.lastName}`,
-        status,
-        priority: taskPriorities[i % taskPriorities.length],
-        dueDate,
-      },
-    });
-    tasksCreated.push(task.id);
-  }
+  // ─── Marketing KPIs ───────────────────────────────────────────────────────
+  const p1Start = new Date("2025-01-01");
+  const p1End = new Date("2025-01-31");
+  const p2Start = new Date("2025-02-01");
+  const p2End = new Date("2025-02-28");
 
-  // ─── Seed Marketing Campaigns ─────────────────────────────────────────────
-  const campaignChannels = [
-    "email",
-    "social_media",
-    "linkedin",
-    "google_ads",
-    "referral",
-  ];
-  const campaignStatuses = [
-    "DRAFT",
-    "ACTIVE",
-    "PAUSED",
-    "COMPLETED",
-    "CANCELLED",
-  ];
-
-  const allBusinesses = Array.from(businessMap.values());
-  for (let i = 0; i < 16; i += 1) {
-    const business = allBusinesses[i % allBusinesses.length];
-    const businessCode =
-      businessDefinitions.find((b) => b.name === business.name)?.code ?? "";
-    const verticals = verticalMap.get(businessCode) ?? [];
-    const vertical = verticals[0];
-    const teams = teamMap.get(vertical?.code ?? "") ?? [];
-    const team = teams[i % teams.length];
-
-    const campaign = await prisma.marketingCampaign.create({
-      data: {
-        organizationId: organization.id,
-        businessId: business.id,
-        teamId: team?.id ?? null,
-        verticalId: vertical?.id ?? null,
-        createdById: businessOwner.id,
-        assignedToId: teamManagers[i % teamManagers.length].id,
-        name: `Campaign ${i + 1} - ${business.name}`,
-        description: `Marketing campaign for ${business.name}`,
-        channel: campaignChannels[i % campaignChannels.length],
-        status: campaignStatuses[i % campaignStatuses.length] as any,
-        startDate: new Date(2025, i % 12, 1),
-        endDate: new Date(2025, (i % 12) + 1, 1),
-        budget: Math.round(50000 + Math.random() * 200000),
-        budgetSpent: Math.round(30000 + Math.random() * 150000),
-        targetLeads: 50 + Math.round(Math.random() * 200),
-        actualLeads: 30 + Math.round(Math.random() * 180),
-      },
-    });
-
-    // Seed Marketing KPIs
-    const kpiTypes = [
-      "LEADS_GENERATED",
-      "CAMPAIGN_SUCCESS",
-      "TASK_COMPLETION",
-      "PRODUCTIVITY",
-      "BUDGET_UTILIZATION",
-    ];
-    for (let k = 0; k < kpiTypes.length; k += 1) {
-      const target = 50 + Math.round(Math.random() * 200);
-      const value = Math.round(target * (0.3 + Math.random() * 0.8));
-      await prisma.marketingKPI.create({
-        data: {
-          organizationId: organization.id,
-          businessId: business.id,
-          teamId: team?.id ?? null,
-          verticalId: vertical?.id ?? null,
-          employeeId: teamManagers[i % teamManagers.length].id,
-          campaignId: campaign.id,
-          metricType: kpiTypes[k] as any,
-          name: `${kpiTypes[k].replace(/_/g, " ").toLowerCase()}`,
-          value,
-          target,
-          periodStart: new Date(2025, i % 12, 1),
-          periodEnd: new Date(2025, (i % 12) + 1, 1),
-        },
-      });
-    }
-
-    // Seed Marketing Leads
-    const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"];
-    for (let l = 0; l < 5; l += 1) {
-      await prisma.marketingLead.create({
-        data: {
-          organizationId: organization.id,
-          businessId: business.id,
-          teamId: team?.id ?? null,
-          verticalId: vertical?.id ?? null,
-          campaignId: campaign.id,
-          createdById: businessOwner.id,
-          assignedToId: teamManagers[i % teamManagers.length].id,
-          name: `Lead ${i * 5 + l + 1} - ${business.name}`,
-          email: `lead${i * 5 + l + 1}@example.com`,
-          source: campaignChannels[l % campaignChannels.length],
-          status: leadStatuses[l % leadStatuses.length] as any,
-          estimatedValue: Math.round(10000 + Math.random() * 100000),
-        },
-      });
-    }
-
-    // Seed Marketing Tasks
-    const marketingTaskStatuses = [
-      "TODO",
-      "IN_PROGRESS",
-      "BLOCKED",
-      "COMPLETED",
-      "CANCELLED",
-    ];
-    for (let t = 0; t < 3; t += 1) {
-      await prisma.marketingTask.create({
-        data: {
-          organizationId: organization.id,
-          businessId: business.id,
-          teamId: team?.id ?? null,
-          verticalId: vertical?.id ?? null,
-          campaignId: campaign.id,
-          assignedToId: teamManagers[i % teamManagers.length].id,
-          createdById: businessOwner.id,
-          title: `Marketing Task ${t + 1} for Campaign ${i + 1}`,
-          description: `Task for campaign ${campaign.name}`,
-          status: marketingTaskStatuses[
-            t % marketingTaskStatuses.length
-          ] as any,
-          priority: ["low", "medium", "high"][t % 3],
-          dueDate: new Date(2025, (i % 12) + 1, 15),
-        },
-      });
-    }
-  }
-
-  // ─── Seed Activities ──────────────────────────────────────────────────────
-  for (let i = 0; i < 40; i += 1) {
-    const actor = allTaskableEmployees[i % allTaskableEmployees.length];
-    await prisma.activity.create({
-      data: {
-        businessId: actor.businessId,
-        actorId: actor.id,
-        targetType: "TASK",
-        targetId: tasksCreated[i % tasksCreated.length] ?? null,
-        action: "CREATE",
-        metadata: { description: `Activity #${i + 1}` },
-      },
-    });
-  }
-
-  // ─── Seed Initial Perspective ─────────────────────────────────────────────
-  await prisma.perspective.create({
-    data: {
-      userId: businessOwner.id,
-      currentPerspectiveId: businessOwner.id,
-      perspectiveType: PerspectiveType.BUSINESS_OWNER,
-    },
+  await prisma.marketingKPI.createMany({
+    data: [
+      // ── Sales Team ──
+      { organizationId: organization.id, businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, metricType: "LEADS_GENERATED", name: "New Leads Jan", value: 24, target: 30, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, metricType: "CAMPAIGN_SUCCESS", name: "Conversions Jan", value: 18, target: 20, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, metricType: "LEADS_GENERATED", name: "New Leads Feb", value: 29, target: 30, periodStart: p2Start, periodEnd: p2End },
+      { organizationId: organization.id, businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, metricType: "CAMPAIGN_SUCCESS", name: "Conversions Feb", value: 22, target: 20, periodStart: p2Start, periodEnd: p2End },
+      // ── Marketing Team ──
+      { organizationId: organization.id, businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, metricType: "LEADS_GENERATED", name: "Marketing Leads Jan", value: 31, target: 30, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, metricType: "BUDGET_UTILIZATION", name: "Budget Used Jan", value: 85000, target: 100000, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, metricType: "LEADS_GENERATED", name: "Marketing Leads Feb", value: 27, target: 35, periodStart: p2Start, periodEnd: p2End },
+      { organizationId: organization.id, businessId: business.id, teamId: marketingTeam.id, verticalId: vertical.id, metricType: "BUDGET_UTILIZATION", name: "Budget Used Feb", value: 92000, target: 100000, periodStart: p2Start, periodEnd: p2End },
+      // ── Documentation Team ──
+      { organizationId: organization.id, businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, metricType: "CAMPAIGN_SUCCESS", name: "Files Processed Jan", value: 48, target: 50, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, metricType: "BUDGET_UTILIZATION", name: "Ops Budget Jan", value: 32000, target: 40000, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, teamId: documentationTeam.id, verticalId: vertical.id, metricType: "CAMPAIGN_SUCCESS", name: "Files Processed Feb", value: 54, target: 50, periodStart: p2Start, periodEnd: p2End },
+      // ── Individual KPIs (Sales Executive) ──
+      { organizationId: organization.id, businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, employeeId: salesExecutive.id, metricType: "LEADS_GENERATED", name: "Exec Leads Jan", value: 12, target: 15, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, teamId: salesTeam.id, verticalId: vertical.id, employeeId: salesExecutive.id, metricType: "LEADS_GENERATED", name: "Exec Leads Feb", value: 14, target: 15, periodStart: p2Start, periodEnd: p2End },
+      // ── Business-level rollup ──
+      { organizationId: organization.id, businessId: business.id, metricType: "LEADS_GENERATED", name: "Business Leads Q1", value: 55, target: 60, periodStart: p1Start, periodEnd: p1End },
+      { organizationId: organization.id, businessId: business.id, metricType: "BUDGET_UTILIZATION", name: "Business Budget Q1", value: 202000, target: 240000, periodStart: p1Start, periodEnd: p1End },
+    ],
   });
 
   console.log("Seed complete with new hierarchy structure");
-  console.log(`Created: ${allEmployees.length} employees across 4 businesses`);
-  console.log(
-    `Created: ${tasksCreated.length} tasks, 16 campaigns with KPIs, leads, and marketing tasks`,
-  );
+  console.log(`Created: ${allEmployees.length} employees`);
+  console.log("Hierarchy:");
+  console.log("  Super Admin (Level 5)");
+  console.log("    └── Business Owner (Level 4)");
+  console.log("        └── Head of Immigration (Level 3)");
+  console.log("            └── Vertical Manager (Level 2)");
+  console.log("                ├── Sales Head (Level 2)");
+  console.log("                │   └── Sales Executive (Level 1)");
+  console.log("                │       └── Sales Intern (Level 0)");
+  console.log("                ├── Marketing Manager (Level 2)");
+  console.log("                │   └── Marketing Executive (Level 1)");
+  console.log("                │       └── Marketing Intern (Level 0)");
+  console.log("                └── Documentation Manager (Level 2)");
+  console.log("                    └── Documentation Executive (Level 1)");
+  console.log("                        └── Documentation Intern (Level 0)");
 }
 
 main()
