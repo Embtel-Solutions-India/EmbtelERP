@@ -1,6 +1,5 @@
 import { prisma } from "../config/prisma.js";
 import type { DataScope } from "./scope.service.js";
-import { getDescendantIds } from "./hierarchy.service.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -15,7 +14,12 @@ export type AggregationLevel =
   | "DEPARTMENT"
   | "BUSINESS"
   | "DESCENDANT"
-  | "ALL";
+  | "ALL"
+  | "BUSINESS_OWNER"
+  | "HEAD"
+  | "VERTICAL"
+  | "TEAM_MANAGER"
+  | "EMPLOYEE";
 
 export type DashboardOverview = {
   employeeCount: number;
@@ -64,12 +68,39 @@ export type BusinessKpiSummary = {
   businessName: string;
   departmentCount: number;
   teamCount: number;
+  verticalCount: number;
   employeeCount: number;
   totalTasks: number;
   completedTasks: number;
   pendingTasks: number;
   overdueTasks: number;
   targetAchievement: number;
+};
+
+export type BusinessAnalytics = {
+  businessId: string;
+  businessName: string;
+  businessCode: string;
+  employeeCount: number;
+  teamCount: number;
+  verticalCount: number;
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  overdueTasks: number;
+  completionRate: number;
+  targetAchievement: number;
+  leadsGenerated: number;
+  conversions: number;
+  revenue: number;
+  teams: {
+    id: string;
+    name: string;
+    memberCount: number;
+    completedTasks: number;
+    pendingTasks: number;
+    completionRate: number;
+  }[];
 };
 
 export type DashboardPerformance = {
@@ -104,6 +135,224 @@ export type DashboardTeam = {
   ranking: number;
 };
 
+// ─── Aggregation scope ────────────────────────────────────────────────────────
+
+type AggScope = {
+  employeeIds: string[];
+  teamIds: string[];
+  businessIds: string[];
+};
+
+/**
+ * Derives the correct employee/team/business ID sets for a given perspective.
+ *
+ * The scope.middleware passes `perspectiveTargetId` to `getDataScope` which
+ * expects an employeeId; for BUSINESS / VERTICAL / BUSINESS_OWNER targets that
+ * lookup returns null and the middleware silently falls back to the viewer's own
+ * scope.  For high-role viewers (Super Admin) `buildScope` always returns ALL
+ * records even when they've switched to a narrower perspective.
+ *
+ * This function re-derives scope directly from the DB for every perspective
+ * type so that dashboard aggregation is always correct regardless of viewer
+ * level.
+ */
+export async function resolveAggregationScope(
+  scope: DataScope,
+  perspective: CurrentPerspective | null | undefined,
+): Promise<AggScope> {
+  if (!perspective) {
+    return {
+      employeeIds: scope.visibleEmployees,
+      teamIds: scope.visibleTeams,
+      businessIds: scope.visibleBusinesses,
+    };
+  }
+
+  const { type, targetId } = perspective;
+
+  switch (type) {
+    // ── Self-only perspectives ────────────────────────────────────────────────
+    case "EMPLOYEE":
+    case "INTERN": {
+      return { employeeIds: [targetId], teamIds: [], businessIds: [] };
+    }
+
+    // ── Manager: own team OR vertical (Vertical Manager has no teamId) ────────
+    case "MANAGER": {
+      const mgr = await prisma.employee.findUnique({
+        where: { id: targetId },
+        select: { teamId: true, verticalId: true, businessId: true },
+      });
+      if (!mgr) return { employeeIds: [targetId], teamIds: [], businessIds: [] };
+
+      if (mgr.teamId) {
+        const members = await prisma.employee.findMany({
+          where: { teamId: mgr.teamId, isActive: true },
+          select: { id: true },
+        });
+        return {
+          employeeIds: [...new Set([targetId, ...members.map((e) => e.id)])],
+          teamIds: [mgr.teamId],
+          businessIds: mgr.businessId ? [mgr.businessId] : [],
+        };
+      }
+
+      // Vertical Manager: no team assigned — scope to the entire vertical
+      if (mgr.verticalId) {
+        const [members, teams] = await Promise.all([
+          prisma.employee.findMany({
+            where: { verticalId: mgr.verticalId, isActive: true },
+            select: { id: true },
+          }),
+          prisma.team.findMany({
+            where: { verticalId: mgr.verticalId, isActive: true },
+            select: { id: true },
+          }),
+        ]);
+        return {
+          employeeIds: members.map((e) => e.id),
+          teamIds: teams.map((t) => t.id),
+          businessIds: mgr.businessId ? [mgr.businessId] : [],
+        };
+      }
+
+      return {
+        employeeIds: [targetId],
+        teamIds: [],
+        businessIds: mgr.businessId ? [mgr.businessId] : [],
+      };
+    }
+
+    // ── Vertical: all teams and employees inside this vertical ────────────────
+    case "VERTICAL": {
+      const vertical = await prisma.vertical.findUnique({
+        where: { id: targetId },
+        select: { businessId: true },
+      });
+      if (!vertical) return { employeeIds: [], teamIds: [], businessIds: [] };
+
+      const [members, teams] = await Promise.all([
+        prisma.employee.findMany({
+          where: { verticalId: targetId, isActive: true },
+          select: { id: true },
+        }),
+        prisma.team.findMany({
+          where: { verticalId: targetId, isActive: true },
+          select: { id: true },
+        }),
+      ]);
+
+      return {
+        employeeIds: members.map((e) => e.id),
+        teamIds: teams.map((t) => t.id),
+        businessIds: [vertical.businessId],
+      };
+    }
+
+    // ── Business Head: all teams and employees in this business ───────────────
+    case "HEAD": {
+      const head = await prisma.employee.findUnique({
+        where: { id: targetId },
+        select: { businessId: true },
+      });
+      if (!head) return { employeeIds: [], teamIds: [], businessIds: [] };
+
+      const [members, teams] = await Promise.all([
+        prisma.employee.findMany({
+          where: { businessId: head.businessId, isActive: true },
+          select: { id: true },
+        }),
+        prisma.team.findMany({
+          where: { businessId: head.businessId, isActive: true },
+          select: { id: true },
+        }),
+      ]);
+
+      return {
+        employeeIds: members.map((e) => e.id),
+        teamIds: teams.map((t) => t.id),
+        businessIds: [head.businessId],
+      };
+    }
+
+    // ── Business / Business Owner: targetId IS the businessId ─────────────────
+    case "BUSINESS":
+    case "BUSINESS_OWNER": {
+      const [members, teams] = await Promise.all([
+        prisma.employee.findMany({
+          where: { businessId: targetId, isActive: true },
+          select: { id: true },
+        }),
+        prisma.team.findMany({
+          where: { businessId: targetId, isActive: true },
+          select: { id: true },
+        }),
+      ]);
+
+      return {
+        employeeIds: members.map((e) => e.id),
+        teamIds: teams.map((t) => t.id),
+        businessIds: [targetId],
+      };
+    }
+
+    // ── Team: all members of this team ───────────────────────────────────────
+    case "TEAM": {
+      const team = await prisma.team.findUnique({
+        where: { id: targetId },
+        select: { businessId: true },
+      });
+      if (!team) return { employeeIds: [], teamIds: [targetId], businessIds: [] };
+
+      const members = await prisma.employee.findMany({
+        where: { teamId: targetId, isActive: true },
+        select: { id: true },
+      });
+
+      return {
+        employeeIds: members.map((e) => e.id),
+        teamIds: [targetId],
+        businessIds: [team.businessId],
+      };
+    }
+
+    // ── Department: all employees and teams in this department ────────────────
+    case "DEPARTMENT": {
+      const dept = await prisma.department.findUnique({
+        where: { id: targetId },
+        select: { businessId: true },
+      });
+      if (!dept) return { employeeIds: [], teamIds: [], businessIds: [] };
+
+      const [members, teams] = await Promise.all([
+        prisma.employee.findMany({
+          where: { departmentId: targetId, isActive: true },
+          select: { id: true },
+        }),
+        prisma.team.findMany({
+          where: { departmentId: targetId, isActive: true },
+          select: { id: true },
+        }),
+      ]);
+
+      return {
+        employeeIds: members.map((e) => e.id),
+        teamIds: teams.map((t) => t.id),
+        businessIds: [dept.businessId],
+      };
+    }
+
+    // ── Organization / Super Admin: fall back to full middleware scope ─────────
+    default: {
+      return {
+        employeeIds: scope.visibleEmployees,
+        teamIds: scope.visibleTeams,
+        businessIds: scope.visibleBusinesses,
+      };
+    }
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function getPerspectiveLabel(
@@ -111,7 +360,8 @@ async function getPerspectiveLabel(
   targetId: string,
 ): Promise<string> {
   switch (type) {
-    case "BUSINESS": {
+    case "BUSINESS":
+    case "BUSINESS_OWNER": {
       const b = await prisma.business.findUnique({
         where: { id: targetId },
         select: { name: true },
@@ -125,19 +375,29 @@ async function getPerspectiveLabel(
       });
       return d?.name ?? "Unknown Department";
     }
+    case "VERTICAL": {
+      const v = await prisma.vertical.findUnique({
+        where: { id: targetId },
+        select: { name: true },
+      });
+      return v?.name ?? "Unknown Vertical";
+    }
+    case "HEAD":
+    case "MANAGER":
+    case "EMPLOYEE":
+    case "INTERN": {
+      const e = await prisma.employee.findUnique({
+        where: { id: targetId },
+        select: { firstName: true, lastName: true },
+      });
+      return e ? `${e.firstName} ${e.lastName}` : "Unknown Employee";
+    }
     case "TEAM": {
       const t = await prisma.team.findUnique({
         where: { id: targetId },
         select: { name: true },
       });
       return t?.name ?? "Unknown Team";
-    }
-    case "EMPLOYEE": {
-      const e = await prisma.employee.findUnique({
-        where: { id: targetId },
-        select: { firstName: true, lastName: true },
-      });
-      return e ? `${e.firstName} ${e.lastName}` : "Unknown Employee";
     }
     default:
       return "Organization";
@@ -150,14 +410,26 @@ function determineAggregationLevel(
 ): AggregationLevel {
   if (viewerRoleLevel >= 5) return "ALL";
   switch (type) {
+    case "ORGANIZATION":
+      return "ALL";
     case "BUSINESS":
-      return "BUSINESS";
+      return viewerRoleLevel >= 4 ? "BUSINESS_OWNER" : "BUSINESS";
+    case "BUSINESS_OWNER":
+      return "BUSINESS_OWNER";
+    case "HEAD":
+      return "HEAD";
+    case "VERTICAL":
+      return "VERTICAL";
     case "DEPARTMENT":
       return "DEPARTMENT";
     case "TEAM":
-      return "TEAM";
+      return viewerRoleLevel >= 2 ? "TEAM_MANAGER" : "TEAM";
+    case "MANAGER":
+      return "TEAM_MANAGER";
     case "EMPLOYEE":
-      return "DESCENDANT";
+      return viewerRoleLevel >= 1 ? "DESCENDANT" : "EMPLOYEE";
+    case "INTERN":
+      return "SELF";
     default:
       return "SELF";
   }
@@ -172,42 +444,33 @@ async function getTaskStats(
   pending: number;
   overdue: number;
 }> {
+  if (employeeIds.length === 0 && businessIds.length === 0) {
+    return { total: 0, completed: 0, pending: 0, overdue: 0 };
+  }
+
   const now = new Date();
+  const where = {
+    OR: [
+      ...(employeeIds.length > 0
+        ? [{ assigneeId: { in: employeeIds } }]
+        : []),
+      ...(businessIds.length > 0
+        ? [{ businessId: { in: businessIds } }]
+        : []),
+    ] as object[],
+  };
+
   const [total, completed, pending, overdue] = await Promise.all([
+    prisma.task.count({ where }),
+    prisma.task.count({ where: { ...where, status: "completed" } }),
     prisma.task.count({
-      where: {
-        OR: [
-          { assigneeId: { in: employeeIds } },
-          { businessId: { in: businessIds } },
-        ],
-      },
+      where: { ...where, status: { notIn: ["completed", "cancelled"] } },
     }),
     prisma.task.count({
       where: {
-        status: "completed",
-        OR: [
-          { assigneeId: { in: employeeIds } },
-          { businessId: { in: businessIds } },
-        ],
-      },
-    }),
-    prisma.task.count({
-      where: {
-        status: { notIn: ["completed", "cancelled"] },
-        OR: [
-          { assigneeId: { in: employeeIds } },
-          { businessId: { in: businessIds } },
-        ],
-      },
-    }),
-    prisma.task.count({
-      where: {
+        ...where,
         status: { notIn: ["completed", "cancelled"] },
         dueDate: { lt: now },
-        OR: [
-          { assigneeId: { in: employeeIds } },
-          { businessId: { in: businessIds } },
-        ],
       },
     }),
   ]);
@@ -224,13 +487,25 @@ async function getMarketingKpiStats(
   leadsGenerated: number;
   conversions: number;
 }> {
+  if (
+    businessIds.length === 0 &&
+    teamIds.length === 0 &&
+    employeeIds.length === 0
+  ) {
+    return { targetAchievement: 0, leadsGenerated: 0, conversions: 0 };
+  }
+
   const kpis = await prisma.marketingKPI.findMany({
     where: {
       OR: [
-        { businessId: { in: businessIds } },
-        { teamId: { in: teamIds } },
-        { employeeId: { in: employeeIds } },
-      ],
+        ...(businessIds.length > 0
+          ? [{ businessId: { in: businessIds } }]
+          : []),
+        ...(teamIds.length > 0 ? [{ teamId: { in: teamIds } }] : []),
+        ...(employeeIds.length > 0
+          ? [{ employeeId: { in: employeeIds } }]
+          : []),
+      ] as object[],
     },
     select: { value: true, target: true, metricType: true },
   });
@@ -265,10 +540,8 @@ export async function getDashboardOverview(
   scope: DataScope,
   perspective?: CurrentPerspective | null,
 ): Promise<DashboardOverview> {
-  const employeeIds = scope.visibleEmployees;
-  const businessIds = scope.visibleBusinesses;
-  const teamIds = scope.visibleTeams;
-  const departmentIds = scope.visibleDepartments;
+  const resolved = await resolveAggregationScope(scope, perspective);
+  const { employeeIds, teamIds, businessIds } = resolved;
 
   const [employeeCount, activityCount, auditCount, taskStats, marketingStats] =
     await Promise.all([
@@ -283,46 +556,73 @@ export async function getDashboardOverview(
       getMarketingKpiStats(businessIds, teamIds, employeeIds),
     ]);
 
-  // Team-specific KPIs
+  // Team KPIs — shown when viewing a TEAM or MANAGER perspective
   let teamKpis: TeamKpiSummary | null = null;
-  if (perspective?.type === "TEAM") {
-    const team = await prisma.team.findUnique({
-      where: { id: perspective.targetId },
-      select: {
-        id: true,
-        name: true,
-        _count: { select: { employees: true, tasks: true } },
-      },
-    });
-    if (team) {
-      const teamTaskStats = await getTaskStats(
-        employeeIds.filter((eid) => {
-          // We'll get team members separately
-          return true;
-        }),
-        businessIds,
-      );
-      teamKpis = {
-        teamName: team.name,
-        memberCount: team._count.employees,
-        taskCount: team._count.tasks,
-        completedTasks: teamTaskStats.completed,
-        pendingTasks: teamTaskStats.pending,
-        overdueTasks: teamTaskStats.overdue,
-        targetAchievement: marketingStats.targetAchievement,
-        completionRate:
-          teamTaskStats.total > 0
-            ? Math.round((teamTaskStats.completed / teamTaskStats.total) * 100)
-            : 0,
-        monthlyRevenue: marketingStats.leadsGenerated * 1000,
-        monthlyTarget: marketingStats.leadsGenerated * 1500,
-      };
+  if (
+    perspective?.type === "TEAM" ||
+    (perspective?.type === "MANAGER" &&
+      (await prisma.employee
+        .findUnique({
+          where: { id: perspective.targetId },
+          select: { teamId: true },
+        })
+        .then((e) => !!e?.teamId)))
+  ) {
+    const teamId =
+      perspective?.type === "TEAM"
+        ? perspective.targetId
+        : (
+            await prisma.employee.findUnique({
+              where: { id: perspective!.targetId },
+              select: { teamId: true },
+            })
+          )?.teamId ?? null;
+
+    if (teamId) {
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+        select: {
+          id: true,
+          name: true,
+          _count: { select: { employees: true, tasks: true } },
+        },
+      });
+      if (team) {
+        const teamMemberIds = (
+          await prisma.employee.findMany({
+            where: { teamId, isActive: true },
+            select: { id: true },
+          })
+        ).map((e) => e.id);
+
+        const tStats = await getTaskStats(teamMemberIds, []);
+        const mStats = await getMarketingKpiStats([], [teamId], []);
+
+        teamKpis = {
+          teamName: team.name,
+          memberCount: team._count.employees,
+          taskCount: tStats.total,
+          completedTasks: tStats.completed,
+          pendingTasks: tStats.pending,
+          overdueTasks: tStats.overdue,
+          targetAchievement: mStats.targetAchievement,
+          completionRate:
+            tStats.total > 0
+              ? Math.round((tStats.completed / tStats.total) * 100)
+              : 0,
+          monthlyRevenue: mStats.leadsGenerated * 1000,
+          monthlyTarget: mStats.leadsGenerated * 1500,
+        };
+      }
     }
   }
 
-  // Employee-specific KPIs
+  // Employee KPIs — shown for EMPLOYEE and INTERN perspectives
   let employeeKpis: EmployeeKpiSummary | null = null;
-  if (perspective?.type === "EMPLOYEE") {
+  if (
+    perspective?.type === "EMPLOYEE" ||
+    perspective?.type === "INTERN"
+  ) {
     const employee = await prisma.employee.findUnique({
       where: { id: perspective.targetId },
       select: {
@@ -334,38 +634,45 @@ export async function getDashboardOverview(
       },
     });
     if (employee) {
-      const empTaskStats = await getTaskStats([employee.id], []);
+      const empStats = await getTaskStats([employee.id], []);
       employeeKpis = {
         name: `${employee.firstName} ${employee.lastName}`,
         designation: employee.designation,
         taskCount: employee._count.tasksOwned,
-        completedTasks: empTaskStats.completed,
-        pendingTasks: empTaskStats.pending,
-        overdueTasks: empTaskStats.overdue,
+        completedTasks: empStats.completed,
+        pendingTasks: empStats.pending,
+        overdueTasks: empStats.overdue,
         performanceScore:
-          empTaskStats.total > 0
-            ? Math.round((empTaskStats.completed / empTaskStats.total) * 100)
+          empStats.total > 0
+            ? Math.round((empStats.completed / empStats.total) * 100)
             : 0,
         productivity:
-          empTaskStats.total > 0
-            ? Math.round(
-                (empTaskStats.completed / Math.max(empTaskStats.total, 1)) *
-                  100,
-              )
+          empStats.total > 0
+            ? Math.round((empStats.completed / Math.max(empStats.total, 1)) * 100)
             : 0,
       };
     }
   }
 
-  // Business-specific KPIs
+  // Business KPIs — shown for BUSINESS and BUSINESS_OWNER perspectives
   let businessKpis: BusinessKpiSummary | null = null;
-  if (perspective?.type === "BUSINESS") {
+  if (
+    perspective?.type === "BUSINESS" ||
+    perspective?.type === "BUSINESS_OWNER"
+  ) {
     const business = await prisma.business.findUnique({
       where: { id: perspective.targetId },
       select: {
         id: true,
         name: true,
-        _count: { select: { departments: true, teams: true, employees: true } },
+        _count: {
+          select: {
+            departments: true,
+            teams: true,
+            verticals: true,
+            employees: true,
+          },
+        },
       },
     });
     if (business) {
@@ -373,6 +680,7 @@ export async function getDashboardOverview(
         businessName: business.name,
         departmentCount: business._count.departments,
         teamCount: business._count.teams,
+        verticalCount: business._count.verticals,
         employeeCount: business._count.employees,
         totalTasks: taskStats.total,
         completedTasks: taskStats.completed,
@@ -384,7 +692,7 @@ export async function getDashboardOverview(
   }
 
   const viewer = await prisma.employee.findUnique({
-    where: { id: employeeIds[0] ?? "" },
+    where: { id: scope.visibleEmployees[0] ?? "" },
     select: { role: { select: { level: true } } },
   });
 
@@ -421,41 +729,42 @@ export async function getDashboardPerformance(
   scope: DataScope,
   perspective?: CurrentPerspective | null,
 ): Promise<DashboardPerformance[]> {
-  const employeeIds = scope.visibleEmployees;
-  const businessIds = scope.visibleBusinesses;
+  const { employeeIds, businessIds } = await resolveAggregationScope(
+    scope,
+    perspective,
+  );
 
-  // Get marketing KPIs grouped by period
-  const kpis = await prisma.marketingKPI.findMany({
-    where: {
-      OR: [
-        { businessId: { in: businessIds } },
-        { employeeId: { in: employeeIds } },
-      ],
-    },
-    select: {
-      value: true,
-      target: true,
-      metricType: true,
-      periodStart: true,
-      periodEnd: true,
-    },
-    orderBy: { periodStart: "asc" },
-  });
+  const whereOr: object[] = [];
+  if (businessIds.length > 0) whereOr.push({ businessId: { in: businessIds } });
+  if (employeeIds.length > 0) whereOr.push({ employeeId: { in: employeeIds } });
 
-  // Get tasks for performance metrics
-  const tasks = await prisma.task.findMany({
-    where: {
-      OR: [
-        { assigneeId: { in: employeeIds } },
-        { businessId: { in: businessIds } },
-      ],
-    },
-    select: {
-      status: true,
-      createdAt: true,
-      assigneeId: true,
-    },
-  });
+  const kpis =
+    whereOr.length > 0
+      ? await prisma.marketingKPI.findMany({
+          where: { OR: whereOr },
+          select: {
+            value: true,
+            target: true,
+            metricType: true,
+            periodStart: true,
+          },
+          orderBy: { periodStart: "asc" },
+        })
+      : [];
+
+  const taskWhereOr: object[] = [];
+  if (employeeIds.length > 0)
+    taskWhereOr.push({ assigneeId: { in: employeeIds } });
+  if (businessIds.length > 0)
+    taskWhereOr.push({ businessId: { in: businessIds } });
+
+  const tasks =
+    taskWhereOr.length > 0
+      ? await prisma.task.findMany({
+          where: { OR: taskWhereOr },
+          select: { status: true, createdAt: true },
+        })
+      : [];
 
   // Group by month
   const monthlyMap = new Map<
@@ -467,89 +776,66 @@ export async function getDashboardPerformance(
       conversions: number;
       tasksCompleted: number;
       tasksCreated: number;
-      employeeProductivity: number;
     }
   >();
 
-  for (const kpi of kpis) {
-    const monthKey = kpi.periodStart.toISOString().slice(0, 7);
-    const entry = monthlyMap.get(monthKey) ?? {
+  const entry = (key: string) =>
+    monthlyMap.get(key) ?? {
       revenue: 0,
       target: 0,
       leads: 0,
       conversions: 0,
       tasksCompleted: 0,
       tasksCreated: 0,
-      employeeProductivity: 0,
     };
 
-    if (kpi.metricType === "LEADS_GENERATED") {
-      entry.leads += Number(kpi.value);
-    }
-    if (kpi.metricType === "CAMPAIGN_SUCCESS") {
-      entry.conversions += Number(kpi.value);
-    }
-    if (kpi.target) {
-      entry.target += Number(kpi.target);
-    }
-    // Use value as revenue proxy for budget-related KPIs
-    if (kpi.metricType === "BUDGET_UTILIZATION") {
-      entry.revenue += Number(kpi.value);
-    }
-
-    monthlyMap.set(monthKey, entry);
+  for (const kpi of kpis) {
+    const key = kpi.periodStart.toISOString().slice(0, 7);
+    const e = entry(key);
+    if (kpi.metricType === "LEADS_GENERATED") e.leads += Number(kpi.value);
+    if (kpi.metricType === "CAMPAIGN_SUCCESS") e.conversions += Number(kpi.value);
+    if (kpi.target) e.target += Number(kpi.target);
+    if (kpi.metricType === "BUDGET_UTILIZATION") e.revenue += Number(kpi.value);
+    monthlyMap.set(key, e);
   }
 
   for (const task of tasks) {
-    const monthKey = task.createdAt.toISOString().slice(0, 7);
-    const entry = monthlyMap.get(monthKey) ?? {
-      revenue: 0,
-      target: 0,
-      leads: 0,
-      conversions: 0,
-      tasksCompleted: 0,
-      tasksCreated: 0,
-      employeeProductivity: 0,
-    };
-
-    entry.tasksCreated += 1;
-    if (task.status === "completed") {
-      entry.tasksCompleted += 1;
-    }
-
-    monthlyMap.set(monthKey, entry);
+    const key = task.createdAt.toISOString().slice(0, 7);
+    const e = entry(key);
+    e.tasksCreated += 1;
+    if (task.status === "completed") e.tasksCompleted += 1;
+    monthlyMap.set(key, e);
   }
 
-  // Convert to array and calculate productivity
-  const result: DashboardPerformance[] = [];
-  for (const [period, data] of monthlyMap) {
-    result.push({
+  return [...monthlyMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([period, d]) => ({
       period,
-      revenue: data.revenue,
-      target: data.target,
-      leads: data.leads,
-      conversions: data.conversions,
-      tasksCompleted: data.tasksCompleted,
-      tasksCreated: data.tasksCreated,
+      revenue: d.revenue,
+      target: d.target,
+      leads: d.leads,
+      conversions: d.conversions,
+      tasksCompleted: d.tasksCompleted,
+      tasksCreated: d.tasksCreated,
       employeeProductivity:
-        data.tasksCreated > 0
-          ? Math.round((data.tasksCompleted / data.tasksCreated) * 100)
+        d.tasksCreated > 0
+          ? Math.round((d.tasksCompleted / d.tasksCreated) * 100)
           : 0,
-    });
-  }
-
-  return result.sort((a, b) => a.period.localeCompare(b.period));
+    }));
 }
 
 export async function getDashboardInsights(
   scope: DataScope,
   perspective?: CurrentPerspective | null,
 ): Promise<DashboardInsight[]> {
-  const employeeIds = scope.visibleEmployees;
-  const businessIds = scope.visibleBusinesses;
+  const { employeeIds, teamIds, businessIds } = await resolveAggregationScope(
+    scope,
+    perspective,
+  );
+
   const insights: DashboardInsight[] = [];
 
-  // 1. Task completion rate insight
+  // 1. Task completion rate
   const taskStats = await getTaskStats(employeeIds, businessIds);
   const completionRate =
     taskStats.total > 0 ? (taskStats.completed / taskStats.total) * 100 : 0;
@@ -583,16 +869,19 @@ export async function getDashboardInsights(
     });
   }
 
-  // 2. Overdue tasks alert
+  // 2. Overdue task details (up to 3)
   if (taskStats.overdue > 0) {
+    const overdueFilter: object[] = [];
+    if (employeeIds.length > 0)
+      overdueFilter.push({ assigneeId: { in: employeeIds } });
+    if (businessIds.length > 0)
+      overdueFilter.push({ businessId: { in: businessIds } });
+
     const overdueTasks = await prisma.task.findMany({
       where: {
         status: { notIn: ["completed", "cancelled"] },
         dueDate: { lt: new Date() },
-        OR: [
-          { assigneeId: { in: employeeIds } },
-          { businessId: { in: businessIds } },
-        ],
+        OR: overdueFilter,
       },
       take: 3,
       select: {
@@ -616,98 +905,105 @@ export async function getDashboardInsights(
     }
   }
 
-  // 3. Marketing KPI insights
-  const kpis = await prisma.marketingKPI.findMany({
-    where: {
-      OR: [
-        { businessId: { in: businessIds } },
-        { teamId: { in: scope.visibleTeams } },
-        { employeeId: { in: employeeIds } },
-      ],
-    },
-    select: {
-      value: true,
-      target: true,
-      metricType: true,
-      name: true,
-      team: { select: { name: true } },
-    },
-  });
+  // 3. KPI target tracking
+  const kpiFilter: object[] = [];
+  if (businessIds.length > 0)
+    kpiFilter.push({ businessId: { in: businessIds } });
+  if (teamIds.length > 0) kpiFilter.push({ teamId: { in: teamIds } });
+  if (employeeIds.length > 0)
+    kpiFilter.push({ employeeId: { in: employeeIds } });
+
+  const kpis =
+    kpiFilter.length > 0
+      ? await prisma.marketingKPI.findMany({
+          where: { OR: kpiFilter },
+          select: {
+            value: true,
+            target: true,
+            metricType: true,
+            name: true,
+            team: { select: { name: true } },
+          },
+        })
+      : [];
 
   for (const kpi of kpis) {
     if (kpi.target && Number(kpi.target) > 0) {
-      const achievement = (Number(kpi.value) / Number(kpi.target)) * 100;
-      if (achievement >= 100) {
-        const teamName = kpi.team?.name ?? "Team";
+      const pct = (Number(kpi.value) / Number(kpi.target)) * 100;
+      if (pct >= 100) {
         insights.push({
           type: "positive",
           category: "Targets",
-          message: `${teamName} exceeded ${kpi.name} target by ${Math.round(achievement - 100)}%.`,
+          message: `${kpi.team?.name ?? "Team"} exceeded ${kpi.name} target by ${Math.round(pct - 100)}%.`,
           metric: kpi.metricType,
-          change: Math.round(achievement - 100),
+          change: Math.round(pct - 100),
           trend: "up",
         });
-      } else if (achievement < 50) {
+      } else if (pct < 50) {
         insights.push({
           type: "negative",
           category: "Targets",
-          message: `${kpi.name} is at ${Math.round(achievement)}% of target. Needs improvement.`,
+          message: `${kpi.name} is at ${Math.round(pct)}% of target. Needs improvement.`,
           metric: kpi.metricType,
-          change: Math.round(achievement),
+          change: Math.round(pct),
           trend: "down",
         });
       }
     }
   }
 
-  // 4. Top performer insight
-  const topPerformer = await prisma.employee.findFirst({
-    where: {
-      id: { in: employeeIds },
-      tasksOwned: {
-        some: { status: "completed" },
+  // 4. Top performer
+  if (employeeIds.length > 0) {
+    const topPerformer = await prisma.employee.findFirst({
+      where: {
+        id: { in: employeeIds },
+        tasksOwned: { some: { status: "completed" } },
       },
-    },
-    orderBy: {
-      tasksOwned: { _count: "desc" },
-    },
-    select: {
-      firstName: true,
-      lastName: true,
-      _count: { select: { tasksOwned: { where: { status: "completed" } } } },
-    },
-  });
-
-  if (topPerformer && topPerformer._count.tasksOwned > 0) {
-    insights.push({
-      type: "positive",
-      category: "Performance",
-      message: `Top performer: ${topPerformer.firstName} ${topPerformer.lastName} with ${topPerformer._count.tasksOwned} completed tasks.`,
-      metric: "top_performer",
-      change: topPerformer._count.tasksOwned,
-      trend: "up",
+      orderBy: {
+        tasksOwned: { _count: "desc" },
+      },
+      select: {
+        firstName: true,
+        lastName: true,
+        _count: {
+          select: { tasksOwned: { where: { status: "completed" } } },
+        },
+      },
     });
+
+    if (topPerformer && topPerformer._count.tasksOwned > 0) {
+      insights.push({
+        type: "positive",
+        category: "Performance",
+        message: `Top performer: ${topPerformer.firstName} ${topPerformer.lastName} with ${topPerformer._count.tasksOwned} completed tasks.`,
+        metric: "top_performer",
+        change: topPerformer._count.tasksOwned,
+        trend: "up",
+      });
+    }
   }
 
-  // 5. Revenue trend insight
-  const recentKpis = kpis.filter(
+  // 5. Revenue trend
+  const revenueKpis = kpis.filter(
     (k) =>
-      k.metricType === "LEADS_GENERATED" || k.metricType === "CAMPAIGN_SUCCESS",
+      k.metricType === "LEADS_GENERATED" ||
+      k.metricType === "CAMPAIGN_SUCCESS",
   );
-  if (recentKpis.length >= 2) {
-    const totalValue = recentKpis.reduce((sum, k) => sum + Number(k.value), 0);
-    const avgValue = totalValue / recentKpis.length;
+  if (revenueKpis.length >= 2) {
+    const avg =
+      revenueKpis.reduce((s, k) => s + Number(k.value), 0) /
+      revenueKpis.length;
     insights.push({
       type: "neutral",
       category: "Revenue",
-      message: `Revenue trend ${avgValue > 100 ? "improving" : "stable"} with ${recentKpis.length} active metrics.`,
+      message: `Revenue trend ${avg > 100 ? "improving" : "stable"} with ${revenueKpis.length} active metrics.`,
       metric: "revenue_trend",
-      change: Math.round(avgValue),
-      trend: avgValue > 100 ? "up" : "stable",
+      change: Math.round(avg),
+      trend: avg > 100 ? "up" : "stable",
     });
   }
 
-  // 6. Employee count insight
+  // 6. Team size summary
   if (employeeIds.length > 0) {
     insights.push({
       type: "neutral",
@@ -726,21 +1022,24 @@ export async function getDashboardTeam(
   scope: DataScope,
   perspective?: CurrentPerspective | null,
 ): Promise<DashboardTeam[]> {
-  const businessIds = scope.visibleBusinesses;
-  const teamIds = scope.visibleTeams;
+  const { teamIds, businessIds } = await resolveAggregationScope(
+    scope,
+    perspective,
+  );
+
+  if (teamIds.length === 0 && businessIds.length === 0) return [];
+
+  const teamFilter: object[] = [];
+  if (teamIds.length > 0) teamFilter.push({ id: { in: teamIds } });
+  if (businessIds.length > 0) teamFilter.push({ businessId: { in: businessIds } });
 
   const teams = await prisma.team.findMany({
-    where: {
-      OR: [{ id: { in: teamIds } }, { businessId: { in: businessIds } }],
-      isActive: true,
-    },
+    where: { OR: teamFilter, isActive: true },
     select: {
       id: true,
       name: true,
-      _count: { select: { employees: true, tasks: true } },
-      employees: {
-        select: { id: true },
-      },
+      _count: { select: { employees: true } },
+      employees: { select: { id: true } },
     },
     orderBy: { name: "asc" },
   });
@@ -748,30 +1047,31 @@ export async function getDashboardTeam(
   const teamResults: DashboardTeam[] = [];
 
   for (const team of teams) {
-    const teamEmployeeIds = team.employees.map((e) => e.id);
-    const taskStats = await getTaskStats(teamEmployeeIds, []);
-    const marketingStats = await getMarketingKpiStats([], [team.id], []);
+    const memberIds = team.employees.map((e) => e.id);
+    const [tStats, mStats] = await Promise.all([
+      getTaskStats(memberIds, []),
+      getMarketingKpiStats([], [team.id], []),
+    ]);
 
     teamResults.push({
       id: team.id,
       name: team.name,
       memberCount: team._count.employees,
-      completedTasks: taskStats.completed,
-      pendingTasks: taskStats.pending,
-      overdueTasks: taskStats.overdue,
+      completedTasks: tStats.completed,
+      pendingTasks: tStats.pending,
+      overdueTasks: tStats.overdue,
       completionRate:
-        taskStats.total > 0
-          ? Math.round((taskStats.completed / taskStats.total) * 100)
+        tStats.total > 0
+          ? Math.round((tStats.completed / tStats.total) * 100)
           : 0,
-      targetAchievement: marketingStats.targetAchievement,
-      ranking: 0, // Will be calculated after sorting
+      targetAchievement: mStats.targetAchievement,
+      ranking: 0,
     });
   }
 
-  // Sort by completion rate descending and assign ranking
   teamResults.sort((a, b) => b.completionRate - a.completionRate);
-  teamResults.forEach((team, index) => {
-    team.ranking = index + 1;
+  teamResults.forEach((t, i) => {
+    t.ranking = i + 1;
   });
 
   return teamResults;

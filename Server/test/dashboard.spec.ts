@@ -7,11 +7,15 @@ vi.mock("../src/config/prisma.js", () => ({
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       count: vi.fn(),
+      findMany: vi.fn(),
     },
     business: {
       findUnique: vi.fn(),
     },
     department: {
+      findUnique: vi.fn(),
+    },
+    vertical: {
       findUnique: vi.fn(),
     },
     team: {
@@ -45,6 +49,7 @@ import {
   getDashboardPerformance,
   getDashboardInsights,
   getDashboardTeam,
+  resolveAggregationScope,
 } from "../src/services/dashboard.service.js";
 
 const mockScope = {
@@ -86,6 +91,12 @@ describe("Dashboard Service", () => {
     });
 
     it("returns business KPIs when perspective is BUSINESS", async () => {
+      // resolveAggregationScope — BUSINESS path fetches employees + teams in the business
+      (prisma.employee.findMany as any).mockResolvedValueOnce([
+        { id: "emp1" },
+        { id: "emp2" },
+      ]);
+      (prisma.team.findMany as any).mockResolvedValueOnce([{ id: "team1" }]);
       (prisma.employee.count as any).mockResolvedValue(3);
       (prisma.activity.count as any).mockResolvedValue(10);
       (prisma.auditLog.count as any).mockResolvedValue(5);
@@ -117,7 +128,7 @@ describe("Dashboard Service", () => {
       expect(result.businessKpis!.employeeCount).toBe(10);
       expect(result.perspective).not.toBeNull();
       expect(result.perspective!.type).toBe("BUSINESS");
-      expect(result.perspective!.aggregationLevel).toBe("BUSINESS");
+      expect(result.perspective!.aggregationLevel).toBe("BUSINESS_OWNER");
     });
 
     it("returns employee KPIs when perspective is EMPLOYEE", async () => {
@@ -310,5 +321,206 @@ describe("Dashboard Service", () => {
       expect(teams[1].ranking).toBe(2); // Marketing Team (50% completion)
       expect(teams[0].completionRate).toBeGreaterThan(teams[1].completionRate);
     });
+  });
+});
+
+// ─── resolveAggregationScope unit tests ──────────────────────────────────────
+
+describe("resolveAggregationScope", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns full scope when no perspective is active", async () => {
+    const result = await resolveAggregationScope(mockScope, null);
+    expect(result).toEqual({
+      employeeIds: mockScope.visibleEmployees,
+      teamIds: mockScope.visibleTeams,
+      businessIds: mockScope.visibleBusinesses,
+    });
+    expect(prisma.employee.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("returns self-only for EMPLOYEE perspective without DB calls", async () => {
+    const result = await resolveAggregationScope(mockScope, {
+      type: "EMPLOYEE",
+      targetId: "emp1",
+    });
+    expect(result).toEqual({ employeeIds: ["emp1"], teamIds: [], businessIds: [] });
+    expect(prisma.employee.findUnique).not.toHaveBeenCalled();
+    expect(prisma.employee.findMany).not.toHaveBeenCalled();
+  });
+
+  it("returns self-only for INTERN perspective without DB calls", async () => {
+    const result = await resolveAggregationScope(mockScope, {
+      type: "INTERN",
+      targetId: "intern1",
+    });
+    expect(result).toEqual({
+      employeeIds: ["intern1"],
+      teamIds: [],
+      businessIds: [],
+    });
+    expect(prisma.employee.findMany).not.toHaveBeenCalled();
+  });
+
+  it("aggregates own team for MANAGER with a teamId", async () => {
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      teamId: "team1",
+      verticalId: null,
+      businessId: "biz1",
+    });
+    (prisma.employee.findMany as any).mockResolvedValueOnce([
+      { id: "emp1" },
+      { id: "emp2" },
+    ]);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "MANAGER",
+      targetId: "mgr1",
+    });
+
+    expect(result.teamIds).toEqual(["team1"]);
+    expect(result.businessIds).toEqual(["biz1"]);
+    expect(result.employeeIds).toContain("mgr1");
+    expect(result.employeeIds).toContain("emp1");
+    expect(result.employeeIds).toContain("emp2");
+  });
+
+  it("aggregates entire vertical for MANAGER without a teamId (Vertical Manager)", async () => {
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      teamId: null,
+      verticalId: "vert1",
+      businessId: "biz1",
+    });
+    (prisma.employee.findMany as any).mockResolvedValueOnce([
+      { id: "emp1" },
+      { id: "emp2" },
+      { id: "emp3" },
+    ]);
+    (prisma.team.findMany as any).mockResolvedValueOnce([
+      { id: "team1" },
+      { id: "team2" },
+    ]);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "MANAGER",
+      targetId: "vm1",
+    });
+
+    expect(result.teamIds).toEqual(["team1", "team2"]);
+    expect(result.employeeIds).toEqual(["emp1", "emp2", "emp3"]);
+    expect(result.businessIds).toEqual(["biz1"]);
+  });
+
+  it("aggregates all vertical employees and teams for VERTICAL perspective", async () => {
+    (prisma.vertical.findUnique as any).mockResolvedValueOnce({
+      businessId: "biz1",
+    });
+    (prisma.employee.findMany as any).mockResolvedValueOnce([{ id: "e1" }]);
+    (prisma.team.findMany as any).mockResolvedValueOnce([
+      { id: "t1" },
+      { id: "t2" },
+    ]);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "VERTICAL",
+      targetId: "vert1",
+    });
+
+    expect(result.businessIds).toEqual(["biz1"]);
+    expect(result.teamIds).toEqual(["t1", "t2"]);
+    expect(result.employeeIds).toEqual(["e1"]);
+  });
+
+  it("returns empty scope for unknown VERTICAL targetId", async () => {
+    (prisma.vertical.findUnique as any).mockResolvedValueOnce(null);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "VERTICAL",
+      targetId: "bad-id",
+    });
+
+    expect(result).toEqual({ employeeIds: [], teamIds: [], businessIds: [] });
+  });
+
+  it("aggregates all business employees for HEAD perspective using head's businessId", async () => {
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      businessId: "biz1",
+    });
+    (prisma.employee.findMany as any).mockResolvedValueOnce([
+      { id: "e1" },
+      { id: "e2" },
+      { id: "e3" },
+    ]);
+    (prisma.team.findMany as any).mockResolvedValueOnce([{ id: "t1" }]);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "HEAD",
+      targetId: "head1",
+    });
+
+    expect(result.businessIds).toEqual(["biz1"]);
+    expect(result.employeeIds).toHaveLength(3);
+    expect(result.teamIds).toEqual(["t1"]);
+  });
+
+  it("aggregates all business employees for BUSINESS perspective using targetId as businessId", async () => {
+    (prisma.employee.findMany as any).mockResolvedValueOnce([
+      { id: "e1" },
+      { id: "e2" },
+    ]);
+    (prisma.team.findMany as any).mockResolvedValueOnce([
+      { id: "t1" },
+      { id: "t2" },
+    ]);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "BUSINESS",
+      targetId: "biz1",
+    });
+
+    expect(result.businessIds).toEqual(["biz1"]);
+    expect(result.employeeIds).toEqual(["e1", "e2"]);
+    expect(result.teamIds).toEqual(["t1", "t2"]);
+  });
+
+  it("aggregates same as BUSINESS for BUSINESS_OWNER perspective", async () => {
+    (prisma.employee.findMany as any).mockResolvedValueOnce([{ id: "e1" }]);
+    (prisma.team.findMany as any).mockResolvedValueOnce([{ id: "t1" }]);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "BUSINESS_OWNER",
+      targetId: "biz1",
+    });
+
+    expect(result.businessIds).toEqual(["biz1"]);
+    expect(result.employeeIds).toEqual(["e1"]);
+  });
+
+  it("aggregates team members for TEAM perspective", async () => {
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ businessId: "biz1" });
+    (prisma.employee.findMany as any).mockResolvedValueOnce([
+      { id: "e1" },
+      { id: "e2" },
+    ]);
+
+    const result = await resolveAggregationScope(mockScope, {
+      type: "TEAM",
+      targetId: "team1",
+    });
+
+    expect(result.teamIds).toEqual(["team1"]);
+    expect(result.employeeIds).toEqual(["e1", "e2"]);
+    expect(result.businessIds).toEqual(["biz1"]);
+  });
+
+  it("returns full scope for ORGANIZATION (default case)", async () => {
+    const result = await resolveAggregationScope(mockScope, {
+      type: "ORGANIZATION",
+      targetId: "org1",
+    });
+
+    expect(result.employeeIds).toEqual(mockScope.visibleEmployees);
+    expect(result.teamIds).toEqual(mockScope.visibleTeams);
+    expect(result.businessIds).toEqual(mockScope.visibleBusinesses);
   });
 });

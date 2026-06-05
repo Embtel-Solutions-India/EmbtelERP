@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { lightTheme, darkTheme } from './theme/muiTheme'
+import { getHomePath } from './utils/roleRoutes'
 import MainLayout from './layouts/MainLayout'
 import Login from './pages/Login'
 
@@ -20,27 +21,42 @@ import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import SalesTeamPage from './modules/sales/team/pages/SalesTeamPage'
 
+// Demo Dashboards
+import SuperAdminDashboard    from './pages/demo/SuperAdminDashboard'
+import BusinessOwnerDashboard from './pages/demo/BusinessOwnerDashboard'
+import BusinessHeadDashboard  from './pages/demo/BusinessHeadDashboard'
+import VerticalDashboard      from './pages/demo/VerticalDashboard'
+import ManagerDashboard       from './pages/demo/ManagerDashboard'
+import ExecutiveDashboard     from './pages/demo/ExecutiveDashboard'
+import InternDashboard        from './pages/demo/InternDashboard'
+
 // Marketing Components
-import MarketingDashboard from './modules/marketing/dashboard/MarketingDashboard'
-import MarketingLeads from './modules/marketing/lead-funnels/MarketingLeads'
-import MarketingActivities from './modules/marketing/dashboard/MarketingActivities'
-import MarketingEmail from './modules/marketing/email-marketing/MarketingEmail'
-import MarketingAssets from './modules/marketing/content/MarketingAssets'
-import MarketingCampaigns from './modules/marketing/campaigns/MarketingCampaigns'
-import MarketingTeamPage from './modules/marketing/team/pages/MarketingTeamPage'
-import MarketingTasks from './modules/marketing/components/MarketingTasks'
-import MarketingPerformance from './modules/marketing/reports/MarketingPerformance'
-import MarketingReports from './modules/marketing/reports/MarketingReports'
+import MarketingDashboard    from './modules/marketing/dashboard/MarketingDashboard'
+import MarketingLeads        from './modules/marketing/lead-funnels/MarketingLeads'
+import MarketingActivities   from './modules/marketing/dashboard/MarketingActivities'
+import MarketingEmail        from './modules/marketing/email-marketing/MarketingEmail'
+import MarketingAssets       from './modules/marketing/content/MarketingAssets'
+import MarketingCampaigns    from './modules/marketing/campaigns/MarketingCampaigns'
+import MarketingTeamPage     from './modules/marketing/team/pages/MarketingTeamPage'
+import MarketingTasks        from './modules/marketing/components/MarketingTasks'
+import MarketingPerformance  from './modules/marketing/reports/MarketingPerformance'
+import MarketingReports      from './modules/marketing/reports/MarketingReports'
+
+/**
+ * Sends authenticated users to the route that matches their role level.
+ * Used for both the index ("/") and the wildcard ("*") route so that
+ * no path ever dead-ends at a hardcoded Sales URL.
+ */
+function RoleRedirect() {
+  const { user } = useSelector((s) => s.auth)
+  return <Navigate to={getHomePath(user?.roleLevel)} replace />
+}
 
 export default function App() {
   const { isDark } = useSelector((s) => s.theme)
 
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+    document.documentElement.classList.toggle('dark', isDark)
   }, [isDark])
 
   return (
@@ -48,11 +64,12 @@ export default function App() {
       <CssBaseline />
       <Routes>
         <Route path="/login" element={<Login />} />
+
         <Route path="/" element={<MainLayout />}>
-          {/* Default entry redirect */}
-          <Route index element={<Navigate to="/sales/dashboard" replace />} />
-          
-          {/* Sales Executive Routes Module */}
+          {/* Root redirect — goes to the role's home dashboard */}
+          <Route index element={<RoleRedirect />} />
+
+          {/* ── Sales module ──────────────────────────────────────── */}
           <Route path="sales/dashboard"     element={<Dashboard />} />
           <Route path="sales/leads"         element={<Leads />} />
           <Route path="sales/follow-ups"    element={<FollowUps />} />
@@ -66,7 +83,16 @@ export default function App() {
           <Route path="sales/profile"       element={<Profile />} />
           <Route path="sales/settings"      element={<Settings />} />
 
-          {/* Marketing Executive Routes Module */}
+          {/* ── Role demo dashboards ──────────────────────────────── */}
+          <Route path="demo/super-admin"    element={<SuperAdminDashboard />} />
+          <Route path="demo/business-owner" element={<BusinessOwnerDashboard />} />
+          <Route path="demo/business"       element={<BusinessHeadDashboard />} />
+          <Route path="demo/vertical"       element={<VerticalDashboard />} />
+          <Route path="demo/manager"        element={<ManagerDashboard />} />
+          <Route path="demo/executive"      element={<ExecutiveDashboard />} />
+          <Route path="demo/intern"         element={<InternDashboard />} />
+
+          {/* ── Marketing module ──────────────────────────────────── */}
           <Route path="marketing/dashboard"       element={<MarketingDashboard />} />
           <Route path="marketing/leads"           element={<MarketingLeads />} />
           <Route path="marketing/activities"      element={<MarketingActivities />} />
@@ -80,8 +106,9 @@ export default function App() {
           <Route path="marketing/profile"         element={<Profile />} />
           <Route path="marketing/settings"        element={<Settings />} />
         </Route>
-        {/* Wildcard fallback redirect */}
-        <Route path="*" element={<Navigate to="/sales/dashboard" replace />} />
+
+        {/* Any unmatched path → role home (MainLayout guards auth) */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ThemeProvider>
   )
