@@ -111,3 +111,66 @@ export async function createEmployee(
     include: { role: true, business: true, department: true, team: true },
   });
 }
+
+export async function updateEmployee(
+  id: string,
+  input: Partial<CreateEmployeeInput & { isActive?: boolean; level?: number }>,
+  actorId?: string
+) {
+  const existing = await prisma.employee.findUnique({ where: { id } });
+  if (!existing) {
+    throw new ApiError(404, "Employee not found");
+  }
+
+  const data: any = { ...input };
+  if (input.password) {
+    data.passwordHash = await bcrypt.hash(input.password, 12);
+    delete data.password;
+  }
+
+  if (input.firstName || input.lastName) {
+    const fn = `${input.firstName ?? existing.firstName} ${input.lastName ?? existing.lastName}`.trim();
+    data.fullName = fn;
+  }
+
+  const employee = await prisma.employee.update({
+    where: { id },
+    data,
+    include: { role: true, business: true, department: true, team: true },
+  });
+
+  await recordActivity({
+    actorId,
+    businessId: employee.businessId,
+    action: "UPDATE",
+    targetType: "Employee",
+    targetId: employee.id,
+  });
+
+  return employee;
+}
+
+export async function deactivateEmployee(id: string, actorId?: string) {
+  const existing = await prisma.employee.findUnique({ where: { id } });
+  if (!existing) {
+    throw new ApiError(404, "Employee not found");
+  }
+
+  const employee = await prisma.employee.update({
+    where: { id },
+    data: { isActive: false },
+    include: { role: true, business: true, department: true, team: true },
+  });
+
+  await recordActivity({
+    actorId,
+    businessId: employee.businessId,
+    action: "UPDATE",
+    targetType: "Employee",
+    targetId: employee.id,
+    metadata: { status: "Inactive" },
+  });
+
+  return employee;
+}
+

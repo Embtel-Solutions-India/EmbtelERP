@@ -16,7 +16,7 @@ export default function Login() {
 
   // Already authenticated — skip login page
   if (isAuthenticated && user) {
-    return <Navigate to={getHomePath(user.roleLevel)} replace />
+    return <Navigate to={getHomePath(user)} replace />
   }
 
   const handleChange = (e) => {
@@ -28,8 +28,7 @@ export default function Login() {
     e.preventDefault()
     const result = await dispatch(loginAsync({ email: form.email, password: form.password }))
     if (loginAsync.fulfilled.match(result)) {
-      const { roleLevel } = result.payload.employee
-      navigate(getHomePath(roleLevel), { replace: true })
+      navigate(getHomePath(result.payload.employee), { replace: true })
     }
   }
 

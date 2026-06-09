@@ -49,11 +49,24 @@ export const fetchDashboardTeam = createAsyncThunk(
   }
 )
 
+export const fetchRoleWorkspace = createAsyncThunk(
+  'dashboard/fetchWorkspace',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await dashboardService.getWorkspace()
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
 const initialState = {
   overview: null,
   performance: [],
   insights: [],
   teams: [],
+  workspace: null,
   opportunities: [],
   activities: [],
   monthlyRevenue: 0,
@@ -77,6 +90,7 @@ const dashboardSlice = createSlice({
       state.performance = []
       state.insights = []
       state.teams = []
+      state.workspace = null
       state.opportunities = []
       state.loading = false
       state.error = null
@@ -128,6 +142,10 @@ const dashboardSlice = createSlice({
       // Team
       .addCase(fetchDashboardTeam.fulfilled, (state, action) => {
         state.teams = action.payload || []
+      })
+      // Role workspace
+      .addCase(fetchRoleWorkspace.fulfilled, (state, action) => {
+        state.workspace = action.payload || null
       })
   },
 })

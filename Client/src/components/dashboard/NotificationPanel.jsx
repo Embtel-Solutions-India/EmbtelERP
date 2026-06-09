@@ -33,8 +33,8 @@ export default function NotificationPanel() {
         ) : null
       }
     >
-      <div className="space-y-2">
-        {list.slice(0, 6).map((n, i) => {
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
+        {list.slice(0, 10).map((n, i) => {
           const style = TYPE_STYLES[n.type] || TYPE_STYLES.system
           const { Icon } = style
           return (

@@ -8,6 +8,10 @@ import notificationReducer from './slices/notificationSlice'
 import themeReducer        from './slices/themeSlice'
 import teamReducer         from './slices/teamSlice'
 import perspectiveReducer  from './slices/perspectiveSlice'
+import workspaceReducer    from './slices/workspaceSlice'
+import employeeReducer     from './slices/employeeSlice'
+import documentReducer     from './slices/documentSlice'
+import calendarReducer     from './slices/calendarSlice'
 
 // Marketing Reducers
 import marketingDashboardReducer from '../modules/marketing/redux/marketingDashboardSlice'
@@ -25,7 +29,11 @@ export const store = configureStore({
     theme:         themeReducer,
     team:          teamReducer,
     perspective:   perspectiveReducer,
-    
+    workspace:     workspaceReducer,
+    employees:     employeeReducer,
+    documents:     documentReducer,
+    calendar:      calendarReducer,
+
     // Marketing slices
     marketingDashboard: marketingDashboardReducer,
     marketingTasks:     marketingTaskReducer,
@@ -34,3 +42,4 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),
 })
+

@@ -178,6 +178,9 @@ export async function validatePerspectiveAccess(
       id: true,
       businessId: true,
       organizationId: true,
+      designation: true,
+      verticalId: true,
+      teamId: true,
       role: { select: { level: true } },
     },
   });
@@ -190,6 +193,9 @@ export async function validatePerspectiveAccess(
   if (viewer.role.level >= 5) {
     return true;
   }
+
+  // Enforce strict boundaries based on role/designation/vertical/team
+  await validateScopeBoundaries(viewer, targetType, targetId);
 
   switch (targetType) {
     case "ORGANIZATION": {
@@ -745,4 +751,157 @@ async function buildBreadcrumb(
   }
 
   return breadcrumb;
+}
+
+async function validateScopeBoundaries(
+  viewer: { id: string; designation: string | null; role: { level: number }; verticalId: string | null; teamId: string | null },
+  targetType: PerspectiveTargetType,
+  targetId: string
+) {
+  const viewerLevel = viewer.role.level;
+  const designation = (viewer.designation ?? "").toLowerCase();
+
+  // Super admin & Owner bypass
+  if (viewerLevel >= 4) return;
+
+  // Let's retrieve target info depending on type
+  if (targetType === "EMPLOYEE" || targetType === "MANAGER" || targetType === "INTERN" || targetType === "HEAD") {
+    const target = await prisma.employee.findUnique({
+      where: { id: targetId },
+      include: { role: true }
+    });
+    if (!target) throw new ApiError(404, "Target employee not found");
+    const targetLevel = target.level ?? target.role.level;
+    const targetDesignation = (target.designation ?? "").toLowerCase();
+
+    // STRICT RULE: Lower level cannot switch to higher level
+    if (viewerLevel < targetLevel) {
+      throw new ApiError(403, "Access denied: cannot switch to higher hierarchy level");
+    }
+
+    // ── Head of Immigration boundary checks (L3) ──
+    if (designation.includes("immigration")) {
+      if (targetDesignation.includes("evaluation") || targetDesignation.includes("professor") || targetDesignation.includes("hr") || targetDesignation.includes("recruitment") || targetDesignation.includes("it") || targetDesignation.includes("system")) {
+        throw new ApiError(403, "Access denied: Head of Immigration cannot access Evaluation, HR, or IT departments");
+      }
+    }
+    // ── Head of Evaluation boundary checks (L3) ──
+    if (designation.includes("evaluation")) {
+      if (!targetDesignation.includes("evaluation") && !targetDesignation.includes("professor")) {
+        throw new ApiError(403, "Access denied: Head of Evaluation can only access Evaluation department");
+      }
+    }
+    // ── HR Manager boundary checks (L3) ──
+    if (designation.includes("hr") || designation.includes("recruitment")) {
+      if (!targetDesignation.includes("hr") && !targetDesignation.includes("recruitment")) {
+        throw new ApiError(403, "Access denied: HR Manager can only access HR department");
+      }
+    }
+    // ── IT Head boundary checks (L3) ──
+    if (designation.includes("it") || designation.includes("system")) {
+      if (!targetDesignation.includes("it") && !targetDesignation.includes("system")) {
+        throw new ApiError(403, "Access denied: IT Head can only access IT department");
+      }
+    }
+
+    // ── Manager/Head boundary checks (L2) ──
+    if (designation.includes("sales head")) {
+      if (!targetDesignation.includes("sales")) {
+        throw new ApiError(403, "Access denied: Sales Head can only access Sales team");
+      }
+    }
+    if (designation.includes("marketing manager")) {
+      if (!targetDesignation.includes("marketing")) {
+        throw new ApiError(403, "Access denied: Marketing Manager can only access Marketing team");
+      }
+    }
+    if (designation.includes("documentation manager")) {
+      if (!targetDesignation.includes("documentation")) {
+        throw new ApiError(403, "Access denied: Documentation Manager can only access Documentation team");
+      }
+    }
+
+    // ── Vertical Manager boundary checks (L2) ──
+    if (designation.includes("vertical manager")) {
+      if (viewer.verticalId !== target.verticalId) {
+        throw new ApiError(403, "Access denied: Vertical Manager can only access employees in their vertical");
+      }
+    }
+  }
+
+  if (targetType === "TEAM") {
+    const target = await prisma.team.findUnique({
+      where: { id: targetId }
+    });
+    if (!target) throw new ApiError(404, "Target team not found");
+    const teamCode = target.code.toLowerCase();
+    const teamName = target.name.toLowerCase();
+
+    // Head of Immigration
+    if (designation.includes("immigration")) {
+      if (teamCode.includes("eval") || teamCode.includes("hr") || teamCode.includes("it")) {
+        throw new ApiError(403, "Access denied: Head of Immigration cannot access Evaluation, HR, or IT teams");
+      }
+    }
+    // Head of Evaluation
+    if (designation.includes("evaluation")) {
+      if (!teamCode.includes("eval") && !teamName.includes("eval")) {
+        throw new ApiError(403, "Access denied: Head of Evaluation can only access Evaluation teams");
+      }
+    }
+    // HR Manager
+    if (designation.includes("hr") || designation.includes("recruitment")) {
+      if (!teamCode.includes("hr") && !teamName.includes("hr")) {
+        throw new ApiError(403, "Access denied: HR Manager can only access HR teams");
+      }
+    }
+    // IT Head
+    if (designation.includes("it") || designation.includes("system")) {
+      if (!teamCode.includes("it") && !teamName.includes("it")) {
+        throw new ApiError(403, "Access denied: IT Head can only access IT teams");
+      }
+    }
+
+    // Manager
+    if (designation.includes("sales head") && !teamCode.includes("sales") && !teamName.includes("sales")) {
+      throw new ApiError(403, "Access denied: Sales Head can only access Sales teams");
+    }
+    if (designation.includes("marketing manager") && !teamCode.includes("marketing") && !teamName.includes("marketing")) {
+      throw new ApiError(403, "Access denied: Marketing Manager can only access Marketing teams");
+    }
+    if (designation.includes("documentation manager") && !teamCode.includes("documentation") && !teamName.includes("documentation")) {
+      throw new ApiError(403, "Access denied: Documentation Manager can only access Documentation teams");
+    }
+
+    // Vertical Manager
+    if (designation.includes("vertical manager") && viewer.verticalId !== target.verticalId) {
+      throw new ApiError(403, "Access denied: Vertical Manager can only access teams in their vertical");
+    }
+  }
+
+  if (targetType === "VERTICAL") {
+    const target = await prisma.vertical.findUnique({
+      where: { id: targetId }
+    });
+    if (!target) throw new ApiError(404, "Target vertical not found");
+
+    // Head of Immigration
+    if (designation.includes("immigration") && target.code.toLowerCase().includes("eval")) {
+      throw new ApiError(403, "Access denied: Head of Immigration cannot access Evaluation vertical");
+    }
+    // Head of Evaluation
+    if (designation.includes("evaluation") && !target.code.toLowerCase().includes("eval") && !target.name.toLowerCase().includes("eval")) {
+      throw new ApiError(403, "Access denied: Head of Evaluation can only access Evaluation vertical");
+    }
+
+    // Managers / Verticals
+    if (designation.includes("vertical manager") && viewer.verticalId !== target.id) {
+      throw new ApiError(403, "Access denied: Vertical Manager can only access their vertical");
+    }
+    if (designation.includes("sales head") || designation.includes("marketing manager") || designation.includes("documentation manager")) {
+      if (viewer.verticalId !== target.id) {
+        throw new ApiError(403, "Access denied: Managers can only access their vertical");
+      }
+    }
+  }
 }

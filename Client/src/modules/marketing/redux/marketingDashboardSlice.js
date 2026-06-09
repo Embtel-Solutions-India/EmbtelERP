@@ -1,196 +1,294 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import api from '../../../services/api'
+import { campaignService } from '../../../services/campaignService'
 
-const monthlyRevenue = [
-  { month: 'Jan', revenue: 320000, target: 400000, leads: 450, won: 48 },
-  { month: 'Feb', revenue: 285000, target: 400000, leads: 380, won: 36 },
-  { month: 'Mar', revenue: 410000, target: 420000, leads: 520, won: 66 },
-  { month: 'Apr', revenue: 375000, target: 430000, leads: 480, won: 54 },
-  { month: 'May', revenue: 450000, target: 450000, leads: 600, won: 78 },
-  { month: 'Jun', revenue: 390000, target: 460000, leads: 550, won: 60 },
-  { month: 'Jul', revenue: 480000, target: 470000, leads: 650, won: 84 },
-  { month: 'Aug', revenue: 520000, target: 480000, leads: 700, won: 96 },
-  { month: 'Sep', revenue: 445000, target: 490000, leads: 580, won: 72 },
-  { month: 'Oct', revenue: 510000, target: 500000, leads: 680, won: 90 },
-  { month: 'Nov', revenue: 475000, target: 510000, leads: 620, won: 78 },
-  { month: 'Dec', revenue: 395000, target: 500000, leads: 420, won: 54 },
-]
-
-const weeklyData = [
-  { day: 'Mon', clicks: 120, emails: 250, visits: 300, leads: 5 },
-  { day: 'Tue', clicks: 180, emails: 320, visits: 400, leads: 8 },
-  { day: 'Wed', clicks: 150, emails: 280, visits: 350, leads: 6 },
-  { day: 'Thu', clicks: 220, emails: 350, visits: 450, leads: 9 },
-  { day: 'Fri', clicks: 190, emails: 300, visits: 380, leads: 7 },
-  { day: 'Sat', clicks: 80,  emails: 120, visits: 150, leads: 2 },
-  { day: 'Sun', clicks: 30,  emails: 50,  visits: 60,  leads: 1 },
-]
-
-const activities = [
-  { id: 1, type: 'campaign_created', title: 'Campaign Created', description: 'Summer Sale PPC launched on Google Ads', time: new Date(Date.now() - 10 * 60000).toISOString() },
-  { id: 2, type: 'campaign_updated', title: 'Campaign Updated', description: 'Q2 Newsletter Blast budget optimized for conversion', time: new Date(Date.now() - 35 * 60000).toISOString() },
-  { id: 3, type: 'leads_generated', title: 'Leads Generated', description: '15 new organic search leads recorded', time: new Date(Date.now() - 90 * 60000).toISOString() },
-  { id: 4, type: 'email_sent', title: 'Email Campaign Sent', description: 'Promo sequence delivered to 10k subscribers', time: new Date(Date.now() - 3 * 3600000).toISOString() },
-  { id: 5, type: 'content_published', title: 'Content Published', description: 'New landing page blog post published for SEO', time: new Date(Date.now() - 5 * 3600000).toISOString() },
-  { id: 6, type: 'asset_uploaded', title: 'New Asset Uploaded', description: 'Banner Creative v2 added to assets library', time: new Date(Date.now() - 7 * 3600000).toISOString() },
-]
-
-const opportunities = [
-  {
-    id: 1,
-    campaign_name: 'Summer Sale PPC',
-    campaign_type: 'PPC',
-    target_audience: 'E-commerce Owners',
-    service_promoted: 'Cloud Hosting',
-    budget: 50000,
-    start_date: '2026-06-01',
-    end_date: '2026-06-30',
-    status: 'Active',
-    leads_generated: 450,
-    conversions: 55,
-    emails_sent: 0,
-    open_rate: 0,
-    click_rate: 0,
-    revenue_generated: 165000,
-  },
-  {
-    id: 2,
-    campaign_name: 'Q2 Newsletter Blast',
-    campaign_type: 'Email',
-    target_audience: 'Existing Leads',
-    service_promoted: 'Premium Support Add-on',
-    budget: 15000,
-    start_date: '2026-05-15',
-    end_date: '2026-06-15',
-    status: 'Active',
-    leads_generated: 380,
-    conversions: 42,
-    emails_sent: 10000,
-    open_rate: 28.5,
-    click_rate: 6.2,
-    revenue_generated: 45000,
-  },
-  {
-    id: 3,
-    campaign_name: 'SEO Blog Optimization',
-    campaign_type: 'SEO',
-    target_audience: 'Developers & SaaS Founders',
-    service_promoted: 'DBaaS Platforms',
-    budget: 20000,
-    start_date: '2026-04-01',
-    end_date: '2026-09-30',
-    status: 'Active',
-    leads_generated: 620,
-    conversions: 80,
-    emails_sent: 0,
-    open_rate: 0,
-    click_rate: 0,
-    revenue_generated: 96000,
-  },
-  {
-    id: 4,
-    campaign_name: 'Instagram Influencer Run',
-    campaign_type: 'Social',
-    target_audience: 'Gen Z Tech Enthusiasts',
-    service_promoted: 'Smart Office Hub',
-    budget: 35000,
-    start_date: '2026-05-20',
-    end_date: '2026-06-20',
-    status: 'Paused',
-    leads_generated: 280,
-    conversions: 30,
-    emails_sent: 0,
-    open_rate: 0,
-    click_rate: 0,
-    revenue_generated: 52000,
-  },
-  {
-    id: 5,
-    campaign_name: 'Spring Tech Expo 2026',
-    campaign_type: 'Event',
-    target_audience: 'Enterprise CTOs & VPs',
-    service_promoted: 'Enterprise Security CRM',
-    budget: 120000,
-    start_date: '2026-03-10',
-    end_date: '2026-03-15',
-    status: 'Completed',
-    leads_generated: 650,
-    conversions: 95,
-    emails_sent: 0,
-    open_rate: 0,
-    click_rate: 0,
-    revenue_generated: 380000,
-  },
-  {
-    id: 6,
-    campaign_name: 'Q3 Product Hunt Launch Prep',
-    campaign_type: 'Content',
-    target_audience: 'Early Adopters',
-    service_promoted: 'AI CRM Co-pilot',
-    budget: 8000,
-    start_date: '2026-06-10',
-    end_date: '2026-07-10',
-    status: 'Draft',
-    leads_generated: 0,
-    conversions: 0,
-    emails_sent: 0,
-    open_rate: 0,
-    click_rate: 0,
-    revenue_generated: 0,
-  },
-]
-
-const kpiStats = {
-  leadsGenerated: 2480,
-  activeCampaigns: 5,
-  costPerLead: 15.5,
-  conversionRate: 12.4,
-  campaignRoi: 3.2,
-  websiteTraffic: 45000,
-  socialEngagement: 4.8,
-  emailOpenRate: 24.5,
-  monthlyRevenue: 395000,
-  targetAchievement: 79,
-  monthlyTarget: 500000,
+const emptyKpiStats = {
+  leadsGenerated: 0,
+  activeCampaigns: 0,
+  costPerLead: 0,
+  conversionRate: 0,
+  campaignRoi: 0,
+  websiteTraffic: 0,
+  socialEngagement: 0,
+  emailOpenRate: 0,
+  monthlyRevenue: 0,
+  targetAchievement: 0,
+  monthlyTarget: 0,
 }
 
-const funnelData = [
-  { stage: 'Impressions', count: 120000, value: 0, convRate: 100 },
-  { stage: 'Clicks', count: 25000, value: 0, convRate: 20.8 },
-  { stage: 'Landing Page Visits', count: 18000, value: 0, convRate: 72.0 },
-  { stage: 'Leads Generated', count: 2480, value: 0, convRate: 13.8 },
-  { stage: 'Qualified Leads', count: 620, value: 0, convRate: 25.0 },
-  { stage: 'Converted Clients', count: 308, value: 0, convRate: 49.7 },
-]
+const statusLabel = (status = '') =>
+  status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+
+const monthKey = (value) => {
+  const date = value ? new Date(value) : new Date()
+  return date.toLocaleString('en-US', { month: 'short' })
+}
+
+const mapCampaign = (campaign) => {
+  const leadsGenerated = Number(campaign.actualLeads ?? campaign.leads?.length ?? 0)
+  const conversions = campaign.leads?.filter?.((lead) => lead.status === 'CONVERTED').length ?? 0
+  const budget = Number(campaign.budget ?? 0)
+  const spent = Number(campaign.budgetSpent ?? 0)
+
+  return {
+    id: campaign.id,
+    campaign_name: campaign.name,
+    campaign_type: campaign.channel,
+    target_audience: campaign.description || 'Assigned audience',
+    service_promoted: campaign.successMetric || campaign.channel,
+    budget,
+    start_date: campaign.startDate,
+    end_date: campaign.endDate,
+    status: statusLabel(campaign.status),
+    leads_generated: leadsGenerated,
+    conversions,
+    emails_sent: 0,
+    open_rate: 0,
+    click_rate: 0,
+    revenue_generated: spent,
+  }
+}
+
+const summarizeMonthly = (campaigns, leads) => {
+  const map = new Map()
+
+  campaigns.forEach((campaign) => {
+    const key = monthKey(campaign.startDate || campaign.createdAt)
+    const current = map.get(key) || { month: key, revenue: 0, target: 0, leads: 0, won: 0 }
+    current.revenue += Number(campaign.budgetSpent ?? 0)
+    current.target += Number(campaign.budget ?? 0)
+    current.leads += Number(campaign.actualLeads ?? 0)
+    map.set(key, current)
+  })
+
+  leads.forEach((lead) => {
+    const key = monthKey(lead.createdAt)
+    const current = map.get(key) || { month: key, revenue: 0, target: 0, leads: 0, won: 0 }
+    current.leads += 1
+    if (lead.status === 'CONVERTED') current.won += 1
+    map.set(key, current)
+  })
+
+  return [...map.values()]
+}
+
+const summarizeWeekly = (activities, leads) => {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const map = new Map(days.map((day) => [day, { day, clicks: 0, emails: 0, visits: 0, leads: 0 }]))
+
+  activities.forEach((activity) => {
+    const day = days[new Date(activity.reportDate || activity.createdAt).getDay()]
+    const current = map.get(day)
+    current.visits += 1
+  })
+
+  leads.forEach((lead) => {
+    const day = days[new Date(lead.createdAt).getDay()]
+    const current = map.get(day)
+    current.leads += 1
+  })
+
+  return [...map.values()]
+}
+
+const summarizeFunnel = (leads) => {
+  const total = leads.length
+  const contacted = leads.filter((lead) => ['CONTACTED', 'QUALIFIED', 'CONVERTED'].includes(lead.status)).length
+  const qualified = leads.filter((lead) => ['QUALIFIED', 'CONVERTED'].includes(lead.status)).length
+  const converted = leads.filter((lead) => lead.status === 'CONVERTED').length
+  const rate = (count) => (total > 0 ? Number(((count / total) * 100).toFixed(1)) : 0)
+
+  return [
+    { stage: 'Leads Generated', count: total, value: 0, convRate: total ? 100 : 0 },
+    { stage: 'Contacted', count: contacted, value: 0, convRate: rate(contacted) },
+    { stage: 'Qualified Leads', count: qualified, value: 0, convRate: rate(qualified) },
+    { stage: 'Converted Clients', count: converted, value: 0, convRate: rate(converted) },
+  ]
+}
+
+const summarizeStats = (campaigns, leads) => {
+  const budget = campaigns.reduce(
+    (acc, campaign) => ({
+      allocated: acc.allocated + Number(campaign.budget ?? 0),
+      spent: acc.spent + Number(campaign.budgetSpent ?? 0),
+    }),
+    { allocated: 0, spent: 0 },
+  )
+  const converted = leads.filter((lead) => lead.status === 'CONVERTED').length
+
+  return {
+    leadsGenerated: leads.length,
+    activeCampaigns: campaigns.filter((campaign) => campaign.status === 'ACTIVE').length,
+    costPerLead: leads.length > 0 ? Number((budget.spent / leads.length).toFixed(2)) : 0,
+    conversionRate: leads.length > 0 ? Number(((converted / leads.length) * 100).toFixed(1)) : 0,
+    campaignRoi: budget.allocated > 0 ? Number((budget.spent / budget.allocated).toFixed(1)) : 0,
+    websiteTraffic: 0,
+    socialEngagement: 0,
+    emailOpenRate: 0,
+    monthlyRevenue: budget.spent,
+    targetAchievement: budget.allocated > 0 ? Math.round((budget.spent / budget.allocated) * 100) : 0,
+    monthlyTarget: budget.allocated,
+  }
+}
+
+export const fetchMarketingDashboardData = createAsyncThunk(
+  'marketingDashboard/fetchData',
+  async (_, { rejectWithValue }) => {
+    try {
+      const [campaignsRes, leadsRes, activitiesRes] = await Promise.all([
+        api.get('/marketing/campaigns'),
+        api.get('/marketing/leads'),
+        api.get('/marketing/activities'),
+      ])
+      const campaigns = campaignsRes.data || []
+      const leads = leadsRes.data || []
+      const activities = activitiesRes.data || []
+
+      return {
+        kpiStats: summarizeStats(campaigns, leads),
+        opportunities: campaigns.map(mapCampaign),
+        monthlyRevenue: summarizeMonthly(campaigns, leads),
+        weeklyData: summarizeWeekly(activities, leads),
+        activities: activities.map((activity) => ({
+          id: activity.id,
+          type: activity.type,
+          title: activity.title,
+          description: activity.description || activity.campaign?.name || 'Marketing activity',
+          time: activity.reportDate || activity.createdAt,
+        })),
+        funnelData: summarizeFunnel(leads),
+      }
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  },
+)
+
+export const createCampaignAsync = createAsyncThunk(
+  'marketingDashboard/createCampaign',
+  async (campaignData, { rejectWithValue }) => {
+    try {
+      const res = await campaignService.create({
+        name: campaignData.campaign_name,
+        channel: campaignData.campaign_type,
+        description: campaignData.target_audience,
+        budget: campaignData.budget,
+        startDate: campaignData.start_date ? new Date(campaignData.start_date).toISOString() : null,
+        endDate: campaignData.end_date ? new Date(campaignData.end_date).toISOString() : null,
+        status: String(campaignData.status).toUpperCase(),
+        successMetric: campaignData.service_promoted || 'General',
+      })
+      return mapCampaign(res.data)
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const updateCampaignAsync = createAsyncThunk(
+  'marketingDashboard/updateCampaign',
+  async ({ id, ...campaignData }, { rejectWithValue }) => {
+    try {
+      const res = await campaignService.update(id, {
+        name: campaignData.campaign_name,
+        channel: campaignData.campaign_type,
+        description: campaignData.target_audience,
+        budget: campaignData.budget,
+        startDate: campaignData.start_date ? new Date(campaignData.start_date).toISOString() : null,
+        endDate: campaignData.end_date ? new Date(campaignData.end_date).toISOString() : null,
+        status: String(campaignData.status).toUpperCase(),
+        successMetric: campaignData.service_promoted || 'General',
+      })
+      return mapCampaign(res.data)
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const deleteCampaignAsync = createAsyncThunk(
+  'marketingDashboard/deleteCampaign',
+  async (id, { rejectWithValue }) => {
+    try {
+      await campaignService.delete(id)
+      return id
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const updateCampaignStatus = createAsyncThunk(
+  'marketingDashboard/updateStatus',
+  async ({ id, status }, { rejectWithValue }) => {
+    try {
+      const dbStatus = String(status).toUpperCase()
+      const res = await campaignService.update(id, { status: dbStatus })
+      return mapCampaign(res.data)
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
 
 const marketingDashboardSlice = createSlice({
   name: 'marketingDashboard',
   initialState: {
-    kpiStats,
-    monthlyRevenue,
-    weeklyData,
-    activities,
-    opportunities,
-    funnelData,
+    kpiStats: emptyKpiStats,
+    monthlyRevenue: [],
+    weeklyData: [],
+    activities: [],
+    opportunities: [],
+    funnelData: summarizeFunnel([]),
     chartPeriod: 'monthly',
     loading: false,
+    error: null,
   },
   reducers: {
-    addCampaign(state, { payload }) { state.opportunities.unshift(payload) },
-    updateCampaign(state, { payload }) {
-      const idx = state.opportunities.findIndex(o => o.id === payload.id)
-      if (idx !== -1) {
-        state.opportunities[idx] = { ...state.opportunities[idx], ...payload }
-      }
-    },
-    updateCampaignStatus(state, { payload: { id, status } }) {
-      const opp = state.opportunities.find(o => o.id === id)
-      if (opp) opp.status = status
-    },
     setChartPeriod(state, { payload }) { state.chartPeriod = payload },
     setLoading(state, { payload }) { state.loading = payload },
-    refreshStats(state) { state.kpiStats.leadsGenerated += 1 },
+    refreshStats() {},
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMarketingDashboardData.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchMarketingDashboardData.fulfilled, (state, { payload }) => {
+        state.loading = false
+        state.kpiStats = payload.kpiStats
+        state.monthlyRevenue = payload.monthlyRevenue
+        state.weeklyData = payload.weeklyData
+        state.activities = payload.activities
+        state.opportunities = payload.opportunities
+        state.funnelData = payload.funnelData
+      })
+      .addCase(fetchMarketingDashboardData.rejected, (state, { payload }) => {
+        state.loading = false
+        state.error = payload || 'Unable to load marketing dashboard'
+      })
+      .addCase(createCampaignAsync.fulfilled, (state, action) => {
+        state.opportunities.unshift(action.payload)
+      })
+      .addCase(updateCampaignAsync.fulfilled, (state, action) => {
+        const idx = state.opportunities.findIndex(c => c.id === action.payload.id)
+        if (idx !== -1) {
+          state.opportunities[idx] = action.payload
+        }
+      })
+      .addCase(deleteCampaignAsync.fulfilled, (state, action) => {
+        state.opportunities = state.opportunities.filter(c => c.id !== action.payload)
+      })
+      .addCase(updateCampaignStatus.fulfilled, (state, action) => {
+        const idx = state.opportunities.findIndex(c => c.id === action.payload.id)
+        if (idx !== -1) {
+          state.opportunities[idx] = action.payload
+        }
+      })
   },
 })
 
-export const { addCampaign, updateCampaign, updateCampaignStatus, setChartPeriod, setLoading, refreshStats } = marketingDashboardSlice.actions
+export const { setChartPeriod, setLoading, refreshStats } = marketingDashboardSlice.actions
 export default marketingDashboardSlice.reducer

@@ -18,6 +18,15 @@ export async function attachScope(
   // active perspective session (if any) and effective data scope
   req.perspective = await getActivePerspectiveForUser(req.user.employeeId);
 
+  // Read-only enforcer for impersonation
+  if (req.perspective && req.perspective.perspectiveTargetId !== req.user.employeeId) {
+    const isMutating = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
+    if (isMutating) {
+      next(new ApiError(403, "Data modification is not allowed while impersonating (read-only mode)"));
+      return;
+    }
+  }
+
   // currentPerspective for dashboard queries - centralized filter logic
   if (req.perspective) {
     req.currentPerspective = {

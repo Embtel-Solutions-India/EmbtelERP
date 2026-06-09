@@ -8,7 +8,7 @@ import {
   Warning,
 } from "@mui/icons-material";
 import { FaCheckCircle } from "react-icons/fa";
-import { toggleTask } from "../../redux/slices/taskSlice";
+import { toggleTaskAsync } from "../../redux/slices/taskSlice";
 import { formatDate } from "../../utils";
 import SectionCard from "../common/SectionCard";
 
@@ -34,11 +34,11 @@ export default function TaskWidget({ tasks: overviewData }) {
     .filter((t) => {
       const due = new Date(t.dueDate);
       if (activeTab === "Today")
-        return due >= startOfDay && due <= endOfDay && t.status !== "done";
+        return due >= startOfDay && due <= endOfDay && t.status !== "completed";
       if (activeTab === "Upcoming") return due > endOfDay;
       if (activeTab === "Overdue")
         return (
-          t.status === "overdue" || (due < startOfDay && t.status !== "done")
+          t.status === "overdue" || (due < startOfDay && t.status !== "completed")
         );
       return true;
     })
@@ -46,7 +46,7 @@ export default function TaskWidget({ tasks: overviewData }) {
 
   const todayCount = tasks.filter((t) => {
     const due = new Date(t.dueDate);
-    return due >= startOfDay && due <= endOfDay && t.status !== "done";
+    return due >= startOfDay && due <= endOfDay && t.status !== "completed";
   }).length;
 
   return (
@@ -61,6 +61,7 @@ export default function TaskWidget({ tasks: overviewData }) {
           {todayCount} due today
         </span>
       }
+      className="h-[380px] flex flex-col"
     >
       <div className="flex gap-1 mb-4 bg-slate-100 dark:bg-gray-700 rounded-xl p-1">
         {TABS.map((tab) => (
@@ -85,7 +86,7 @@ export default function TaskWidget({ tasks: overviewData }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.2 }}
-          className="space-y-2"
+          className="space-y-2 flex-1 overflow-y-auto pr-1 scrollbar-thin min-h-0"
         >
           {filtered.length === 0 ? (
             <div className="text-center py-8 text-slate-400 dark:text-slate-500">
@@ -105,20 +106,20 @@ export default function TaskWidget({ tasks: overviewData }) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.05 }}
                 className={`flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/40 transition-colors border ${
-                  task.status === "done"
+                  task.status === "completed"
                     ? "border-transparent opacity-60"
                     : "border-transparent hover:border-slate-100 dark:hover:border-gray-700"
                 }`}
               >
                 <button
-                  onClick={() => dispatch(toggleTask(task.id))}
+                  onClick={() => dispatch(toggleTaskAsync(task))}
                   className={`flex-shrink-0 mt-0.5 transition-colors ${
-                    task.status === "done"
+                    task.status === "completed"
                       ? "text-emerald-500"
                       : "text-slate-300 dark:text-slate-600 hover:text-primary-500"
                   }`}
                 >
-                  {task.status === "done" ? (
+                  {task.status === "completed" ? (
                     <CheckCircle style={{ fontSize: 20 }} />
                   ) : (
                     <RadioButtonUnchecked style={{ fontSize: 20 }} />
@@ -127,7 +128,7 @@ export default function TaskWidget({ tasks: overviewData }) {
 
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`text-sm font-semibold ${task.status === "done" ? "line-through text-slate-400" : "text-slate-800 dark:text-slate-100"}`}
+                    className={`text-sm font-semibold ${task.status === "completed" ? "line-through text-slate-400" : "text-slate-800 dark:text-slate-100"}`}
                   >
                     {task.title}
                   </p>
