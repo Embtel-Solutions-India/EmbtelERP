@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
-import { updateLeadStatus } from '../../redux/slices/leadSlice'
+import { updateLeadStatusAsync } from '../../redux/slices/leadSlice'
 import { PIPELINE_COLUMNS } from '../../constants'
 import { formatCurrency, getInitials, formatDate } from '../../utils'
 import SectionCard from '../common/SectionCard'
@@ -54,7 +54,17 @@ export default function PipelineBoard() {
   const [draggedLead, setDraggedLead] = useState(null)
   const [overColumn, setOverColumn] = useState(null)
 
-  const getLeadsByStatus = (statusId) => leads.filter((l) => l.status === statusId)
+  const getLeadsByStatus = (statusId) => leads.filter((l) => {
+    const s = String(l.status).toLowerCase();
+    if (statusId === 'new') return s === 'new';
+    if (statusId === 'contacted') return s === 'contacted';
+    if (statusId === 'qualified') return s === 'qualified';
+    if (statusId === 'proposal') return s === 'proposal';
+    if (statusId === 'negotiation') return s === 'negotiation';
+    if (statusId === 'won') return s === 'won' || s === 'converted';
+    if (statusId === 'lost') return s === 'lost';
+    return s === statusId;
+  })
 
   const handleDragStart = (e, lead) => {
     setDraggedLead(lead)
@@ -69,8 +79,11 @@ export default function PipelineBoard() {
 
   const handleDrop = (e, columnId) => {
     e.preventDefault()
-    if (draggedLead && draggedLead.status !== columnId) {
-      dispatch(updateLeadStatus({ id: draggedLead.id, status: columnId }))
+    if (draggedLead) {
+      const currentStatus = String(draggedLead.status).toLowerCase();
+      if (currentStatus !== columnId) {
+        dispatch(updateLeadStatusAsync({ id: draggedLead.id, status: columnId }))
+      }
     }
     setDraggedLead(null)
     setOverColumn(null)

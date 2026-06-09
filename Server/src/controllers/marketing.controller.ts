@@ -21,6 +21,9 @@ import {
   updateMarketingKPI,
   updateMarketingLead,
   updateMarketingTask,
+  deleteMarketingCampaign,
+  deleteMarketingTask,
+  deleteMarketingLead,
 } from "../services/marketing.service.js";
 
 function marketingContext(req: Request): MarketingRequestContext {
@@ -115,3 +118,19 @@ export async function executiveDashboard(req: Request, res: Response) {
 export async function internDashboard(req: Request, res: Response) {
   res.json({ data: await getMarketingInternDashboard(marketingContext(req)) });
 }
+
+export async function deleteCampaign(req: Request, res: Response) {
+  await deleteMarketingCampaign(marketingContext(req), String(req.params.id));
+  res.status(204).end();
+}
+
+export async function deleteTask(req: Request, res: Response) {
+  await deleteMarketingTask(marketingContext(req), String(req.params.id));
+  res.status(204).end();
+}
+
+export async function deleteLead(req: Request, res: Response) {
+  await deleteMarketingLead(marketingContext(req), String(req.params.id));
+  res.status(204).end();
+}
+

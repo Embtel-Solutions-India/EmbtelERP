@@ -4,6 +4,7 @@ import { authenticate } from "../middleware/auth.middleware.js";
 import { attachScope } from "../middleware/scope.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validateBody } from "../middleware/validate.middleware.js";
+import { requireRole, requireEmployeeScope, ROLE_LEVEL, } from "../middleware/rbac.middleware.js";
 import { createEmployee, getEmployeeById, listEmployees, } from "../services/employee.service.js";
 const createEmployeeSchema = z.object({
     organizationId: z.string().min(1),
@@ -24,11 +25,11 @@ employeesRouter.get("/", asyncHandler(async (req, res) => {
     const employees = await listEmployees(req.scope?.visibleEmployees ?? []);
     res.json({ data: employees });
 }));
-employeesRouter.get("/:id", asyncHandler(async (req, res) => {
+employeesRouter.get("/:id", requireEmployeeScope("id"), asyncHandler(async (req, res) => {
     const employee = await getEmployeeById(String(req.params.id));
     res.json({ data: employee });
 }));
-employeesRouter.post("/", validateBody(createEmployeeSchema), asyncHandler(async (req, res) => {
+employeesRouter.post("/", requireRole(ROLE_LEVEL.HEAD), validateBody(createEmployeeSchema), asyncHandler(async (req, res) => {
     const actorId = req.user?.employeeId;
     const employee = await createEmployee(req.body, actorId);
     res.status(201).json({ data: employee });

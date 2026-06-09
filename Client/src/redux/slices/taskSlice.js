@@ -1,40 +1,137 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import api from '../../services/api'
 
-const tasks = [
-  { id: 1,  title: 'Send proposal to Wipro',       priority: 'urgent', status: 'todo',        dueDate: new Date().toISOString(),                        category: 'sales',   lead: 'Rohan Kapoor' },
-  { id: 2,  title: 'Follow up with HCL',           priority: 'high',   status: 'todo',        dueDate: new Date().toISOString(),                        category: 'followup',lead: 'Sneha Patel'  },
-  { id: 3,  title: 'Prepare demo for TCS',         priority: 'high',   status: 'in_progress', dueDate: new Date(Date.now() + 86400000).toISOString(),   category: 'sales',   lead: 'Vikram Nair'  },
-  { id: 4,  title: 'Update CRM pipeline data',     priority: 'medium', status: 'in_progress', dueDate: new Date(Date.now() + 86400000).toISOString(),   category: 'admin',   lead: null           },
-  { id: 5,  title: 'Review Q4 sales targets',      priority: 'medium', status: 'todo',        dueDate: new Date(Date.now() + 172800000).toISOString(),  category: 'admin',   lead: null           },
-  { id: 6,  title: 'Call Infosys back',            priority: 'high',   status: 'done',        dueDate: new Date(Date.now() - 86400000).toISOString(),   category: 'followup',lead: 'Priya Singh'  },
-  { id: 7,  title: 'Send quotation to Oracle',     priority: 'urgent', status: 'overdue',     dueDate: new Date(Date.now() - 172800000).toISOString(),  category: 'sales',   lead: 'Kavita Sharma'},
-  { id: 8,  title: 'Prepare monthly report',       priority: 'medium', status: 'todo',        dueDate: new Date(Date.now() + 259200000).toISOString(),  category: 'admin',   lead: null           },
-  { id: 9,  title: 'Schedule IBM discovery call',  priority: 'low',    status: 'todo',        dueDate: new Date(Date.now() + 345600000).toISOString(),  category: 'sales',   lead: 'Ananya Roy'   },
-  { id: 10, title: 'Attend sales training webinar',priority: 'low',    status: 'todo',        dueDate: new Date(Date.now() + 432000000).toISOString(),  category: 'training',lead: null           },
-]
+export const fetchTasks = createAsyncThunk(
+  'tasks/fetchAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get('/tasks')
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const toggleTaskAsync = createAsyncThunk(
+  'tasks/toggle',
+  async (task, { rejectWithValue }) => {
+    try {
+      const newStatus = task.status === 'completed' ? 'todo' : 'completed'
+      const res = await api.patch(`/tasks/${task.id}`, { status: newStatus })
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const toggleTask = createAsyncThunk(
+  'tasks/toggleById',
+  async (id, { getState, rejectWithValue }) => {
+    try {
+      const state = getState()
+      const task = state.tasks.list.find(t => t.id === id)
+      if (!task) throw new Error("Task not found")
+      const newStatus = task.status === 'completed' ? 'todo' : 'completed'
+      const res = await api.patch(`/tasks/${id}`, { status: newStatus })
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const addTask = createAsyncThunk(
+  'tasks/add',
+  async (taskData, { rejectWithValue }) => {
+    try {
+      const res = await api.post('/tasks', taskData)
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const deleteTask = createAsyncThunk(
+  'tasks/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      await api.delete(`/tasks/${id}`)
+      return id
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
+
+export const updateTask = createAsyncThunk(
+  'tasks/update',
+  async ({ id, ...taskData }, { rejectWithValue }) => {
+    try {
+      const res = await api.patch(`/tasks/${id}`, taskData)
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
 
 const taskSlice = createSlice({
   name: 'tasks',
   initialState: {
-    list: tasks,
+    list: [],
     loading: false,
     filter: 'all',
+    error: null
   },
   reducers: {
-    addTask(state, { payload }) { state.list.unshift(payload) },
-    toggleTask(state, { payload }) {
-      const t = state.list.find(t => t.id === payload)
-      if (t) t.status = t.status === 'done' ? 'todo' : 'done'
-    },
-    updateTask(state, { payload }) {
-      const idx = state.list.findIndex(t => t.id === payload.id)
-      if (idx !== -1) state.list[idx] = payload
-    },
-    deleteTask(state, { payload }) { state.list = state.list.filter(t => t.id !== payload) },
     setFilter(state, { payload }) { state.filter = payload },
     setLoading(state, { payload }) { state.loading = payload },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchTasks.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchTasks.fulfilled, (state, action) => {
+        state.loading = false
+        state.list = action.payload || []
+      })
+      .addCase(fetchTasks.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      .addCase(toggleTaskAsync.fulfilled, (state, action) => {
+        const updated = action.payload
+        const idx = state.list.findIndex(t => t.id === updated.id)
+        if (idx !== -1) {
+          state.list[idx] = updated
+        }
+      })
+      .addCase(toggleTask.fulfilled, (state, action) => {
+        const updated = action.payload
+        const idx = state.list.findIndex(t => t.id === updated.id)
+        if (idx !== -1) {
+          state.list[idx] = updated
+        }
+      })
+      .addCase(addTask.fulfilled, (state, action) => {
+        state.list.push(action.payload)
+      })
+      .addCase(deleteTask.fulfilled, (state, action) => {
+        state.list = state.list.filter(t => t.id !== action.payload)
+      })
+      .addCase(updateTask.fulfilled, (state, action) => {
+        const idx = state.list.findIndex(t => t.id === action.payload.id)
+        if (idx !== -1) {
+          state.list[idx] = action.payload
+        }
+      })
+  }
 })
 
-export const { addTask, toggleTask, updateTask, deleteTask, setFilter, setLoading } = taskSlice.actions
+export const { setFilter, setLoading } = taskSlice.actions
 export default taskSlice.reducer

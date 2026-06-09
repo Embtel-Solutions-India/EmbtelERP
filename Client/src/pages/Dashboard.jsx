@@ -1,22 +1,8 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
-  FaUsers,
-  FaUserPlus,
-  FaStar,
-  FaFire,
-  FaPhone,
-  FaCalendarAlt,
-  FaTrophy,
-  FaTimesCircle,
-  FaDollarSign,
-  FaBullseye,
-  FaTasks,
-  FaCheckCircle,
-  FaExclamationTriangle,
-  FaChartLine,
-  FaLightbulb,
-  FaTachometerAlt,
+  FaUsers, FaStar, FaFire, FaCalendarAlt, FaDollarSign, FaBullseye,
+  FaTasks, FaCheckCircle, FaExclamationTriangle, FaChartLine, FaLightbulb, FaTachometerAlt,
 } from "react-icons/fa";
 import StatCard from "../components/common/StatCard";
 import WelcomeSection from "../components/dashboard/WelcomeSection";
@@ -31,28 +17,59 @@ import OpportunityTable from "../components/dashboard/OpportunityTable";
 import CustomerInsights from "../components/dashboard/CustomerInsights";
 import CalendarWidget from "../components/dashboard/CalendarWidget";
 import {
-  fetchDashboardOverview,
-  fetchDashboardPerformance,
-  fetchDashboardInsights,
-  fetchDashboardTeam,
+  fetchDashboardOverview, fetchDashboardPerformance, fetchDashboardInsights,
+  fetchDashboardTeam, fetchRoleWorkspace,
 } from "../redux/slices/dashboardSlice";
+import { fetchTasks } from "../redux/slices/taskSlice";
+import { fetchLeads } from "../redux/slices/leadSlice";
+import RoleWorkspacePanel from "../components/dashboard/RoleWorkspacePanel";
+
+// Role-specific sales dashboard components
+import SalesInternDashboard from '../modules/sales/dashboard/SalesInternDashboard'
+import SalesExecutiveDashboard from '../modules/sales/dashboard/SalesExecutiveDashboard'
+import SalesHeadDashboard from '../modules/sales/dashboard/SalesHeadDashboard'
 
 export default function Dashboard() {
   const dispatch = useDispatch();
-  const { overview, performance, insights, teams, loading } = useSelector(
+  const { user } = useSelector(s => s.auth);
+  const { overview, performance, insights, teams, workspace, loading } = useSelector(
     (s) => s.dashboard,
   );
   const { current: activePerspective } = useSelector((s) => s.perspective);
 
-  // Fetch dashboard data whenever perspective changes
   useEffect(() => {
     dispatch(fetchDashboardOverview());
     dispatch(fetchDashboardPerformance());
     dispatch(fetchDashboardInsights());
     dispatch(fetchDashboardTeam());
+    dispatch(fetchRoleWorkspace());
+    dispatch(fetchTasks());
+    dispatch(fetchLeads());
   }, [dispatch, activePerspective]);
 
-  // Build stat cards from API data
+  // Role-aware routing: render dedicated sales role dashboards
+  const level = Number(user?.employeeLevel ?? user?.roleLevel ?? 1);
+  const designation = (user?.designation || '').toLowerCase();
+  const isSalesRole = designation.includes('sales') || (
+    !designation.includes('marketing') &&
+    !designation.includes('documentation') &&
+    !designation.includes('hr') &&
+    !designation.includes('owner') &&
+    !designation.includes('admin') &&
+    !designation.includes('professor') &&
+    !designation.includes('immigration') &&
+    !designation.includes('evaluation') &&
+    !designation.includes('it head') &&
+    level <= 2
+  );
+
+  if (isSalesRole) {
+    if (level <= 0) return <div className="space-y-6 max-w-[1600px] mx-auto"><WelcomeSection /><SalesInternDashboard /></div>
+    if (level === 1) return <div className="space-y-6 max-w-[1600px] mx-auto"><WelcomeSection /><SalesExecutiveDashboard /></div>
+    if (level === 2) return <div className="space-y-6 max-w-[1600px] mx-auto"><WelcomeSection /><SalesHeadDashboard /></div>
+  }
+
+  // Generic / higher-level fallback dashboard
   const statCards = [
     {
       title: "Total Employees",
@@ -61,7 +78,6 @@ export default function Dashboard() {
       color: "#6366f1",
       change: 0,
       changeLabel: "in scope",
-      sparkData: [30, 42, 38, 55, 47, 62, 58, 71, 65, 78, 72, 85],
     },
     {
       title: "Total Tasks",
@@ -70,7 +86,6 @@ export default function Dashboard() {
       color: "#06b6d4",
       change: 0,
       changeLabel: "total",
-      sparkData: [8, 12, 15, 10, 18, 14, 22, 19, 25, 21, 28, 23],
     },
     {
       title: "Completed Tasks",
@@ -82,7 +97,6 @@ export default function Dashboard() {
           ? Math.round((overview.taskCompleted / overview.taskCount) * 100)
           : 0,
       changeLabel: "completion rate",
-      sparkData: [10, 14, 12, 16, 15, 18, 17, 20, 19, 22, 21, 24],
     },
     {
       title: "Pending Tasks",
@@ -91,7 +105,6 @@ export default function Dashboard() {
       color: "#f59e0b",
       change: 0,
       changeLabel: "need attention",
-      sparkData: [5, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14, 18],
     },
     {
       title: "Overdue Tasks",
@@ -100,7 +113,6 @@ export default function Dashboard() {
       color: "#ef4444",
       change: overview?.taskOverdue > 0 ? -overview.taskOverdue : 0,
       changeLabel: "overdue",
-      sparkData: [4, 3, 5, 3, 4, 2, 3, 2, 2, 1, 2, 1],
     },
     {
       title: "Activities",
@@ -109,7 +121,6 @@ export default function Dashboard() {
       color: "#8b5cf6",
       change: 0,
       changeLabel: "total activities",
-      sparkData: [1, 2, 3, 2, 4, 3, 5, 4, 6, 5, 7, 7],
     },
     {
       title: "Target Achievement",
@@ -122,12 +133,10 @@ export default function Dashboard() {
       color: "#10b981",
       change: 0,
       changeLabel: "achievement",
-      sparkData: [55, 60, 58, 63, 67, 65, 70, 68, 73, 72, 77, 79],
       formatValue: false,
     },
   ];
 
-  // Add team/employee specific KPIs if available
   if (overview?.teamKpis) {
     statCards.push({
       title: `Team: ${overview.teamKpis.teamName}`,
@@ -136,7 +145,6 @@ export default function Dashboard() {
       color: "#06b6d4",
       change: overview.teamKpis.completionRate,
       changeLabel: "completion %",
-      sparkData: [30, 42, 38, 55, 47, 62, 58, 71, 65, 78, 72, 85],
     });
   }
 
@@ -149,7 +157,6 @@ export default function Dashboard() {
       color: "#8b5cf6",
       change: overview.employeeKpis.productivity,
       changeLabel: "productivity",
-      sparkData: [55, 60, 58, 63, 67, 65, 70, 68, 73, 72, 77, 79],
       formatValue: false,
     });
   }
@@ -162,7 +169,6 @@ export default function Dashboard() {
       color: "#6366f1",
       change: overview.businessKpis.targetAchievement,
       changeLabel: "target %",
-      sparkData: [30, 42, 38, 55, 47, 62, 58, 71, 65, 78, 72, 85],
     });
   }
 
@@ -176,7 +182,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Perspective indicator */}
       {overview?.perspective && (
         <div className="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/10 dark:to-blue-900/10 border border-primary-200 dark:border-primary-800 rounded-xl px-4 py-3">
           <div className="flex items-center gap-2 text-sm">
@@ -191,7 +196,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Insights section */}
       {insights && insights.length > 0 && (
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-2">
@@ -226,6 +230,8 @@ export default function Dashboard() {
         </div>
       )}
 
+      <RoleWorkspacePanel workspace={workspace} />
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statCards.map((card, i) => (
           <StatCard key={card.title} {...card} delay={i * 0.05} />
@@ -239,7 +245,6 @@ export default function Dashboard() {
         <TaskWidget tasks={overview} />
       </div>
 
-      {/* Team rankings */}
       {teams && teams.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-700 p-4">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">

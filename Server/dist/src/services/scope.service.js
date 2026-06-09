@@ -1,6 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { getDescendants } from "./hierarchy.service.js";
-export async function getDataScope(userId, perspectiveEmployeeId) {
+export async function getDataScope(userId, perspectiveTargetId) {
     try {
         const viewer = await prisma.employee.findUnique({
             where: { id: userId },
@@ -21,25 +21,104 @@ export async function getDataScope(userId, perspectiveEmployeeId) {
                 visibleTeams: [],
             };
         }
-        const perspectiveTarget = perspectiveEmployeeId
-            ? await prisma.employee.findUnique({
-                where: { id: perspectiveEmployeeId },
-                select: {
-                    id: true,
-                    businessId: true,
-                    departmentId: true,
-                    teamId: true,
-                },
-            })
-            : viewer;
-        if (!perspectiveTarget) {
+        if (!perspectiveTargetId) {
+            return buildScope({ ...viewer, level: viewer.level ?? undefined }, viewer);
+        }
+        // Resolve active perspective session to determine the type
+        const session = await prisma.perspectiveSession.findFirst({
+            where: { userId },
+        });
+        if (!session || session.perspectiveTargetId !== perspectiveTargetId) {
+            return buildScope({ ...viewer, level: viewer.level ?? undefined }, viewer);
+        }
+        const { perspectiveType, perspectiveTargetId: targetId } = session;
+        // Handle TEAM target
+        if (perspectiveType === "TEAM") {
+            const team = await prisma.team.findUnique({
+                where: { id: targetId },
+                select: { id: true, businessId: true, departmentId: true }
+            });
+            if (!team)
+                return getSelfScope(viewer);
+            const teamEmployees = await prisma.employee.findMany({
+                where: { teamId: team.id, isActive: true },
+                select: { id: true }
+            });
             return {
-                visibleEmployees: [],
-                visibleBusinesses: [],
-                visibleDepartments: [],
-                visibleTeams: [],
+                visibleEmployees: teamEmployees.map(e => e.id),
+                visibleBusinesses: [team.businessId],
+                visibleDepartments: team.departmentId ? [team.departmentId] : [],
+                visibleTeams: [team.id]
             };
         }
+        // Handle VERTICAL target
+        if (perspectiveType === "VERTICAL") {
+            const vertical = await prisma.vertical.findUnique({
+                where: { id: targetId },
+                select: { id: true, businessId: true }
+            });
+            if (!vertical)
+                return getSelfScope(viewer);
+            const [teams, employees] = await Promise.all([
+                prisma.team.findMany({
+                    where: { verticalId: vertical.id, isActive: true },
+                    select: { id: true }
+                }),
+                prisma.employee.findMany({
+                    where: { verticalId: vertical.id, isActive: true },
+                    select: { id: true }
+                })
+            ]);
+            return {
+                visibleEmployees: employees.map(e => e.id),
+                visibleBusinesses: [vertical.businessId],
+                visibleDepartments: [],
+                visibleTeams: teams.map(t => t.id)
+            };
+        }
+        // Handle BUSINESS or BUSINESS_OWNER target
+        if (perspectiveType === "BUSINESS" || perspectiveType === "BUSINESS_OWNER") {
+            const business = await prisma.business.findUnique({
+                where: { id: targetId },
+                select: { id: true }
+            });
+            if (!business)
+                return getSelfScope(viewer);
+            const [departments, teams, employees] = await Promise.all([
+                prisma.department.findMany({
+                    where: { businessId: business.id, isActive: true },
+                    select: { id: true }
+                }),
+                prisma.team.findMany({
+                    where: { businessId: business.id, isActive: true },
+                    select: { id: true }
+                }),
+                prisma.employee.findMany({
+                    where: { businessId: business.id, isActive: true },
+                    select: { id: true }
+                })
+            ]);
+            return {
+                visibleEmployees: employees.map(e => e.id),
+                visibleBusinesses: [business.id],
+                visibleDepartments: departments.map(d => d.id),
+                visibleTeams: teams.map(t => t.id)
+            };
+        }
+        // Handle employee-based targets
+        const perspectiveTarget = await prisma.employee.findUnique({
+            where: { id: perspectiveTargetId },
+            select: {
+                id: true,
+                businessId: true,
+                departmentId: true,
+                teamId: true,
+            },
+        });
+        if (!perspectiveTarget) {
+            return getSelfScope(viewer);
+        }
+        // Enforce descendant check
         if (viewer.id !== perspectiveTarget.id) {
             const descendants = await getDescendants(viewer.id);
             if (!descendants.some((employee) => employee.id === perspectiveTarget.id)) {
@@ -59,19 +138,6 @@ export async function getScopedEmployees(scope) {
             id: { in: scope.visibleEmployees },
         },
     });
-}
-export async function getActivePerspectiveForUser(userId) {
-    const active = await prisma.perspective.findFirst({
-        where: { userId },
-        orderBy: { updatedAt: "desc" },
-    });
-    return active
-        ? {
-            userId: active.userId,
-            currentPerspectiveId: active.currentPerspectiveId,
-            perspectiveType: active.perspectiveType,
-        }
-        : null;
 }
 function getSelfScope(employee) {
     return {

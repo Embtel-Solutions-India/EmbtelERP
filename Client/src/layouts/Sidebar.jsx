@@ -30,13 +30,32 @@ import {
   School as InternIcon,
 } from "@mui/icons-material";
 import {
+  salesInternMenu,
+  salesExecutiveMenu,
+  salesHeadMenu,
   salesMenu,
+  marketingInternMenu,
+  marketingExecutiveMenu,
+  marketingManagerMenu,
   marketingMenu,
+  productionInternMenu,
+  productionExecutiveMenu,
+  productionManagerMenu,
   productionMenu,
+  documentationInternMenu,
+  documentationExecutiveMenu,
+  documentationManagerMenu,
   evaluationMenu,
+  headEvaluationMenu,
+  professorMenu,
   hrMenu,
+  hrExecutiveMenu,
+  recruitmentMenu,
   ownerMenu,
+  headMenu,
+  verticalMenu,
   adminMenu,
+  superAdminMenu,
 } from "../config/sidebarConfig";
 import { APP_NAME } from "../constants";
 import { getInitials } from "../utils";
@@ -68,26 +87,110 @@ const ICON_MAP = {
   Assessment,
   AccountCircle,
   Settings,
+  AccountTree: VerticalIcon,
 };
 
-const menuMap = {
-  sales: salesMenu,
-  marketing: marketingMenu,
-  production: productionMenu,
-  evaluation: evaluationMenu,
-  hr: hrMenu,
-  owner: ownerMenu,
-  admin: adminMenu,
-};
+// Resolve which menu to show based on active module + role level + designation
+function resolveMenu(activeModule, level, designation) {
+  const desg = (designation || "").toLowerCase();
+
+  switch (activeModule) {
+    case "sales":
+      if (level <= 0) return salesInternMenu;
+      if (level >= 2 || desg.includes("head") || desg.includes("manager")) return salesHeadMenu;
+      return salesExecutiveMenu;
+
+    case "sales-intern":
+      return salesInternMenu;
+
+    case "sales-manager":
+      return salesHeadMenu;
+
+    case "marketing":
+      if (level <= 0) return marketingInternMenu;
+      if (level >= 2 || desg.includes("manager")) return marketingManagerMenu;
+      return marketingExecutiveMenu;
+
+    case "marketing-intern":
+      return marketingInternMenu;
+
+    case "marketing-manager":
+      return marketingManagerMenu;
+
+    case "production":
+      if (level <= 0) return productionInternMenu;
+      if (level >= 2 || desg.includes("manager")) return productionManagerMenu;
+      return productionExecutiveMenu;
+
+    case "documentation-intern":
+      return documentationInternMenu;
+
+    case "documentation":
+      return documentationExecutiveMenu;
+
+    case "documentation-manager":
+      return documentationManagerMenu;
+
+    case "evaluation":
+      return evaluationMenu;
+
+    case "head-evaluation":
+      return headEvaluationMenu;
+
+    case "professor":
+      return professorMenu;
+
+    case "hr":
+      return hrMenu;
+
+    case "hr-executive":
+      return hrExecutiveMenu;
+
+    case "recruitment":
+      return recruitmentMenu;
+
+    case "owner":
+      return ownerMenu;
+
+    case "head":
+      return headMenu;
+
+    case "vertical":
+      return verticalMenu;
+
+    case "admin":
+      return adminMenu;
+
+    case "super-admin":
+      return superAdminMenu;
+
+    default:
+      return salesMenu;
+  }
+}
 
 const moduleLabelMap = {
-  sales: "Sales Platform",
-  marketing: "Marketing Platform",
-  production: "Production Platform",
-  evaluation: "Evaluation Platform",
-  hr: "HR Platform",
-  owner: "Owner Platform",
-  admin: "Admin Platform",
+  "sales":                 "Sales Platform",
+  "sales-intern":          "Sales Platform",
+  "sales-manager":         "Sales Platform",
+  "marketing":             "Marketing Platform",
+  "marketing-intern":      "Marketing Platform",
+  "marketing-manager":     "Marketing Platform",
+  "production":            "Documentation Platform",
+  "documentation":         "Documentation Platform",
+  "documentation-intern":  "Documentation Platform",
+  "documentation-manager": "Documentation Platform",
+  "evaluation":            "Evaluation Platform",
+  "head-evaluation":       "Evaluation Platform",
+  "professor":             "Evaluation Platform",
+  "hr":                    "HR Platform",
+  "hr-executive":          "HR Platform",
+  "recruitment":           "HR Platform",
+  "owner":                 "Management Platform",
+  "head":                  "Management Platform",
+  "vertical":              "Management Platform",
+  "admin":                 "Admin Platform",
+  "super-admin":           "Admin Platform",
 };
 
 const IconComponent = ({ name, size = 20 }) => {
@@ -316,7 +419,9 @@ export default function Sidebar({ open, mobileOpen }) {
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const activeModule = pathSegments[0] || "sales";
 
-  const items = menuMap[activeModule] || salesMenu;
+  const level = Number(user?.employeeLevel ?? user?.roleLevel ?? 0);
+  const designation = user?.designation || ''
+  const items = resolveMenu(activeModule, level, designation)
   const platformLabel = moduleLabelMap[activeModule] || "Sales Platform";
   const isViewingOther = activePerspective !== null;
 

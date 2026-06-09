@@ -135,6 +135,32 @@ export type DashboardTeam = {
   ranking: number;
 };
 
+export type RoleWorkspaceWidget = {
+  key: string;
+  title: string;
+  value: number;
+  label: string;
+  tone: "primary" | "success" | "warning" | "danger" | "neutral";
+};
+
+export type RoleWorkspaceAction = {
+  key: string;
+  label: string;
+  path: string;
+};
+
+export type RoleWorkspace = {
+  roleKey: string;
+  title: string;
+  focus: string[];
+  widgets: RoleWorkspaceWidget[];
+  actions: RoleWorkspaceAction[];
+  approvals: {
+    pending: number;
+    label: string;
+  };
+};
+
 // ─── Aggregation scope ────────────────────────────────────────────────────────
 
 type AggScope = {
@@ -532,6 +558,32 @@ async function getMarketingKpiStats(
     leadsGenerated,
     conversions,
   };
+}
+
+function hasDesignation(designation: string, ...needles: string[]) {
+  return needles.some((needle) => designation.includes(needle));
+}
+
+function completionRate(completed: number, total: number) {
+  return total > 0 ? Math.round((completed / total) * 100) : 0;
+}
+
+function makeWidget(
+  key: string,
+  title: string,
+  value: number,
+  label: string,
+  tone: RoleWorkspaceWidget["tone"] = "neutral",
+): RoleWorkspaceWidget {
+  return { key, title, value, label, tone };
+}
+
+function makeAction(
+  key: string,
+  label: string,
+  path: string,
+): RoleWorkspaceAction {
+  return { key, label, path };
 }
 
 // ─── Main Dashboard Service ──────────────────────────────────────────────────
@@ -1075,4 +1127,244 @@ export async function getDashboardTeam(
   });
 
   return teamResults;
+}
+
+export async function getRoleWorkspace(
+  scope: DataScope,
+  viewer: AuthUser,
+  perspective?: CurrentPerspective | null,
+): Promise<RoleWorkspace> {
+  const { employeeIds, teamIds, businessIds } = await resolveAggregationScope(
+    scope,
+    perspective,
+  );
+
+  const employee = await prisma.employee.findUnique({
+    where: { id: viewer.employeeId },
+    select: {
+      designation: true,
+      role: { select: { level: true, name: true } },
+    },
+  });
+
+  const roleLevel = viewer.roleLevel ?? employee?.role.level ?? 0;
+  const designation = (employee?.designation ?? employee?.role.name ?? "").toLowerCase();
+  const taskStats = await getTaskStats(employeeIds, businessIds);
+
+  const [
+    employeeCount,
+    documentCount,
+    pendingDocuments,
+    marketingCampaigns,
+    marketingTasks,
+    marketingLeads,
+    notificationApprovals,
+  ] = await Promise.all([
+    prisma.employee.count({ where: { id: { in: employeeIds } } }),
+    businessIds.length
+      ? prisma.document.count({ where: { businessId: { in: businessIds } } })
+      : Promise.resolve(0),
+    businessIds.length
+      ? prisma.document.count({
+          where: {
+            businessId: { in: businessIds },
+            kind: { contains: "missing", mode: "insensitive" },
+          },
+        })
+      : Promise.resolve(0),
+    businessIds.length
+      ? prisma.marketingCampaign.findMany({
+          where: { businessId: { in: businessIds } },
+          select: { status: true, budget: true, budgetSpent: true },
+        })
+      : Promise.resolve([]),
+    businessIds.length || employeeIds.length || teamIds.length
+      ? prisma.marketingTask.findMany({
+          where: {
+            OR: [
+              ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
+              ...(teamIds.length ? [{ teamId: { in: teamIds } }] : []),
+              ...(employeeIds.length ? [{ assignedToId: { in: employeeIds } }] : []),
+            ],
+          },
+          select: { status: true, dueDate: true },
+        })
+      : Promise.resolve([]),
+    businessIds.length || employeeIds.length || teamIds.length
+      ? prisma.marketingLead.findMany({
+          where: {
+            OR: [
+              ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
+              ...(teamIds.length ? [{ teamId: { in: teamIds } }] : []),
+              ...(employeeIds.length ? [{ assignedToId: { in: employeeIds } }] : []),
+            ],
+          },
+          select: { status: true, estimatedValue: true },
+        })
+      : Promise.resolve([]),
+    businessIds.length || employeeIds.length
+      ? prisma.notification.count({
+          where: {
+            isRead: false,
+            OR: [
+              ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
+              { recipientId: viewer.employeeId },
+            ],
+          },
+        })
+      : Promise.resolve(0),
+  ]);
+
+  const activeMarketingCampaigns = marketingCampaigns.filter(
+    (campaign) => campaign.status === "ACTIVE",
+  ).length;
+  const completedMarketingTasks = marketingTasks.filter(
+    (task) => task.status === "COMPLETED",
+  ).length;
+  const pendingMarketingTasks = marketingTasks.filter(
+    (task) => !["COMPLETED", "CANCELLED"].includes(task.status),
+  ).length;
+  const leadValue = marketingLeads.reduce(
+    (sum, lead) => sum + Number(lead.estimatedValue ?? 0),
+    0,
+  );
+  const budget = marketingCampaigns.reduce(
+    (acc, row) => ({
+      allocated: acc.allocated + Number(row.budget ?? 0),
+      spent: acc.spent + Number(row.budgetSpent ?? 0),
+    }),
+    { allocated: 0, spent: 0 },
+  );
+  const budgetUsage =
+    budget.allocated > 0 ? Math.round((budget.spent / budget.allocated) * 100) : 0;
+
+  if (roleLevel >= 5 || hasDesignation(designation, "super admin", "admin", "it head")) {
+    return {
+      roleKey: "super_admin",
+      title: "System Administration Workspace",
+      focus: ["System health", "Users and roles", "Audit visibility"],
+      widgets: [
+        makeWidget("employees", "Active Users", employeeCount, "employees in scope", "primary"),
+        makeWidget("audit", "Audit Logs", await prisma.auditLog.count({ where: { businessId: { in: businessIds } } }), "recorded events", "neutral"),
+        makeWidget("approvals", "Unread Requests", notificationApprovals, "permission and system notices", "warning"),
+        makeWidget("tasks", "Open Tasks", taskStats.pending, "operational follow-up", "danger"),
+      ],
+      actions: [
+        makeAction("org", "Organization Explorer", "/admin/org-explorer"),
+        makeAction("reports", "Audit Reports", "/sales/reports"),
+        makeAction("settings", "Settings", "/sales/settings"),
+      ],
+      approvals: { pending: notificationApprovals, label: "Unread system requests" },
+    };
+  }
+
+  if (roleLevel >= 4 || hasDesignation(designation, "owner", "business head", "immigration head")) {
+    return {
+      roleKey: "business_owner",
+      title: "Business Owner Workspace",
+      focus: ["Revenue overview", "Department comparison", "Forecast attention"],
+      widgets: [
+        makeWidget("employees", "Employee Count", employeeCount, "active employees", "primary"),
+        makeWidget("revenue", "Estimated Lead Value", Math.round(leadValue), "from converted pipeline", "success"),
+        makeWidget("completion", "KPI Summary", completionRate(taskStats.completed, taskStats.total), "task completion %", "success"),
+        makeWidget("pending", "Pending Work", taskStats.pending, "tasks needing action", "warning"),
+      ],
+      actions: [
+        makeAction("analytics", "Analytics", "/owner/dashboard"),
+        makeAction("reports", "Reports", "/sales/reports"),
+        makeAction("finance", "Finance", "/owner/dashboard"),
+      ],
+      approvals: { pending: notificationApprovals, label: "Business approval requests" },
+    };
+  }
+
+  if (hasDesignation(designation, "hr", "recruitment")) {
+    return {
+      roleKey: "hr_manager",
+      title: "HR Workspace",
+      focus: ["Employee operations", "Recruitment tasks", "Performance reviews"],
+      widgets: [
+        makeWidget("employees", "Total Employees", employeeCount, "active employees", "primary"),
+        makeWidget("pending", "Open HR Tasks", taskStats.pending, "assigned follow-up", "warning"),
+        makeWidget("completed", "Completed Tasks", taskStats.completed, "closed work", "success"),
+        makeWidget("approvals", "Approvals", notificationApprovals, "people requests", "danger"),
+      ],
+      actions: [
+        makeAction("employees", "Employees", "/hr/dashboard"),
+        makeAction("performance", "Performance", "/sales/performance"),
+        makeAction("reports", "Reports", "/sales/reports"),
+      ],
+      approvals: { pending: notificationApprovals, label: "HR approvals" },
+    };
+  }
+
+  if (hasDesignation(designation, "documentation", "production")) {
+    return {
+      roleKey: roleLevel >= 2 ? "documentation_manager" : "documentation_executive",
+      title: roleLevel >= 2 ? "Documentation Manager Workspace" : "Documentation Workspace",
+      focus: ["Case processing", "Verification", "SLA attention"],
+      widgets: [
+        makeWidget("documents", "Documents", documentCount, "records in scope", "primary"),
+        makeWidget("missing", "Missing Documents", pendingDocuments, "needs follow-up", "danger"),
+        makeWidget("due", "Due Cases", taskStats.overdue, "overdue tasks", "warning"),
+        makeWidget("sla", "SLA Compliance", completionRate(taskStats.completed, taskStats.total), "completion %", "success"),
+      ],
+      actions: [
+        makeAction("cases", "Cases", "/production/dashboard"),
+        makeAction("tasks", "Tasks", "/sales/tasks"),
+        makeAction("reports", "Reports", "/sales/reports"),
+      ],
+      approvals: { pending: notificationApprovals, label: "QC and document approvals" },
+    };
+  }
+
+  if (hasDesignation(designation, "marketing")) {
+    const roleKey = roleLevel <= 0 ? "marketing_intern" : roleLevel >= 2 ? "marketing_manager" : "marketing_executive";
+    return {
+      roleKey,
+      title:
+        roleKey === "marketing_manager"
+          ? "Marketing Manager Workspace"
+          : roleKey === "marketing_intern"
+            ? "Marketing Intern Workspace"
+            : "Marketing Executive Workspace",
+      focus: ["Campaign work", "Lead generation", "Content and activity tracking"],
+      widgets: [
+        makeWidget("leads", "Leads Generated", marketingLeads.length, "marketing leads", "primary"),
+        makeWidget("campaigns", "Active Campaigns", activeMarketingCampaigns, "currently active", "success"),
+        makeWidget("tasks", "Content Tasks", pendingMarketingTasks, "open marketing tasks", "warning"),
+        makeWidget("budget", "Budget Usage", budgetUsage, "spent %", budgetUsage > 90 ? "danger" : "neutral"),
+      ],
+      actions: [
+        makeAction("campaigns", "Campaigns", "/marketing/campaigns"),
+        makeAction("tasks", "Tasks", "/marketing/tasks"),
+        makeAction("reports", "Reports", "/marketing/reports"),
+      ],
+      approvals: { pending: notificationApprovals, label: "Campaign approval requests" },
+    };
+  }
+
+  const salesRoleKey = roleLevel <= 0 ? "sales_intern" : roleLevel >= 2 ? "sales_head" : "sales_executive";
+  return {
+    roleKey: salesRoleKey,
+    title:
+      salesRoleKey === "sales_head"
+        ? "Sales Head Workspace"
+        : salesRoleKey === "sales_intern"
+          ? "Sales Intern Workspace"
+          : "Sales Executive Workspace",
+    focus: ["Follow-ups", "Pipeline movement", "Revenue impact"],
+    widgets: [
+      makeWidget("assigned", "Assigned Leads", marketingLeads.length, "pipeline records", "primary"),
+      makeWidget("followups", "Today's Follow Ups", taskStats.pending, "open tasks", "warning"),
+      makeWidget("completed", "Completed Tasks", taskStats.completed + completedMarketingTasks, "closed work", "success"),
+      makeWidget("revenue", "Revenue Impact", Math.round(leadValue), "estimated lead value", "success"),
+    ],
+    actions: [
+      makeAction("leads", "Leads", "/sales/leads"),
+      makeAction("followups", "Follow Ups", "/sales/follow-ups"),
+      makeAction("performance", "Performance", "/sales/performance"),
+    ],
+    approvals: { pending: notificationApprovals, label: "Sales approval requests" },
+  };
 }

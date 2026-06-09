@@ -19,14 +19,16 @@ const ICON_MAP = {
 const DEFAULT = { Icon: FaMapPin, bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-500' }
 
 export default function ActivityTimeline() {
-  const { activities } = useSelector((s) => s.dashboard)
+  const dashboardActivities = useSelector((s) => s.dashboard?.activities)
+  const workspaceActivities = useSelector((s) => s.workspace?.activities)
+  const activities = (workspaceActivities?.length ? workspaceActivities : dashboardActivities) || []
 
   return (
-    <SectionCard title="Recent Activities" subtitle="Your latest CRM interactions" delay={0.25}>
-      <div className="relative">
+    <SectionCard title="Recent Activities" subtitle="Your latest CRM interactions" delay={0.25} className="h-[380px] flex flex-col">
+      <div className="relative flex-1 min-h-0 flex flex-col">
         <div className="absolute left-5 top-2 bottom-2 w-px bg-gradient-to-b from-primary-200 via-purple-200 to-transparent dark:from-primary-900 dark:via-purple-900" />
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-y-auto pr-1 scrollbar-thin">
           {activities.map((activity, i) => {
             const entry = ICON_MAP[activity.type] || DEFAULT
             const { Icon } = entry

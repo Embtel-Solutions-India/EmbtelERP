@@ -616,3 +616,83 @@ model MarketingKPI {
   @@index([campaignId])
   @@index([metricType])
 }
+
+model DashboardConfig {
+  id        String   @id @default(cuid())
+  role      String   // e.g. "sales_intern", "sales_executive", "sales_head", "marketing_intern", "marketing_executive", "marketing_manager", "documentation_executive", "documentation_manager", "vertical_manager", "immigration_head", "evaluation_head", "hr_manager", "business_owner", "super_admin"
+  widget    String   // e.g. "kpi_cards", "calendar", "activities", "notifications", "quick_actions", "task_summary", "performance", "upcoming_events", ...
+  position  Int      // Order position
+  priority  String   // "critical", "high", "medium", "low"
+  colSpan   Json?    // { xs: 1, sm: 2, md: 3, lg: 4, xl: 5 }
+  height    String?  // "small", "medium", "large"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([role, widget])
+}
+
+enum CalendarEventType {
+  MEETING
+  FOLLOWUP
+  TASK
+  DEADLINE
+  CAMPAIGN
+  DOCUMENT_REVIEW
+  APPROVAL
+  INTERVIEW
+  EMPLOYEE_EVENT
+  OTHER
+}
+
+enum CalendarEventStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum CalendarEventPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model CalendarEvent {
+  id              String                @id @default(cuid())
+  title           String
+  description     String?
+  eventType       CalendarEventType     @default(OTHER)
+  status          CalendarEventStatus   @default(SCHEDULED)
+  priority        CalendarEventPriority @default(MEDIUM)
+  date            DateTime
+  startTime       String?               // "09:00"
+  endTime         String?               // "10:00"
+
+  // Org scoping
+  organizationId  String
+  businessId      String
+
+  // Ownership
+  createdById     String
+  assignedToId    String?
+
+  // Optional related records (soft links — no FK constraint to keep it flexible)
+  relatedLeadId      String?
+  relatedTaskId      String?
+  relatedEmployeeId  String?
+  relatedCampaignId  String?
+  relatedModule      String?            // e.g. "lead", "campaign", "task", "employee"
+
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([organizationId])
+  @@index([businessId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([date])
+  @@index([eventType])
+}
+

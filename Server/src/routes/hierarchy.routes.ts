@@ -119,3 +119,23 @@ hierarchyRouter.get(
     res.json({ data: managers });
   }),
 );
+
+hierarchyRouter.get(
+  "/meta",
+  asyncHandler(async (req, res) => {
+    const [businesses, departments, teams, roles] = await Promise.all([
+      prisma.business.findMany({ where: { isActive: true } }),
+      prisma.department.findMany({ where: { isActive: true } }),
+      prisma.team.findMany({ where: { isActive: true } }),
+      prisma.role.findMany(),
+    ]);
+    res.json({
+      data: {
+        businesses,
+        departments,
+        teams,
+        roles,
+      }
+    });
+  })
+);

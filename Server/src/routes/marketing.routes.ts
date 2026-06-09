@@ -24,6 +24,9 @@ import {
   updateKPI,
   updateLead,
   updateTask,
+  deleteCampaign,
+  deleteTask,
+  deleteLead,
 } from "../controllers/marketing.controller.js";
 import {
   createMarketingActivitySchema,
@@ -59,6 +62,10 @@ marketingRouter.patch("/tasks/:id", validateBody(updateMarketingTaskSchema), asy
 marketingRouter.get("/leads", asyncHandler(listLeads));
 marketingRouter.post("/leads", validateBody(createMarketingLeadSchema), asyncHandler(createLead));
 marketingRouter.patch("/leads/:id", validateBody(updateMarketingLeadSchema), asyncHandler(updateLead));
+marketingRouter.delete("/leads/:id", asyncHandler(deleteLead));
+marketingRouter.delete("/campaigns/:id", asyncHandler(deleteCampaign));
+marketingRouter.delete("/tasks/:id", asyncHandler(deleteTask));
+
 
 marketingRouter.get("/activities", asyncHandler(listActivities));
 marketingRouter.post("/activities", validateBody(createMarketingActivitySchema), asyncHandler(createActivity));

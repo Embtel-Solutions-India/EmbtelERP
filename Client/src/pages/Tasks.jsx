@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Add, CheckCircle, RadioButtonUnchecked, DeleteOutline, AccessTime } from '@mui/icons-material'
+import { Add, CheckCircle, RadioButtonUnchecked, DeleteOutline, AccessTime, Edit } from '@mui/icons-material'
 import { FaExclamationTriangle, FaCalendarDay, FaArrowRight, FaCheckCircle } from 'react-icons/fa'
-import { addTask, toggleTask, deleteTask } from '../redux/slices/taskSlice'
+import { addTask, toggleTask, deleteTask, updateTask, fetchTasks } from '../redux/slices/taskSlice'
+import { fetchEmployees } from '../redux/slices/employeeSlice'
 import PageHeader from '../components/common/PageHeader'
 import ActionFormModal from '../components/common/ActionFormModal'
 import { formatDate } from '../utils'
 
 const PRIORITY_MAP = {
   urgent: 'badge-purple', high: 'badge-error', medium: 'badge-warning', low: 'badge-info',
+  URGENT: 'badge-purple', HIGH: 'badge-error', MEDIUM: 'badge-warning', LOW: 'badge-info',
 }
 
 const GROUPS = [
@@ -22,70 +24,120 @@ const GROUPS = [
 export default function Tasks() {
   const dispatch = useDispatch()
   const { list: tasks } = useSelector((s) => s.tasks)
+  const { list: employees } = useSelector((s) => s.employees)
   const [isTaskFormOpen, setTaskFormOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
+
+  useEffect(() => {
+    dispatch(fetchTasks())
+    dispatch(fetchEmployees())
+  }, [dispatch])
 
   const now = new Date()
   const groups = {
-    overdue:  tasks.filter(t => t.status === 'overdue'),
-    today:    tasks.filter(t => {
-      if (t.status === 'done' || t.status === 'overdue') return false
-      return new Date(t.dueDate).toDateString() === now.toDateString()
+    overdue: tasks.filter(t => {
+      const status = String(t.status).toLowerCase()
+      if (status === 'completed' || status === 'done') return false
+      return t.dueDate && new Date(t.dueDate) < now
+    }),
+    today: tasks.filter(t => {
+      const status = String(t.status).toLowerCase()
+      if (status === 'completed' || status === 'done') return false
+      if (t.dueDate && new Date(t.dueDate) < now) return false // Already in overdue
+      return t.dueDate && new Date(t.dueDate).toDateString() === now.toDateString()
     }),
     upcoming: tasks.filter(t => {
-      if (t.status === 'done' || t.status === 'overdue') return false
-      const due = new Date(t.dueDate)
-      return due.toDateString() !== now.toDateString() && due > now
+      const status = String(t.status).toLowerCase()
+      if (status === 'completed' || status === 'done') return false
+      const due = t.dueDate ? new Date(t.dueDate) : null
+      return due && due.toDateString() !== now.toDateString() && due > now
     }),
-    done: tasks.filter(t => t.status === 'done'),
+    done: tasks.filter(t => {
+      const status = String(t.status).toLowerCase()
+      return status === 'completed' || status === 'done'
+    }),
   }
-  const handleCreateTask = (values) => {
-    const dueDate = new Date(values.dueDate)
 
-    dispatch(addTask({
-      id: Date.now(),
+  const handleCreateOrUpdateTask = (values) => {
+    const payload = {
       title: values.title,
+      description: values.description || '',
       priority: values.priority,
-      status: dueDate < new Date() ? 'overdue' : 'todo',
-      dueDate: dueDate.toISOString(),
-      category: values.category,
-      lead: values.lead || null,
-    }))
+      dueDate: values.dueDate ? new Date(values.dueDate).toISOString() : null,
+      assigneeId: values.assigneeId || null,
+      status: values.status || 'todo',
+    }
+
+    if (editingTask) {
+      dispatch(updateTask({ id: editingTask.id, ...payload })).then(() => {
+        setTaskFormOpen(false)
+        setEditingTask(null)
+      })
+    } else {
+      dispatch(addTask(payload)).then(() => {
+        setTaskFormOpenOpen(false)
+      })
+    }
   }
+
+  const handleEditClick = (task) => {
+    setEditingTask(task)
+    setTaskFormOpen(true)
+  }
+
+  const taskFields = [
+    { name: 'title', label: 'Task Title', required: true, fullWidth: true },
+    { name: 'description', label: 'Description', type: 'textarea', fullWidth: true },
+    {
+      name: 'priority',
+      label: 'Priority',
+      type: 'select',
+      options: ['urgent', 'high', 'medium', 'low'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      options: ['todo', 'in_progress', 'completed', 'cancelled'].map((value) => ({ value, label: value.replace('_', ' ').toUpperCase() })),
+    },
+    { name: 'dueDate', label: 'Due Date', type: 'datetime-local' },
+    ...(employees.length ? [{
+      name: 'assigneeId',
+      label: 'Assignee',
+      type: 'select',
+      options: [
+        { value: '', label: 'Unassigned' },
+        ...employees.map(emp => ({ value: emp.id, label: `${emp.firstName} ${emp.lastName} (${emp.designation})` }))
+      ],
+      fullWidth: true
+    }] : [])
+  ]
 
   return (
     <div className="space-y-6 max-w-[900px] mx-auto">
       <PageHeader
         title="Tasks"
-        subtitle={`${tasks.filter(t => t.status !== 'done').length} active tasks`}
+        subtitle={`${tasks.filter(t => String(t.status).toLowerCase() !== 'completed' && String(t.status).toLowerCase() !== 'done').length} active tasks`}
         breadcrumbs={['Dashboard', 'Tasks']}
-        actions={<button onClick={() => setTaskFormOpen(true)} className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> Create Task</button>}
+        actions={<button onClick={() => { setEditingTask(null); setTaskFormOpen(true); }} className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> Create Task</button>}
       />
 
       <ActionFormModal
         open={isTaskFormOpen}
-        title="Create Task"
-        subtitle="Add an actionable item to your daily workflow"
-        fields={[
-          { name: 'title', label: 'Task Title', required: true, fullWidth: true },
-          {
-            name: 'priority',
-            label: 'Priority',
-            type: 'select',
-            options: ['urgent', 'high', 'medium', 'low'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
-          },
-          {
-            name: 'category',
-            label: 'Category',
-            type: 'select',
-            options: ['sales', 'followup', 'admin', 'training'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
-          },
-          { name: 'dueDate', label: 'Due Date', type: 'datetime-local', required: true },
-          { name: 'lead', label: 'Related Lead', fullWidth: true },
-        ]}
-        initialValues={{ title: '', priority: 'medium', category: 'sales', dueDate: '', lead: '' }}
-        submitLabel="Create Task"
-        onClose={() => setTaskFormOpen(false)}
-        onSubmit={handleCreateTask}
+        title={editingTask ? "Edit Task" : "Create Task"}
+        subtitle={editingTask ? "Modify details of this task" : "Add an actionable item to your daily workflow"}
+        fields={taskFields}
+        initialValues={editingTask ? {
+          title: editingTask.title,
+          description: editingTask.description || '',
+          priority: editingTask.priority,
+          status: editingTask.status,
+          dueDate: editingTask.dueDate ? editingTask.dueDate.substring(0, 16) : '',
+          assigneeId: editingTask.assigneeId || '',
+        } : { title: '', description: '', priority: 'medium', status: 'todo', dueDate: '', assigneeId: '' }}
+        submitLabel={editingTask ? "Save Changes" : "Create Task"}
+        onClose={() => { setTaskFormOpen(false); setEditingTask(null); }}
+        onSubmit={handleCreateOrUpdateTask}
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -114,40 +166,52 @@ export default function Tasks() {
               <p className="text-sm text-slate-400 dark:text-slate-500 italic ml-6">No {label.toLowerCase()} tasks</p>
             ) : (
               <div className="space-y-2">
-                {groups[key].map((task, i) => (
-                  <motion.div
-                    key={task.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    className={`card p-4 flex items-start gap-3 ${task.status === 'done' ? 'opacity-60' : ''}`}
-                  >
-                    <button
-                      onClick={() => dispatch(toggleTask(task.id))}
-                      className={task.status === 'done' ? 'text-emerald-500 mt-0.5' : 'text-slate-300 hover:text-primary-500 mt-0.5'}
+                {groups[key].map((task, i) => {
+                  const isCompleted = String(task.status).toLowerCase() === 'completed' || String(task.status).toLowerCase() === 'done'
+                  return (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className={`card p-4 flex items-start gap-3 ${isCompleted ? 'opacity-60' : ''}`}
                     >
-                      {task.status === 'done' ? <CheckCircle /> : <RadioButtonUnchecked />}
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold ${task.status === 'done' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100'}`}>
-                        {task.title}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1 flex-wrap">
-                        {task.lead && <span className="text-xs text-slate-400">— {task.lead}</span>}
-                        <span className="flex items-center gap-1 text-xs text-slate-400">
-                          <AccessTime style={{ fontSize: 12 }} /> {formatDate(task.dueDate)}
-                        </span>
-                        <span className="badge badge-info text-xs capitalize">{task.category}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`${PRIORITY_MAP[task.priority] || 'badge-info'}`}>{task.priority}</span>
-                      <button onClick={() => dispatch(deleteTask(task.id))} className="text-slate-300 hover:text-red-500 transition-colors">
-                        <DeleteOutline fontSize="small" />
+                      <button
+                        onClick={() => dispatch(toggleTask(task.id))}
+                        className={isCompleted ? 'text-emerald-500 mt-0.5' : 'text-slate-300 hover:text-primary-500 mt-0.5'}
+                      >
+                        {isCompleted ? <CheckCircle /> : <RadioButtonUnchecked />}
                       </button>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-semibold ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100'}`}>
+                          {task.title}
+                        </p>
+                        {task.description && (
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">{task.description}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          {task.assignee && (
+                            <span className="text-xs text-slate-400">— {task.assignee.firstName} {task.assignee.lastName}</span>
+                          )}
+                          {task.dueDate && (
+                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                              <AccessTime style={{ fontSize: 12 }} /> {formatDate(task.dueDate)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`${PRIORITY_MAP[task.priority] || 'badge-info'}`}>{task.priority}</span>
+                        <button onClick={() => handleEditClick(task)} className="text-slate-300 hover:text-amber-500 transition-colors">
+                          <Edit fontSize="small" />
+                        </button>
+                        <button onClick={() => dispatch(deleteTask(task.id))} className="text-slate-300 hover:text-red-500 transition-colors">
+                          <DeleteOutline fontSize="small" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )
+                })}
               </div>
             )}
           </div>

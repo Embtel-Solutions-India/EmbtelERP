@@ -1,84 +1,121 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Add, Search, FilterList, Phone, Email, WhatsApp, Visibility, Edit } from '@mui/icons-material'
+import { Add, Search, FilterList, Phone, Email, WhatsApp, Edit, Delete } from '@mui/icons-material'
 import { Tooltip } from '@mui/material'
 import PageHeader from '../components/common/PageHeader'
 import ActionFormModal from '../components/common/ActionFormModal'
 import PriorityBadge from '../components/common/PriorityBadge'
-import { addLead, setFilter } from '../redux/slices/leadSlice'
+import { addLeadAsync, updateLead, deleteLeadAsync, setFilter, fetchLeads } from '../redux/slices/leadSlice'
+import { fetchEmployees } from '../redux/slices/employeeSlice'
 import { formatCurrency, formatDate, getInitials } from '../utils'
 
 const STATUS_COLORS = {
   new: 'badge-primary', contacted: 'badge-info', qualified: 'badge-success',
   proposal: 'badge-purple', negotiation: 'badge-warning', won: 'badge-success', lost: 'badge-error',
-}
-
-const LEAD_FIELDS = [
-  { name: 'name', label: 'Lead Name', required: true },
-  { name: 'company', label: 'Company', required: true },
-  { name: 'email', label: 'Email', type: 'email', required: true },
-  { name: 'phone', label: 'Phone', type: 'tel', required: true },
-  { name: 'value', label: 'Deal Value', type: 'number', min: 0, required: true },
-  {
-    name: 'source',
-    label: 'Source',
-    type: 'select',
-    options: ['LinkedIn', 'Website', 'Referral', 'Cold Call', 'Event'].map((value) => ({ value, label: value })),
-  },
-  {
-    name: 'status',
-    label: 'Status',
-    type: 'select',
-    options: ['new', 'contacted', 'qualified', 'proposal', 'negotiation'].map((value) => ({
-      value,
-      label: value.charAt(0).toUpperCase() + value.slice(1),
-    })),
-  },
-  {
-    name: 'priority',
-    label: 'Priority',
-    type: 'select',
-    options: ['hot', 'warm', 'cold'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
-  },
-  { name: 'nextFollowUp', label: 'Next Follow Up', type: 'datetime-local', fullWidth: true },
-]
-
-const LEAD_INITIAL_VALUES = {
-  name: '',
-  company: '',
-  email: '',
-  phone: '',
-  value: '',
-  source: 'LinkedIn',
-  status: 'new',
-  priority: 'warm',
-  nextFollowUp: '',
+  NEW: 'badge-primary', CONTACTED: 'badge-info', QUALIFIED: 'badge-success',
+  CONVERTED: 'badge-success', LOST: 'badge-error',
 }
 
 export default function Leads() {
   const dispatch = useDispatch()
   const { filteredList: leads, filters } = useSelector((s) => s.leads)
+  const { list: employees } = useSelector((s) => s.employees)
+  const { user } = useSelector((s) => s.auth)
   const [viewMode, setViewMode] = useState('table')
   const [isLeadFormOpen, setLeadFormOpen] = useState(false)
+  const [editingLead, setEditingLead] = useState(null)
+
+  useEffect(() => {
+    dispatch(fetchLeads())
+    dispatch(fetchEmployees())
+  }, [dispatch])
+
+  const level = Number(user?.roleLevel ?? user?.employeeLevel ?? 0)
+  const designation = (user?.designation || '').toLowerCase()
+  const canEdit = level >= 1
+  const canDelete = level >= 2
+
+  const leadFields = [
+    { name: 'name', label: 'Lead Name', required: true },
+    { name: 'company', label: 'Company', required: true },
+    { name: 'email', label: 'Email', type: 'email', required: true },
+    { name: 'phone', label: 'Phone', type: 'tel', required: true },
+    { name: 'value', label: 'Deal Value', type: 'number', min: 0, required: true },
+    {
+      name: 'source',
+      label: 'Source',
+      type: 'select',
+      options: ['LinkedIn', 'Website', 'Referral', 'Cold Call', 'Event'].map((value) => ({ value, label: value })),
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      options: ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'].map((value) => ({
+        value,
+        label: value.charAt(0) + value.slice(1).toLowerCase(),
+      })),
+    },
+    {
+      name: 'priority',
+      label: 'Priority',
+      type: 'select',
+      options: ['hot', 'warm', 'cold'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
+    },
+    ...(employees.length ? [{
+      name: 'assignedToId',
+      label: 'Assigned To',
+      type: 'select',
+      options: [
+        { value: '', label: 'Unassigned' },
+        ...employees.map(emp => ({ value: emp.id, label: `${emp.firstName} ${emp.lastName} (${emp.designation})` }))
+      ]
+    }] : [])
+  ]
 
   const handleSearch = (e) => dispatch(setFilter({ search: e.target.value }))
   const handleStatusFilter = (e) => dispatch(setFilter({ status: e.target.value }))
   const handlePriorityFilter = (e) => dispatch(setFilter({ priority: e.target.value }))
-  const handleAddLead = (values) => {
-    dispatch(addLead({
-      id: Date.now(),
+
+  const handleFormSubmit = (values) => {
+    const payload = {
       name: values.name,
       company: values.company,
       email: values.email,
       phone: values.phone,
-      value: Number(values.value) || 0,
+      estimatedValue: Number(values.value) || Number(values.estimatedValue) || 0,
       source: values.source,
       status: values.status,
       priority: values.priority,
-      nextFollowUp: values.nextFollowUp ? new Date(values.nextFollowUp).toISOString() : null,
-      lastContact: new Date().toISOString(),
-    }))
+      assignedToId: values.assignedToId || null,
+      businessId: user?.businessId,
+    }
+
+    if (editingLead) {
+      dispatch(updateLead({ id: editingLead.id, ...payload })).then(() => {
+        setLeadFormOpen(false)
+        setEditingLead(null)
+      })
+    } else {
+      dispatch(addLeadAsync(payload)).then(() => {
+        setLeadFormOpen(false)
+      })
+    }
+  }
+
+  const handleEditClick = (lead) => {
+    setEditingLead({
+      ...lead,
+      value: Number(lead.estimatedValue ?? 0)
+    })
+    setLeadFormOpen(true)
+  }
+
+  const handleDeleteClick = (id) => {
+    if (window.confirm('Are you sure you want to delete this lead?')) {
+      dispatch(deleteLeadAsync(id))
+    }
   }
 
   return (
@@ -92,22 +129,34 @@ export default function Leads() {
             <button className="btn-secondary text-sm flex items-center gap-2">
               <FilterList fontSize="small" /> Filter
             </button>
-            <button onClick={() => setLeadFormOpen(true)} className="btn-primary text-sm flex items-center gap-2">
-              <Add fontSize="small" /> Add Lead
-            </button>
+            {canEdit && (
+              <button onClick={() => { setEditingLead(null); setLeadFormOpen(true); }} className="btn-primary text-sm flex items-center gap-2">
+                <Add fontSize="small" /> Add Lead
+              </button>
+            )}
           </>
         }
       />
 
       <ActionFormModal
         open={isLeadFormOpen}
-        title="Add Lead"
-        subtitle="Capture contact details and pipeline priority"
-        fields={LEAD_FIELDS}
-        initialValues={LEAD_INITIAL_VALUES}
-        submitLabel="Add Lead"
-        onClose={() => setLeadFormOpen(false)}
-        onSubmit={handleAddLead}
+        title={editingLead ? "Edit Lead" : "Add Lead"}
+        subtitle={editingLead ? "Update lead information" : "Capture contact details and pipeline priority"}
+        fields={leadFields}
+        initialValues={editingLead || {
+          name: '',
+          company: '',
+          email: '',
+          phone: '',
+          value: '',
+          source: 'LinkedIn',
+          status: 'NEW',
+          priority: 'warm',
+          assignedToId: '',
+        }}
+        submitLabel={editingLead ? "Save Changes" : "Add Lead"}
+        onClose={() => { setLeadFormOpen(false); setEditingLead(null); }}
+        onSubmit={handleFormSubmit}
       />
 
       {/* Filters */}
@@ -124,8 +173,8 @@ export default function Leads() {
         </div>
         <select value={filters.status} onChange={handleStatusFilter} className="input-field w-auto min-w-[140px]">
           <option value="">All Status</option>
-          {['new','contacted','qualified','proposal','negotiation','won','lost'].map(s => (
-            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          {['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'].map(s => (
+            <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
           ))}
         </select>
         <select value={filters.priority} onChange={handlePriorityFilter} className="input-field w-auto min-w-[130px]">
@@ -156,7 +205,7 @@ export default function Leads() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
-                  {['Lead', 'Contact', 'Status', 'Priority', 'Deal Value', 'Source', 'Next Follow Up', 'Actions'].map(h => (
+                  {['Lead', 'Contact', 'Status', 'Priority', 'Deal Value', 'Assignee', 'Actions'].map(h => (
                     <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -189,20 +238,15 @@ export default function Leads() {
                       </td>
                       <td className="px-5 py-3">
                         <span className={STATUS_COLORS[lead.status] || 'badge-primary'}>
-                          {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
+                          {lead.status.charAt(0) + lead.status.slice(1).toLowerCase()}
                         </span>
                       </td>
                       <td className="px-5 py-3"><PriorityBadge priority={lead.priority} /></td>
                       <td className="px-5 py-3">
-                        <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{formatCurrency(lead.value)}</span>
+                        <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{formatCurrency(lead.estimatedValue ?? lead.value)}</span>
                       </td>
-                      <td className="px-5 py-3">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{lead.source}</span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                          {lead.nextFollowUp ? formatDate(lead.nextFollowUp) : '—'}
-                        </span>
+                      <td className="px-5 py-3 text-xs text-slate-500 dark:text-slate-400">
+                        {lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : 'Unassigned'}
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -210,12 +254,25 @@ export default function Leads() {
                             { icon: <Phone style={{ fontSize: 15 }} />, color: 'text-emerald-600 hover:bg-emerald-50', tip: 'Call' },
                             { icon: <WhatsApp style={{ fontSize: 15 }} />, color: 'text-green-600 hover:bg-green-50', tip: 'WhatsApp' },
                             { icon: <Email style={{ fontSize: 15 }} />, color: 'text-blue-600 hover:bg-blue-50', tip: 'Email' },
-                            { icon: <Edit style={{ fontSize: 15 }} />, color: 'text-amber-600 hover:bg-amber-50', tip: 'Edit' },
                           ].map(({ icon, color, tip }) => (
                             <Tooltip key={tip} title={tip}>
                               <button className={`p-1.5 rounded-lg ${color} dark:hover:bg-gray-700 transition-colors`}>{icon}</button>
                             </Tooltip>
                           ))}
+                          {canEdit && (
+                            <Tooltip title="Edit">
+                              <button onClick={() => handleEditClick(lead)} className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors">
+                                <Edit style={{ fontSize: 15 }} />
+                              </button>
+                            </Tooltip>
+                          )}
+                          {canDelete && (
+                            <Tooltip title="Delete">
+                              <button onClick={() => handleDeleteClick(lead.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors">
+                                <Delete style={{ fontSize: 15 }} />
+                              </button>
+                            </Tooltip>
+                          )}
                         </div>
                       </td>
                     </motion.tr>
@@ -253,10 +310,22 @@ export default function Leads() {
                 <p className="text-xs text-slate-500 dark:text-slate-400">{lead.phone}</p>
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-gray-700">
-                <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{formatCurrency(lead.value)}</span>
-                <span className={STATUS_COLORS[lead.status] || 'badge-primary'}>
-                  {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
-                </span>
+                <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{formatCurrency(lead.estimatedValue ?? lead.value)}</span>
+                <div className="flex items-center gap-2">
+                  <span className={STATUS_COLORS[lead.status] || 'badge-primary'}>
+                    {lead.status.charAt(0) + lead.status.slice(1).toLowerCase()}
+                  </span>
+                  {canEdit && (
+                    <button onClick={(e) => { e.stopPropagation(); handleEditClick(lead); }} className="text-amber-600 hover:text-amber-700">
+                      <Edit style={{ fontSize: 14 }} />
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(lead.id); }} className="text-red-600 hover:text-red-700">
+                      <Delete style={{ fontSize: 14 }} />
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}

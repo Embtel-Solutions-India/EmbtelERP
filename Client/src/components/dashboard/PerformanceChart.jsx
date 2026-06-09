@@ -99,6 +99,7 @@ export default function PerformanceChart({ data: apiData }) {
           ))}
         </div>
       }
+      className="h-[380px] flex flex-col"
     >
       <div className="flex gap-2 mb-4">
         {CHART_TABS.map((t) => (
@@ -121,7 +122,7 @@ export default function PerformanceChart({ data: apiData }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        style={{ height: 260 }}
+        className="flex-1 min-h-0"
       >
         <ResponsiveContainer width="100%" height="100%">
           {chartTab === "Revenue" ? (
