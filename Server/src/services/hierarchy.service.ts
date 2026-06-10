@@ -62,7 +62,7 @@ type HierarchyRow = {
   teamId: string | null;
   verticalId: string | null;
   roleId: string;
-  reportsToId: string | null;
+  managerId: string | null;
   designation: string | null;
 };
 
@@ -83,17 +83,17 @@ export async function getDescendants(
     rows = await prisma.$queryRaw<IdRow[]>`
       WITH RECURSIVE hierarchy AS (
         SELECT e."id",
-               COALESCE(e."managerId", e."reportsToId") AS "managerRef"
+               e."managerId" AS "managerRef"
         FROM "Employee" e
-        WHERE COALESCE(e."managerId", e."reportsToId") = ${employeeId}
+        WHERE e."managerId" = ${employeeId}
 
         UNION ALL
 
         SELECT child."id",
-               COALESCE(child."managerId", child."reportsToId") AS "managerRef"
+               child."managerId" AS "managerRef"
         FROM "Employee" child
         INNER JOIN hierarchy parent
-          ON COALESCE(child."managerId", child."reportsToId") = parent."id"
+          ON child."managerId" = parent."id"
       )
       SELECT DISTINCT id
       FROM hierarchy;
@@ -126,17 +126,17 @@ export async function getDescendantIds(employeeId: string): Promise<string[]> {
     rows = await prisma.$queryRaw<IdRow[]>`
       WITH RECURSIVE hierarchy AS (
         SELECT e."id",
-               COALESCE(e."managerId", e."reportsToId") AS "managerRef"
+               e."managerId" AS "managerRef"
         FROM "Employee" e
-        WHERE COALESCE(e."managerId", e."reportsToId") = ${employeeId}
+        WHERE e."managerId" = ${employeeId}
 
         UNION ALL
 
         SELECT child."id",
-               COALESCE(child."managerId", child."reportsToId") AS "managerRef"
+               child."managerId" AS "managerRef"
         FROM "Employee" child
         INNER JOIN hierarchy parent
-          ON COALESCE(child."managerId", child."reportsToId") = parent."id"
+          ON child."managerId" = parent."id"
       )
       SELECT DISTINCT id
       FROM hierarchy;
@@ -163,20 +163,20 @@ export async function getManagers(employeeId: string): Promise<HierarchyRow[]> {
   try {
     rows = await prisma.$queryRaw<ManagerRow[]>`
       WITH RECURSIVE managers AS (
-        SELECT COALESCE(e."managerId", e."reportsToId") AS "mgr",
+        SELECT e."managerId" AS "mgr",
                1 AS depth
         FROM "Employee" e
         WHERE e.id = ${employeeId}
-          AND COALESCE(e."managerId", e."reportsToId") IS NOT NULL
+          AND e."managerId" IS NOT NULL
 
         UNION ALL
 
-        SELECT COALESCE(mgr2."managerId", mgr2."reportsToId") AS "mgr",
+        SELECT mgr2."managerId" AS "mgr",
                managers.depth + 1
         FROM "Employee" mgr2
         JOIN managers
           ON mgr2.id = managers.mgr
-        WHERE COALESCE(mgr2."managerId", mgr2."reportsToId") IS NOT NULL
+        WHERE mgr2."managerId" IS NOT NULL
       )
       SELECT DISTINCT mgr
       FROM managers;
@@ -211,7 +211,7 @@ export async function getHierarchyTree(
     rows = await prisma.$queryRaw<IdRow[]>`
       WITH RECURSIVE hierarchy AS (
         SELECT e."id",
-               COALESCE(e."managerId", e."reportsToId") AS "managerRef",
+               e."managerId" AS "managerRef",
                0 AS depth
         FROM "Employee" e
         WHERE e."id" = ${rootEmployeeId}
@@ -219,11 +219,11 @@ export async function getHierarchyTree(
         UNION ALL
 
         SELECT child."id",
-               COALESCE(child."managerId", child."reportsToId") AS "managerRef",
+               child."managerId" AS "managerRef",
                parent.depth + 1 AS depth
         FROM "Employee" child
         INNER JOIN hierarchy parent
-          ON COALESCE(child."managerId", child."reportsToId") = parent.id
+          ON child."managerId" = parent.id
       )
       SELECT DISTINCT id
       FROM hierarchy;
@@ -248,7 +248,7 @@ export async function getHierarchyTree(
       firstName: true,
       lastName: true,
       roleId: true,
-      reportsToId: true,
+      managerId: true,
       designation: true,
       teamId: true,
       verticalId: true,
@@ -278,7 +278,7 @@ export async function getHierarchyTree(
 
     if (!node) continue;
 
-    const managerId = employee.reportsToId;
+    const managerId = employee.managerId;
 
     if (managerId && tree.has(managerId)) {
       tree.get(managerId)!.children.push(node);
@@ -309,7 +309,7 @@ export async function getFullOrganizationTree(): Promise<OrganizationTree> {
                   firstName: true,
                   lastName: true,
                   designation: true,
-                  reportsToId: true,
+                  managerId: true,
                   roleId: true,
                   level: true,
                 },
@@ -324,7 +324,7 @@ export async function getFullOrganizationTree(): Promise<OrganizationTree> {
               firstName: true,
               lastName: true,
               designation: true,
-              reportsToId: true,
+              managerId: true,
               roleId: true,
               level: true,
             },
@@ -338,7 +338,7 @@ export async function getFullOrganizationTree(): Promise<OrganizationTree> {
           firstName: true,
           lastName: true,
           designation: true,
-          reportsToId: true,
+          managerId: true,
           roleId: true,
           level: true,
         },
@@ -465,7 +465,7 @@ export async function getBusinessHierarchyTree(
                   firstName: true,
                   lastName: true,
                   designation: true,
-                  reportsToId: true,
+                  managerId: true,
                   roleId: true,
                   level: true,
                 },
@@ -480,7 +480,7 @@ export async function getBusinessHierarchyTree(
               firstName: true,
               lastName: true,
               designation: true,
-              reportsToId: true,
+              managerId: true,
               roleId: true,
               level: true,
             },
@@ -494,7 +494,7 @@ export async function getBusinessHierarchyTree(
           firstName: true,
           lastName: true,
           designation: true,
-          reportsToId: true,
+          managerId: true,
           roleId: true,
           level: true,
         },
@@ -609,7 +609,7 @@ export async function getNodeAncestors(
       firstName: string;
       lastName: string;
       designation: string | null;
-      reportsToId: string | null;
+      managerId: string | null;
       level: number | null;
       businessId: string;
       verticalId: string | null;
@@ -621,7 +621,7 @@ export async function getNodeAncestors(
         firstName: true,
         lastName: true,
         designation: true,
-        reportsToId: true,
+        managerId: true,
         level: true,
         businessId: true,
         verticalId: true,
@@ -644,7 +644,7 @@ export async function getNodeAncestors(
       children: [],
     });
 
-    currentId = employee.reportsToId;
+    currentId = employee.managerId;
   }
 
   return ancestors;
@@ -652,7 +652,7 @@ export async function getNodeAncestors(
 
 /**
  * Get full org role tree: Business → Head → Vertical Manager → Manager → Executive → Intern.
- * Uses reportsToId to build the tree; employees whose manager is outside the business
+ * Uses managerId to build the tree; employees whose manager is outside the business
  * scope are placed as direct children of the business node.
  *
  * Pass `businessIds` / `employeeIds` to restrict results to a caller's data scope.
@@ -680,7 +680,7 @@ export async function getOrgRoleTree(opts?: {
           firstName: true,
           lastName: true,
           designation: true,
-          reportsToId: true,
+          managerId: true,
           level: true,
         },
         orderBy: { firstName: "asc" },
@@ -704,8 +704,8 @@ export async function getOrgRoleTree(opts?: {
     const roots: RoleTreeNode[] = [];
     for (const e of business.employees) {
       const node = nodeMap.get(e.id)!;
-      if (e.reportsToId && nodeMap.has(e.reportsToId)) {
-        nodeMap.get(e.reportsToId)!.children.push(node);
+      if (e.managerId && nodeMap.has(e.managerId)) {
+        nodeMap.get(e.managerId)!.children.push(node);
       } else {
         roots.push(node);
       }
@@ -741,7 +741,7 @@ export async function getNodeDescendants(
       businessId: true,
       verticalId: true,
       teamId: true,
-      reportsToId: true,
+      managerId: true,
     },
   });
 

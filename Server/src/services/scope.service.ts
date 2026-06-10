@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma.js";
-import { getDescendants } from "./hierarchy.service.js";
+import { getDescendants, getDescendantIds } from "./hierarchy.service.js";
 import { getActivePerspectiveForUser } from "./perspective.service.js";
+import { isWorkforceManager } from "../utils/workforce.js";
 
 export type DataScope = {
   visibleEmployees: string[];
@@ -25,8 +26,10 @@ export async function getDataScope(
       select: {
         id: true,
         businessId: true,
+        organizationId: true,
         departmentId: true,
         teamId: true,
+        verticalId: true,
         level: true,
         role: { select: { level: true } },
       },
@@ -69,7 +72,19 @@ export async function getDataScope(
         select: { id: true, businessId: true, departmentId: true }
       });
       if (!team) return getSelfScope(viewer as any);
-      
+
+      // Defense-in-depth: re-assert business and sub-tree authorization
+      if (team.businessId !== viewer.businessId) return getSelfScope(viewer as any);
+      const viewerRoleLevel = viewer.role?.level ?? viewer.level ?? 0;
+      if (viewerRoleLevel < 2 && viewer.teamId !== team.id) {
+        const descendantIds = await getDescendantIds(viewer.id);
+        const subordinates = await prisma.employee.findMany({
+          where: { teamId: team.id, id: { in: descendantIds } },
+          select: { id: true },
+        });
+        if (subordinates.length === 0) return getSelfScope(viewer as any);
+      }
+
       const teamEmployees = await prisma.employee.findMany({
         where: { teamId: team.id, isActive: true },
         select: { id: true }
@@ -90,6 +105,18 @@ export async function getDataScope(
         select: { id: true, businessId: true }
       });
       if (!vertical) return getSelfScope(viewer as any);
+
+      // Defense-in-depth: re-assert business and sub-tree authorization
+      if (vertical.businessId !== viewer.businessId) return getSelfScope(viewer as any);
+      const viewerRoleLevelV = viewer.role?.level ?? viewer.level ?? 0;
+      if (viewerRoleLevelV < 2 && (viewer as any).verticalId !== vertical.id) {
+        const descendantIds = await getDescendantIds(viewer.id);
+        const subordinates = await prisma.employee.findMany({
+          where: { verticalId: vertical.id, id: { in: descendantIds } },
+          select: { id: true },
+        });
+        if (subordinates.length === 0) return getSelfScope(viewer as any);
+      }
 
       const [teams, employees] = await Promise.all([
         prisma.team.findMany({
@@ -114,9 +141,18 @@ export async function getDataScope(
     if (perspectiveType === "BUSINESS" || perspectiveType === "BUSINESS_OWNER") {
       const business = await prisma.business.findUnique({
         where: { id: targetId },
-        select: { id: true }
+        select: { id: true, organizationId: true }
       });
       if (!business) return getSelfScope(viewer as any);
+
+      // Defense-in-depth: re-assert authorization
+      const viewerRoleLevelB = viewer.role?.level ?? viewer.level ?? 0;
+      if (viewerRoleLevelB < 4 && business.id !== viewer.businessId) {
+        return getSelfScope(viewer as any);
+      }
+      if (viewerRoleLevelB >= 4 && business.organizationId !== viewer.organizationId) {
+        return getSelfScope(viewer as any);
+      }
 
       const [departments, teams, employees] = await Promise.all([
         prisma.department.findMany({
@@ -202,6 +238,7 @@ async function buildScope(
   viewer: {
     id: string;
     businessId: string;
+    organizationId: string;
     departmentId: string | null;
     teamId: string | null;
     role: { level: number };
@@ -233,9 +270,43 @@ async function buildScope(
   }
 
   if (viewerLevel >= 4) {
+    const orgBusinesses = await prisma.business.findMany({
+      where: { organizationId: viewer.organizationId },
+      select: { id: true },
+    });
+    const orgBusinessIds = orgBusinesses.map((b: { id: string }) => b.id);
+
     const [employees, departments, teams] = await Promise.all([
       prisma.employee.findMany({
-        where: { businessId: viewer.businessId },
+        where: { businessId: { in: orgBusinessIds } },
+        select: { id: true },
+      }),
+      prisma.department.findMany({
+        where: { businessId: { in: orgBusinessIds } },
+        select: { id: true },
+      }),
+      prisma.team.findMany({
+        where: { businessId: { in: orgBusinessIds } },
+        select: { id: true },
+      }),
+    ]);
+
+    return {
+      visibleEmployees: employees.map((row: { id: string }) => row.id),
+      visibleBusinesses: orgBusinessIds,
+      visibleDepartments: departments.map((row: { id: string }) => row.id),
+      visibleTeams: teams.map((row: { id: string }) => row.id),
+    };
+  }
+
+  // HR workforce managers: expand employee visibility across the whole org but keep
+  // operational scope (business/dept/team) pinned to their own business so they
+  // cannot read sales/marketing/leads from other businesses.
+  // Only applies when the viewer is acting as themselves (no perspective switch).
+  if (viewer.id === perspectiveTarget.id && await isWorkforceManager({ businessId: viewer.businessId, roleLevel: viewer.role?.level ?? viewer.level ?? 0 })) {
+    const [orgEmployees, departments, teams] = await Promise.all([
+      prisma.employee.findMany({
+        where: { organizationId: viewer.organizationId },
         select: { id: true },
       }),
       prisma.department.findMany({
@@ -245,14 +316,13 @@ async function buildScope(
       prisma.team.findMany({
         where: { businessId: viewer.businessId },
         select: { id: true },
-      })
+      }),
     ]);
-
     return {
-      visibleEmployees: employees.map((row: { id: string }) => row.id),
+      visibleEmployees: orgEmployees.map((e: { id: string }) => e.id),
       visibleBusinesses: [viewer.businessId],
-      visibleDepartments: departments.map((row: { id: string }) => row.id),
-      visibleTeams: teams.map((row: { id: string }) => row.id),
+      visibleDepartments: departments.map((d: { id: string }) => d.id),
+      visibleTeams: teams.map((t: { id: string }) => t.id),
     };
   }
 

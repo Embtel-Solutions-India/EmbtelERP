@@ -7,6 +7,7 @@ import {
   requireRole,
   requireEmployeeScope,
   requireBusinessScope,
+  requirePermission,
   ROLE_LEVEL,
 } from "../middleware/rbac.middleware.js";
 import {
@@ -52,6 +53,7 @@ hierarchyRouter.get("/tree", asyncHandler(getHierarchyTreeHandler));
 hierarchyRouter.get(
   "/organization-tree",
   requireRole(ROLE_LEVEL.BUSINESS_OWNER),
+  requirePermission("dashboard:org"),
   asyncHandler(async (_req, res) => {
     const tree = await getFullOrganizationTree();
     res.json({ data: tree });

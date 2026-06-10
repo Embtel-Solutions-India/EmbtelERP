@@ -28,5 +28,6 @@ declare global {
     employeeLevel?: number;
     businessId: string | null;
     organizationId: string | null;
+    permissions: string[];
   }
 }

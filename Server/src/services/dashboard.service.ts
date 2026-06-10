@@ -1262,7 +1262,7 @@ export async function getRoleWorkspace(
     return {
       roleKey: "business_owner",
       title: "Business Owner Workspace",
-      focus: ["Revenue overview", "Department comparison", "Forecast attention"],
+      focus: ["Revenue overview", "Department comparison", "KPI alerts"],
       widgets: [
         makeWidget("employees", "Employee Count", employeeCount, "active employees", "primary"),
         makeWidget("revenue", "Estimated Lead Value", Math.round(leadValue), "from converted pipeline", "success"),

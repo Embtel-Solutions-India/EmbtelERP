@@ -14,7 +14,7 @@ const STATUS_COLORS = {
   new: 'badge-primary', contacted: 'badge-info', qualified: 'badge-success',
   proposal: 'badge-purple', negotiation: 'badge-warning', won: 'badge-success', lost: 'badge-error',
   NEW: 'badge-primary', CONTACTED: 'badge-info', QUALIFIED: 'badge-success',
-  CONVERTED: 'badge-success', LOST: 'badge-error',
+  PROPOSAL: 'badge-purple', NEGOTIATION: 'badge-warning', WON: 'badge-success', LOST: 'badge-error',
 }
 
 export default function Leads() {
@@ -22,6 +22,7 @@ export default function Leads() {
   const { filteredList: leads, filters } = useSelector((s) => s.leads)
   const { list: employees } = useSelector((s) => s.employees)
   const { user } = useSelector((s) => s.auth)
+  const activePerspective = useSelector((s) => s.perspective?.current)
   const [viewMode, setViewMode] = useState('table')
   const [isLeadFormOpen, setLeadFormOpen] = useState(false)
   const [editingLead, setEditingLead] = useState(null)
@@ -29,7 +30,7 @@ export default function Leads() {
   useEffect(() => {
     dispatch(fetchLeads())
     dispatch(fetchEmployees())
-  }, [dispatch])
+  }, [dispatch, activePerspective])
 
   const level = Number(user?.roleLevel ?? user?.employeeLevel ?? 0)
   const designation = (user?.designation || '').toLowerCase()
@@ -52,7 +53,7 @@ export default function Leads() {
       name: 'status',
       label: 'Status',
       type: 'select',
-      options: ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'].map((value) => ({
+      options: ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'].map((value) => ({
         value,
         label: value.charAt(0) + value.slice(1).toLowerCase(),
       })),
@@ -173,7 +174,7 @@ export default function Leads() {
         </div>
         <select value={filters.status} onChange={handleStatusFilter} className="input-field w-auto min-w-[140px]">
           <option value="">All Status</option>
-          {['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'].map(s => (
+          {['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'].map(s => (
             <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
           ))}
         </select>

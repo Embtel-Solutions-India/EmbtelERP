@@ -5,7 +5,8 @@ vi.mock("../src/config/prisma.js", () => ({
     employee: { findUnique: vi.fn(), findMany: vi.fn() },
     business: { findUnique: vi.fn(), findMany: vi.fn() },
     vertical: { findMany: vi.fn(), findUnique: vi.fn() },
-    team: { findMany: vi.fn() },
+    team: { findMany: vi.fn(), findUnique: vi.fn() },
+    role: { findFirst: vi.fn() },
     perspectiveSession: {
       findFirst: vi.fn(),
       deleteMany: vi.fn(),
@@ -26,7 +27,7 @@ import {
   validatePerspectiveAccess,
 } from "../src/services/perspective.service.js";
 import { prisma } from "../src/config/prisma.js";
-import { isDescendantOf } from "../src/services/hierarchy.service.js";
+import { isDescendantOf, getDescendantIds } from "../src/services/hierarchy.service.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -145,6 +146,11 @@ describe("validatePerspectiveAccess — MANAGER", () => {
 
   it("allows a manager to use their own MANAGER perspective", async () => {
     mockViewer({ id: "mgr1", role: { level: 2 } });
+    // validateScopeBoundaries fetches the target employee
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      id: "mgr1", businessId: "b1", verticalId: null, teamId: null,
+      level: 2, role: { level: 2 },
+    });
 
     await expect(
       validatePerspectiveAccess("mgr1", "MANAGER", "mgr1"),
@@ -153,6 +159,10 @@ describe("validatePerspectiveAccess — MANAGER", () => {
 
   it("allows a Head to switch to a subordinate manager's perspective", async () => {
     mockViewer({ id: "head1", role: { level: 3 } });
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      id: "mgr1", businessId: "b1", verticalId: null, teamId: null,
+      level: 2, role: { level: 2 },
+    });
     (isDescendantOf as any).mockResolvedValue(true);
 
     await expect(
@@ -162,6 +172,10 @@ describe("validatePerspectiveAccess — MANAGER", () => {
 
   it("denies access to an unrelated manager's perspective", async () => {
     mockViewer({ id: "mgr2", role: { level: 2 } });
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      id: "mgr_other", businessId: "b1", verticalId: null, teamId: null,
+      level: 2, role: { level: 2 },
+    });
     (isDescendantOf as any).mockResolvedValue(false);
 
     await expect(
@@ -179,6 +193,10 @@ describe("validatePerspectiveAccess — INTERN", () => {
 
   it("allows an intern to use their own INTERN perspective", async () => {
     mockViewer({ id: "intern1", role: { level: 0 } });
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      id: "intern1", businessId: "b1", verticalId: null, teamId: null,
+      level: 0, role: { level: 0 },
+    });
 
     await expect(
       validatePerspectiveAccess("intern1", "INTERN", "intern1"),
@@ -187,6 +205,10 @@ describe("validatePerspectiveAccess — INTERN", () => {
 
   it("allows a manager to view a subordinate intern's perspective", async () => {
     mockViewer({ id: "mgr1", role: { level: 2 } });
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      id: "intern1", businessId: "b1", verticalId: null, teamId: null,
+      level: 0, role: { level: 0 },
+    });
     (isDescendantOf as any).mockResolvedValue(true);
 
     await expect(
@@ -196,6 +218,10 @@ describe("validatePerspectiveAccess — INTERN", () => {
 
   it("denies access to an unrelated intern's perspective", async () => {
     mockViewer({ id: "mgr1", role: { level: 2 } });
+    (prisma.employee.findUnique as any).mockResolvedValueOnce({
+      id: "intern_other", businessId: "b1", verticalId: null, teamId: null,
+      level: 0, role: { level: 0 },
+    });
     (isDescendantOf as any).mockResolvedValue(false);
 
     await expect(
@@ -245,12 +271,102 @@ describe("validatePerspectiveAccess — VERTICAL", () => {
 
   it("allows access to a vertical in the same business", async () => {
     mockViewer({ role: { level: 3 } });
-    (prisma.vertical.findUnique as any).mockResolvedValueOnce({
+    // Called twice: once in validateScopeBoundaries, once in the main switch
+    (prisma.vertical.findUnique as any).mockResolvedValue({
+      id: "v1",
       businessId: "b1",
     });
 
     await expect(
       validatePerspectiveAccess("viewer1", "VERTICAL", "v1"),
+    ).resolves.toBe(true);
+  });
+});
+
+// ─── Structural perspective switches — sub-tree enforcement ──────────────────
+
+describe("validatePerspectiveAccess — TEAM sub-tree enforcement", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("L1 Executive cannot switch to a sibling team they don't manage", async () => {
+    mockViewer({ id: "exec1", businessId: "b1", verticalId: "v1", teamId: "t-exec", role: { level: 1 } });
+    // validateScopeBoundaries: team.findUnique (level 1 skips L2 checks)
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-sibling", businessId: "b1", verticalId: "v1" });
+    // main switch: team.findUnique
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-sibling", businessId: "b1" });
+    (getDescendantIds as any).mockResolvedValue([]);
+    (prisma.employee.findMany as any).mockResolvedValue([]);
+
+    await expect(
+      validatePerspectiveAccess("exec1", "TEAM", "t-sibling"),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("L1 Executive CAN switch to a team containing their subordinates", async () => {
+    mockViewer({ id: "exec1", businessId: "b1", verticalId: "v1", teamId: "t-exec", role: { level: 1 } });
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-with-interns", businessId: "b1", verticalId: "v1" });
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-with-interns", businessId: "b1" });
+    (getDescendantIds as any).mockResolvedValue(["intern1", "intern2"]);
+    (prisma.employee.findMany as any).mockResolvedValue([{ id: "intern1" }]);
+
+    await expect(
+      validatePerspectiveAccess("exec1", "TEAM", "t-with-interns"),
+    ).resolves.toBe(true);
+  });
+
+  it("L2 Vertical Manager can switch to a team in their vertical", async () => {
+    mockViewer({ id: "vm1", businessId: "b1", verticalId: "v1", teamId: null, role: { level: 2 } });
+    // validateScopeBoundaries: team.findUnique — same vertical, passes
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-v1", businessId: "b1", verticalId: "v1" });
+    // main switch: team.findUnique — level 2 returns immediately after business check
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-v1", businessId: "b1" });
+
+    await expect(
+      validatePerspectiveAccess("vm1", "TEAM", "t-v1"),
+    ).resolves.toBe(true);
+  });
+
+  it("L0 Intern cannot switch to a team they are not in", async () => {
+    mockViewer({ id: "intern1", businessId: "b1", verticalId: "v1", teamId: "t-intern", role: { level: 0 } });
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-other", businessId: "b1", verticalId: "v1" });
+    (prisma.team.findUnique as any).mockResolvedValueOnce({ id: "t-other", businessId: "b1" });
+    (getDescendantIds as any).mockResolvedValue([]);
+    (prisma.employee.findMany as any).mockResolvedValue([]);
+
+    await expect(
+      validatePerspectiveAccess("intern1", "TEAM", "t-other"),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+});
+
+describe("validatePerspectiveAccess — VERTICAL sub-tree enforcement", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("L1 Executive cannot switch to an unrelated vertical", async () => {
+    mockViewer({ id: "exec1", businessId: "b1", verticalId: "v1", teamId: null, role: { level: 1 } });
+    // validateScopeBoundaries: vertical.findUnique (level 1 skips L2 checks)
+    (prisma.vertical.findUnique as any).mockResolvedValueOnce({ id: "v2", businessId: "b1" });
+    // main switch: vertical.findUnique
+    (prisma.vertical.findUnique as any).mockResolvedValueOnce({ id: "v2", businessId: "b1" });
+    (getDescendantIds as any).mockResolvedValue([]);
+    (prisma.employee.findMany as any).mockResolvedValue([]);
+
+    await expect(
+      validatePerspectiveAccess("exec1", "VERTICAL", "v2"),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("L1 Executive can switch to their own vertical", async () => {
+    mockViewer({ id: "exec1", businessId: "b1", verticalId: "v1", teamId: null, role: { level: 1 } });
+    (prisma.vertical.findUnique as any).mockResolvedValueOnce({ id: "v1", businessId: "b1" });
+    (prisma.vertical.findUnique as any).mockResolvedValueOnce({ id: "v1", businessId: "b1" });
+
+    await expect(
+      validatePerspectiveAccess("exec1", "VERTICAL", "v1"),
     ).resolves.toBe(true);
   });
 });

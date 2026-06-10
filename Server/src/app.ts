@@ -17,6 +17,7 @@ import { adminRouter } from "./routes/admin.routes.js";
 import { workspaceRouter } from "./routes/workspace.routes.js";
 import { documentsRouter } from "./routes/documents.routes.js";
 import { calendarRouter } from "./routes/calendar.routes.js";
+import { salesRouter }    from "./routes/salesLead.routes.js";
 
 export function createApp() {
   const app = express();
@@ -49,6 +50,7 @@ export function createApp() {
   app.use("/workspace", workspaceRouter);
   app.use("/documents", documentsRouter);
   app.use("/calendar", calendarRouter);
+  app.use("/sales",    salesRouter);
 
   app.use(errorHandler);
   return app;

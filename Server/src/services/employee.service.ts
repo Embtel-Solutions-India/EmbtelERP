@@ -10,7 +10,7 @@ export type CreateEmployeeInput = {
   departmentId?: string | null;
   teamId?: string | null;
   roleId: string;
-  reportsToId?: string | null;
+  managerId?: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -34,7 +34,7 @@ export async function getEmployeeById(id: string) {
       department: true,
       team: true,
       business: true,
-      reportsTo: true,
+      manager: true,
     },
   });
 
@@ -72,7 +72,7 @@ export async function createEmployee(
       ...input,
       departmentId: input.departmentId ?? null,
       teamId: input.teamId ?? null,
-      reportsToId: input.reportsToId ?? null,
+      managerId: input.managerId ?? null,
       passwordHash,
       fullName,
       level,

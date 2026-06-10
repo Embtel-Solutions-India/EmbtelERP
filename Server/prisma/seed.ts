@@ -17,7 +17,6 @@ async function main() {
   await prisma.marketingCampaign.deleteMany();
   await prisma.task.deleteMany();
   await prisma.document.deleteMany();
-  await prisma.perspective.deleteMany();
   await prisma.perspectiveSession.deleteMany();
   await prisma.employeeHierarchy.deleteMany();
   await prisma.employee.deleteMany();
@@ -47,53 +46,30 @@ async function main() {
     prisma.role.create({ data: { name: "Super Admin", level: 5 } }),
   ]);
 
-  const permissions = await Promise.all([
-    prisma.permission.create({ data: { code: "employee.read" } }),
-    prisma.permission.create({ data: { code: "employee.write" } }),
-    prisma.permission.create({ data: { code: "task.read" } }),
-    prisma.permission.create({ data: { code: "task.write" } }),
-    prisma.permission.create({ data: { code: "audit.read" } }),
-    prisma.permission.create({ data: { code: "marketing.read" } }),
-    prisma.permission.create({ data: { code: "marketing.write" } }),
-    prisma.permission.create({ data: { code: "marketing.dashboard" } }),
-    prisma.permission.create({ data: { code: "dashboard.business_owner" } }),
-    prisma.permission.create({ data: { code: "dashboard.head" } }),
-    prisma.permission.create({ data: { code: "dashboard.vertical" } }),
-    prisma.permission.create({ data: { code: "dashboard.team_manager" } }),
-    prisma.permission.create({ data: { code: "dashboard.employee" } }),
-  ]);
+  // Canonical permission codes — every code here is enforced by at least one middleware or service check.
+  const pWorkforce = await prisma.permission.create({ data: { code: "workforce:read:org", description: "Read employees across all businesses (HR only)" } });
+  const pEmployeesWrite = await prisma.permission.create({ data: { code: "employees:write", description: "Create, update, and deactivate employee records" } });
+  const pAuditRead = await prisma.permission.create({ data: { code: "audit:read", description: "Access audit logs and global analytics" } });
+  const pRolesWrite = await prisma.permission.create({ data: { code: "roles:write", description: "Manage org config: businesses, verticals, teams, user roles" } });
+  const pDashboardOrg = await prisma.permission.create({ data: { code: "dashboard:org", description: "View organisation-level dashboard and full hierarchy tree" } });
 
-  // Assign permissions to roles
+  // Role → permission assignments
   await prisma.rolePermission.createMany({
     data: [
-      // Business Owner (level 4)
-      { roleId: roles[4].id, permissionId: permissions[0].id },
-      { roleId: roles[4].id, permissionId: permissions[1].id },
-      { roleId: roles[4].id, permissionId: permissions[5].id },
-      { roleId: roles[4].id, permissionId: permissions[7].id },
-      { roleId: roles[4].id, permissionId: permissions[8].id },
-      // Super Admin (level 5)
-      { roleId: roles[5].id, permissionId: permissions[4].id },
-      { roleId: roles[5].id, permissionId: permissions[5].id },
-      { roleId: roles[5].id, permissionId: permissions[6].id },
-      { roleId: roles[5].id, permissionId: permissions[7].id },
-      // Intern (level 0)
-      { roleId: roles[0].id, permissionId: permissions[5].id },
-      { roleId: roles[0].id, permissionId: permissions[12].id },
-      // Executive (level 1)
-      { roleId: roles[1].id, permissionId: permissions[5].id },
-      { roleId: roles[1].id, permissionId: permissions[6].id },
-      { roleId: roles[1].id, permissionId: permissions[7].id },
-      { roleId: roles[1].id, permissionId: permissions[12].id },
-      // Manager (level 2)
-      { roleId: roles[2].id, permissionId: permissions[5].id },
-      { roleId: roles[2].id, permissionId: permissions[6].id },
-      { roleId: roles[2].id, permissionId: permissions[7].id },
-      { roleId: roles[2].id, permissionId: permissions[11].id },
-      // Head (level 3)
-      { roleId: roles[3].id, permissionId: permissions[5].id },
-      { roleId: roles[3].id, permissionId: permissions[7].id },
-      { roleId: roles[3].id, permissionId: permissions[9].id },
+      // Manager (2) and Head (3): workforce:read:org so HR employees at these levels
+      // gain cross-org read when the structural business.code check also passes.
+      { roleId: roles[2].id, permissionId: pWorkforce.id },
+      { roleId: roles[3].id, permissionId: pWorkforce.id },
+      // Head (3)+: may write employee records
+      { roleId: roles[3].id, permissionId: pEmployeesWrite.id },
+      { roleId: roles[4].id, permissionId: pEmployeesWrite.id },
+      { roleId: roles[5].id, permissionId: pEmployeesWrite.id },
+      // Business Owner (4)+: org-level dashboard
+      { roleId: roles[4].id, permissionId: pDashboardOrg.id },
+      { roleId: roles[5].id, permissionId: pDashboardOrg.id },
+      // Super Admin (5) only: audit logs and org config
+      { roleId: roles[5].id, permissionId: pAuditRead.id },
+      { roleId: roles[5].id, permissionId: pRolesWrite.id },
     ],
   });
 
@@ -162,115 +138,115 @@ async function main() {
   });
 
   const businessOwner = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, roleId: roles[4].id, reportsToId: superAdmin.id, firstName: "Business", lastName: "Owner", email: "owner@demo.com", passwordHash, designation: "Business Owner", level: 4 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, roleId: roles[4].id, managerId:superAdmin.id, firstName: "Business", lastName: "Owner", email: "owner@demo.com", passwordHash, designation: "Business Owner", level: 4 },
   });
 
   // ─── IMMIGRATION EMPLOYEES ───
   const headImmigration = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, roleId: roles[3].id, reportsToId: businessOwner.id, firstName: "Immigration", lastName: "Head", email: "immigration.head@demo.com", passwordHash, designation: "Head of Immigration", level: 3 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, roleId: roles[3].id, managerId:businessOwner.id, firstName: "Immigration", lastName: "Head", email: "immigration.head@demo.com", passwordHash, designation: "Head of Immigration", level: 3 },
   });
   const verticalImmigration = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, verticalId: vImmigration.id, roleId: roles[2].id, reportsToId: headImmigration.id, firstName: "Immigration", lastName: "Vertical", email: "immigration.vertical@demo.com", passwordHash, designation: "Vertical Manager", level: 2 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, verticalId: vImmigration.id, roleId: roles[2].id, managerId:headImmigration.id, firstName: "Immigration", lastName: "Vertical", email: "immigration.vertical@demo.com", passwordHash, designation: "Vertical Manager", level: 2 },
   });
   const salesHeadImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmSales.id, verticalId: vImmigration.id, roleId: roles[2].id, reportsToId: verticalImmigration.id, firstName: "Sales", lastName: "Head", email: "sales.head@demo.com", passwordHash, designation: "Sales Head", level: 2 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmSales.id, verticalId: vImmigration.id, roleId: roles[2].id, managerId:verticalImmigration.id, firstName: "Sales", lastName: "Head", email: "sales.head@demo.com", passwordHash, designation: "Sales Head", level: 2 },
   });
   const salesExecImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmSales.id, verticalId: vImmigration.id, roleId: roles[1].id, reportsToId: salesHeadImm.id, firstName: "Sales", lastName: "Exec", email: "sales.exec@demo.com", passwordHash, designation: "Sales Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmSales.id, verticalId: vImmigration.id, roleId: roles[1].id, managerId:salesHeadImm.id, firstName: "Sales", lastName: "Exec", email: "sales.exec@demo.com", passwordHash, designation: "Sales Executive", level: 1 },
   });
   const salesInternImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmSales.id, verticalId: vImmigration.id, roleId: roles[0].id, reportsToId: salesExecImm.id, firstName: "Sales", lastName: "Intern", email: "sales.intern@demo.com", passwordHash, designation: "Sales Intern", level: 0 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmSales.id, verticalId: vImmigration.id, roleId: roles[0].id, managerId:salesExecImm.id, firstName: "Sales", lastName: "Intern", email: "sales.intern@demo.com", passwordHash, designation: "Sales Intern", level: 0 },
   });
 
   const marketingManagerImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmMarketing.id, verticalId: vImmigration.id, roleId: roles[2].id, reportsToId: verticalImmigration.id, firstName: "Marketing", lastName: "Manager", email: "marketing.manager@demo.com", passwordHash, designation: "Marketing Manager", level: 2 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmMarketing.id, verticalId: vImmigration.id, roleId: roles[2].id, managerId:verticalImmigration.id, firstName: "Marketing", lastName: "Manager", email: "marketing.manager@demo.com", passwordHash, designation: "Marketing Manager", level: 2 },
   });
   const marketingExecImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmMarketing.id, verticalId: vImmigration.id, roleId: roles[1].id, reportsToId: marketingManagerImm.id, firstName: "Marketing", lastName: "Exec", email: "marketing.exec@demo.com", passwordHash, designation: "Marketing Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmMarketing.id, verticalId: vImmigration.id, roleId: roles[1].id, managerId:marketingManagerImm.id, firstName: "Marketing", lastName: "Exec", email: "marketing.exec@demo.com", passwordHash, designation: "Marketing Executive", level: 1 },
   });
   const marketingInternImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmMarketing.id, verticalId: vImmigration.id, roleId: roles[0].id, reportsToId: marketingExecImm.id, firstName: "Marketing", lastName: "Intern", email: "marketing.intern@demo.com", passwordHash, designation: "Marketing Intern", level: 0 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmMarketing.id, verticalId: vImmigration.id, roleId: roles[0].id, managerId:marketingExecImm.id, firstName: "Marketing", lastName: "Intern", email: "marketing.intern@demo.com", passwordHash, designation: "Marketing Intern", level: 0 },
   });
 
   const docManagerImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmDocs.id, verticalId: vImmigration.id, roleId: roles[2].id, reportsToId: verticalImmigration.id, firstName: "Documentation", lastName: "Manager", email: "documentation.manager@demo.com", passwordHash, designation: "Documentation Manager", level: 2 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmDocs.id, verticalId: vImmigration.id, roleId: roles[2].id, managerId:verticalImmigration.id, firstName: "Documentation", lastName: "Manager", email: "documentation.manager@demo.com", passwordHash, designation: "Documentation Manager", level: 2 },
   });
   const docExecImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmDocs.id, verticalId: vImmigration.id, roleId: roles[1].id, reportsToId: docManagerImm.id, firstName: "Documentation", lastName: "Exec", email: "documentation.exec@demo.com", passwordHash, designation: "Documentation Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmDocs.id, verticalId: vImmigration.id, roleId: roles[1].id, managerId:docManagerImm.id, firstName: "Documentation", lastName: "Exec", email: "documentation.exec@demo.com", passwordHash, designation: "Documentation Executive", level: 1 },
   });
   const docInternImm = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmDocs.id, verticalId: vImmigration.id, roleId: roles[0].id, reportsToId: docExecImm.id, firstName: "Documentation", lastName: "Intern", email: "documentation.intern@demo.com", passwordHash, designation: "Documentation Intern", level: 0 },
+    data: { organizationId: organization.id, businessId: bImmigration.id, teamId: tImmDocs.id, verticalId: vImmigration.id, roleId: roles[0].id, managerId:docExecImm.id, firstName: "Documentation", lastName: "Intern", email: "documentation.intern@demo.com", passwordHash, designation: "Documentation Intern", level: 0 },
   });
 
   // ─── CREDENTIAL EVALUATION EMPLOYEES ───
   const headEvaluation = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, roleId: roles[3].id, reportsToId: businessOwner.id, firstName: "Evaluation", lastName: "Head", email: "evaluation.head@demo.com", passwordHash, designation: "Head of Evaluation", level: 3 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, roleId: roles[3].id, managerId:businessOwner.id, firstName: "Evaluation", lastName: "Head", email: "evaluation.head@demo.com", passwordHash, designation: "Head of Evaluation", level: 3 },
   });
   const verticalEvaluation = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, verticalId: vEvaluation.id, roleId: roles[2].id, reportsToId: headEvaluation.id, firstName: "Evaluation", lastName: "Vertical", email: "evaluation.vertical@demo.com", passwordHash, designation: "Vertical Manager", level: 2 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, verticalId: vEvaluation.id, roleId: roles[2].id, managerId:headEvaluation.id, firstName: "Evaluation", lastName: "Vertical", email: "evaluation.vertical@demo.com", passwordHash, designation: "Vertical Manager", level: 2 },
   });
   const salesHeadEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalSales.id, verticalId: vEvaluation.id, roleId: roles[2].id, reportsToId: verticalEvaluation.id, firstName: "Eval Sales", lastName: "Head", email: "evaluation.sales.head@demo.com", passwordHash, designation: "Sales Head", level: 2 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalSales.id, verticalId: vEvaluation.id, roleId: roles[2].id, managerId:verticalEvaluation.id, firstName: "Eval Sales", lastName: "Head", email: "evaluation.sales.head@demo.com", passwordHash, designation: "Sales Head", level: 2 },
   });
   const salesExecEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalSales.id, verticalId: vEvaluation.id, roleId: roles[1].id, reportsToId: salesHeadEval.id, firstName: "Eval Sales", lastName: "Exec", email: "evaluation.sales.exec@demo.com", passwordHash, designation: "Sales Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalSales.id, verticalId: vEvaluation.id, roleId: roles[1].id, managerId:salesHeadEval.id, firstName: "Eval Sales", lastName: "Exec", email: "evaluation.sales.exec@demo.com", passwordHash, designation: "Sales Executive", level: 1 },
   });
   const salesInternEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalSales.id, verticalId: vEvaluation.id, roleId: roles[0].id, reportsToId: salesExecEval.id, firstName: "Eval Sales", lastName: "Intern", email: "evaluation.sales.intern@demo.com", passwordHash, designation: "Sales Intern", level: 0 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalSales.id, verticalId: vEvaluation.id, roleId: roles[0].id, managerId:salesExecEval.id, firstName: "Eval Sales", lastName: "Intern", email: "evaluation.sales.intern@demo.com", passwordHash, designation: "Sales Intern", level: 0 },
   });
 
   const marketingManagerEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalMarketing.id, verticalId: vEvaluation.id, roleId: roles[2].id, reportsToId: verticalEvaluation.id, firstName: "Eval Marketing", lastName: "Manager", email: "evaluation.marketing.manager@demo.com", passwordHash, designation: "Marketing Manager", level: 2 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalMarketing.id, verticalId: vEvaluation.id, roleId: roles[2].id, managerId:verticalEvaluation.id, firstName: "Eval Marketing", lastName: "Manager", email: "evaluation.marketing.manager@demo.com", passwordHash, designation: "Marketing Manager", level: 2 },
   });
   const marketingExecEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalMarketing.id, verticalId: vEvaluation.id, roleId: roles[1].id, reportsToId: marketingManagerEval.id, firstName: "Eval Marketing", lastName: "Exec", email: "evaluation.marketing.exec@demo.com", passwordHash, designation: "Marketing Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalMarketing.id, verticalId: vEvaluation.id, roleId: roles[1].id, managerId:marketingManagerEval.id, firstName: "Eval Marketing", lastName: "Exec", email: "evaluation.marketing.exec@demo.com", passwordHash, designation: "Marketing Executive", level: 1 },
   });
   const marketingInternEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalMarketing.id, verticalId: vEvaluation.id, roleId: roles[0].id, reportsToId: marketingExecEval.id, firstName: "Eval Marketing", lastName: "Intern", email: "evaluation.marketing.intern@demo.com", passwordHash, designation: "Marketing Intern", level: 0 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalMarketing.id, verticalId: vEvaluation.id, roleId: roles[0].id, managerId:marketingExecEval.id, firstName: "Eval Marketing", lastName: "Intern", email: "evaluation.marketing.intern@demo.com", passwordHash, designation: "Marketing Intern", level: 0 },
   });
 
   const docManagerEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalDocs.id, verticalId: vEvaluation.id, roleId: roles[2].id, reportsToId: verticalEvaluation.id, firstName: "Eval Doc", lastName: "Manager", email: "evaluation.documentation.manager@demo.com", passwordHash, designation: "Documentation Manager", level: 2 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalDocs.id, verticalId: vEvaluation.id, roleId: roles[2].id, managerId:verticalEvaluation.id, firstName: "Eval Doc", lastName: "Manager", email: "evaluation.documentation.manager@demo.com", passwordHash, designation: "Documentation Manager", level: 2 },
   });
   const docExecEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalDocs.id, verticalId: vEvaluation.id, roleId: roles[1].id, reportsToId: docManagerEval.id, firstName: "Eval Doc", lastName: "Exec", email: "evaluation.documentation.exec@demo.com", passwordHash, designation: "Documentation Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalDocs.id, verticalId: vEvaluation.id, roleId: roles[1].id, managerId:docManagerEval.id, firstName: "Eval Doc", lastName: "Exec", email: "evaluation.documentation.exec@demo.com", passwordHash, designation: "Documentation Executive", level: 1 },
   });
   const docInternEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalDocs.id, verticalId: vEvaluation.id, roleId: roles[0].id, reportsToId: docExecEval.id, firstName: "Eval Doc", lastName: "Intern", email: "evaluation.documentation.intern@demo.com", passwordHash, designation: "Documentation Intern", level: 0 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, teamId: tEvalDocs.id, verticalId: vEvaluation.id, roleId: roles[0].id, managerId:docExecEval.id, firstName: "Eval Doc", lastName: "Intern", email: "evaluation.documentation.intern@demo.com", passwordHash, designation: "Documentation Intern", level: 0 },
   });
   const professorEval = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bEvaluation.id, roleId: roles[1].id, reportsToId: headEvaluation.id, firstName: "Eval", lastName: "Professor", email: "professor@demo.com", passwordHash, designation: "Professor", level: 1 },
+    data: { organizationId: organization.id, businessId: bEvaluation.id, roleId: roles[1].id, managerId:headEvaluation.id, firstName: "Eval", lastName: "Professor", email: "professor@demo.com", passwordHash, designation: "Professor", level: 1 },
   });
 
   // ─── HR EMPLOYEES ───
   const hrManager = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bHR.id, roleId: roles[3].id, reportsToId: businessOwner.id, firstName: "HR", lastName: "Manager", email: "hr.manager@demo.com", passwordHash, designation: "HR Manager", level: 3 },
+    data: { organizationId: organization.id, businessId: bHR.id, roleId: roles[3].id, managerId:businessOwner.id, firstName: "HR", lastName: "Manager", email: "hr.manager@demo.com", passwordHash, designation: "HR Manager", level: 3 },
   });
   const hrExec = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bHR.id, teamId: tHR.id, verticalId: vHR.id, roleId: roles[1].id, reportsToId: hrManager.id, firstName: "HR", lastName: "Exec", email: "hr.exec@demo.com", passwordHash, designation: "HR Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bHR.id, teamId: tHR.id, verticalId: vHR.id, roleId: roles[1].id, managerId:hrManager.id, firstName: "HR", lastName: "Exec", email: "hr.exec@demo.com", passwordHash, designation: "HR Executive", level: 1 },
   });
   const recruitmentExec = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bHR.id, teamId: tHR.id, verticalId: vHR.id, roleId: roles[1].id, reportsToId: hrManager.id, firstName: "Recruitment", lastName: "Exec", email: "recruitment.exec@demo.com", passwordHash, designation: "Recruitment Executive", level: 1 },
+    data: { organizationId: organization.id, businessId: bHR.id, teamId: tHR.id, verticalId: vHR.id, roleId: roles[1].id, managerId:hrManager.id, firstName: "Recruitment", lastName: "Exec", email: "recruitment.exec@demo.com", passwordHash, designation: "Recruitment Executive", level: 1 },
   });
   const hrIntern = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bHR.id, teamId: tHR.id, verticalId: vHR.id, roleId: roles[0].id, reportsToId: hrExec.id, firstName: "HR", lastName: "Intern", email: "hr.intern@demo.com", passwordHash, designation: "HR Intern", level: 0 },
+    data: { organizationId: organization.id, businessId: bHR.id, teamId: tHR.id, verticalId: vHR.id, roleId: roles[0].id, managerId:hrExec.id, firstName: "HR", lastName: "Intern", email: "hr.intern@demo.com", passwordHash, designation: "HR Intern", level: 0 },
   });
 
   // ─── IT EMPLOYEES ───
   const itHead = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bIT.id, roleId: roles[3].id, reportsToId: businessOwner.id, firstName: "IT", lastName: "Head", email: "it.head@demo.com", passwordHash, designation: "IT Head", level: 3 },
+    data: { organizationId: organization.id, businessId: bIT.id, roleId: roles[3].id, managerId:businessOwner.id, firstName: "IT", lastName: "Head", email: "it.head@demo.com", passwordHash, designation: "IT Head", level: 3 },
   });
   const devLead = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[2].id, reportsToId: itHead.id, firstName: "Development", lastName: "Lead", email: "dev.lead@demo.com", passwordHash, designation: "Development Team Lead", level: 2 },
+    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[2].id, managerId:itHead.id, firstName: "Development", lastName: "Lead", email: "dev.lead@demo.com", passwordHash, designation: "Development Team Lead", level: 2 },
   });
   const developer = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[1].id, reportsToId: devLead.id, firstName: "IT", lastName: "Developer", email: "developer@demo.com", passwordHash, designation: "Developer", level: 1 },
+    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[1].id, managerId:devLead.id, firstName: "IT", lastName: "Developer", email: "developer@demo.com", passwordHash, designation: "Developer", level: 1 },
   });
   const marketingLeadIT = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[2].id, reportsToId: itHead.id, firstName: "IT Marketing", lastName: "Lead", email: "it.marketing.lead@demo.com", passwordHash, designation: "Marketing Team Lead", level: 2 },
+    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[2].id, managerId:itHead.id, firstName: "IT Marketing", lastName: "Lead", email: "it.marketing.lead@demo.com", passwordHash, designation: "Marketing Team Lead", level: 2 },
   });
   const salesLeadIT = await prisma.employee.create({
-    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[2].id, reportsToId: itHead.id, firstName: "IT Sales", lastName: "Lead", email: "it.sales.lead@demo.com", passwordHash, designation: "Sales Team Lead", level: 2 },
+    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, verticalId: vIT.id, roleId: roles[2].id, managerId:itHead.id, firstName: "IT Sales", lastName: "Lead", email: "it.sales.lead@demo.com", passwordHash, designation: "Sales Team Lead", level: 2 },
   });
 
   const allEmployees = [
@@ -287,9 +263,9 @@ async function main() {
 
   console.log("Generating employee hierarchy linkages...");
   for (const employee of allEmployees) {
-    if (!employee.reportsToId) continue;
+    if (!employee.managerId) continue;
     let depth = 1;
-    let currentManagerId: string | null = employee.reportsToId;
+    let currentManagerId: string | null = employee.managerId;
     while (currentManagerId !== null) {
       await prisma.employeeHierarchy.create({
         data: {
@@ -298,12 +274,12 @@ async function main() {
           depth,
         },
       });
-      const manager: { id: string; reportsToId: string | null } | null =
+      const manager: { id: string; managerId:string | null } | null =
         await prisma.employee.findUnique({
           where: { id: currentManagerId },
-          select: { id: true, reportsToId: true },
+          select: { id: true, managerId:true },
         });
-      currentManagerId = manager?.reportsToId ?? null;
+      currentManagerId = manager?.managerId ?? null;
       depth += 1;
     }
   }

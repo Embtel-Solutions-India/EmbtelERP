@@ -643,7 +643,7 @@ export const WIDGET_REGISTRY = {
   // Sales Head extras — alias to nearest matching widgets
   assignment_queue: { title: 'Assignment Queue', component: HotLeadsWidget },
   kpi_score: { title: 'KPI Score', component: PerformanceChart },
-  forecast: { title: 'Revenue Forecast', component: PerformanceChart },
+  revenue_trend: { title: 'Revenue Trend', component: PerformanceChart },
   compliance: { title: 'Compliance', component: TaskWidget },
 
   // Marketing Executive extras

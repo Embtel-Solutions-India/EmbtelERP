@@ -18,6 +18,9 @@ import marketingDashboardReducer from '../modules/marketing/redux/marketingDashb
 import marketingTaskReducer      from '../modules/marketing/redux/marketingTaskSlice'
 import marketingEmailReducer     from '../modules/marketing/redux/marketingEmailSlice'
 
+// HR Reducer
+import hrReducer from '../modules/hr/redux/hrSlice'
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -38,6 +41,9 @@ export const store = configureStore({
     marketingDashboard: marketingDashboardReducer,
     marketingTasks:     marketingTaskReducer,
     marketingEmails:    marketingEmailReducer,
+
+    // HR slice
+    hr: hrReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

@@ -7,7 +7,11 @@ import { ApiError } from "../utils/ApiError.js";
 export async function login(email: string, password: string) {
   const employee = await prisma.employee.findUnique({
     where: { email },
-    include: { role: true },
+    include: {
+      role: {
+        include: { permissions: { include: { permission: true } } },
+      },
+    },
   });
 
   if (!employee || !employee.isActive) {
@@ -26,6 +30,7 @@ export async function login(email: string, password: string) {
     employeeLevel: employee.level ?? employee.role.level,
     businessId: employee.businessId,
     organizationId: employee.organizationId,
+    permissions: employee.role.permissions.map((rp) => rp.permission.code),
   };
 
   const accessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
