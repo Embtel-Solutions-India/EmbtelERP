@@ -6,7 +6,11 @@ vi.mock("../src/config/prisma.js", () => ({
     business: { findUnique: vi.fn(), findMany: vi.fn() },
     vertical: { findMany: vi.fn(), findUnique: vi.fn() },
     team: { findMany: vi.fn() },
-    perspectiveSession: { findFirst: vi.fn(), deleteMany: vi.fn(), create: vi.fn() },
+    perspectiveSession: {
+      findFirst: vi.fn(),
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+    },
     auditLog: { create: vi.fn() },
   },
 }));
@@ -39,14 +43,18 @@ function mockViewer(overrides: object = {}) {
 // ─── Existing behaviour ───────────────────────────────────────────────────────
 
 describe("switchPerspective (existing)", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("allows switching to a descendant EMPLOYEE", async () => {
     // switchPerspective calls employee.findUnique once, then validatePerspectiveAccess calls it again
     mockViewer({ role: { level: 4 } }); // consumed by switchPerspective
     mockViewer({ role: { level: 4 } }); // consumed by validatePerspectiveAccess
     (isDescendantOf as any).mockResolvedValue(true);
-    (prisma.perspectiveSession.deleteMany as any).mockResolvedValue({ count: 0 });
+    (prisma.perspectiveSession.deleteMany as any).mockResolvedValue({
+      count: 0,
+    });
     (prisma.perspectiveSession.create as any).mockResolvedValue({
       id: "p1",
       userId: "viewer1",
@@ -75,11 +83,15 @@ describe("switchPerspective (existing)", () => {
 // ─── BUSINESS_OWNER ───────────────────────────────────────────────────────────
 
 describe("validatePerspectiveAccess — BUSINESS_OWNER", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("allows level 4 to access their own business", async () => {
     mockViewer({ role: { level: 4 } });
-    (prisma.business.findUnique as any).mockResolvedValue({ organizationId: "org1" });
+    (prisma.business.findUnique as any).mockResolvedValue({
+      organizationId: "org1",
+    });
 
     await expect(
       validatePerspectiveAccess("viewer1", "BUSINESS_OWNER", "b1"),
@@ -105,7 +117,9 @@ describe("validatePerspectiveAccess — BUSINESS_OWNER", () => {
 
   it("denies level 4 crossing to another organization's business", async () => {
     mockViewer({ role: { level: 4 } });
-    (prisma.business.findUnique as any).mockResolvedValue({ organizationId: "org_other" });
+    (prisma.business.findUnique as any).mockResolvedValue({
+      organizationId: "org_other",
+    });
 
     await expect(
       validatePerspectiveAccess("viewer1", "BUSINESS_OWNER", "b_other"),
@@ -125,7 +139,9 @@ describe("validatePerspectiveAccess — BUSINESS_OWNER", () => {
 // ─── MANAGER ─────────────────────────────────────────────────────────────────
 
 describe("validatePerspectiveAccess — MANAGER", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("allows a manager to use their own MANAGER perspective", async () => {
     mockViewer({ id: "mgr1", role: { level: 2 } });
@@ -157,7 +173,9 @@ describe("validatePerspectiveAccess — MANAGER", () => {
 // ─── INTERN ──────────────────────────────────────────────────────────────────
 
 describe("validatePerspectiveAccess — INTERN", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(async () => {
+    await vi.clearAllMocks();
+  });
 
   it("allows an intern to use their own INTERN perspective", async () => {
     mockViewer({ id: "intern1", role: { level: 0 } });
@@ -186,10 +204,12 @@ describe("validatePerspectiveAccess — INTERN", () => {
   });
 });
 
-// ─── HEAD (was in service, was missing from switchSchema) ────────────────────
+//─── HEAD (was in service, was missing from switchSchema) ────────────────────
 
 describe("validatePerspectiveAccess — HEAD", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("allows access to a head in the same business", async () => {
     mockViewer({ role: { level: 4 } });
@@ -219,11 +239,15 @@ describe("validatePerspectiveAccess — HEAD", () => {
 // ─── VERTICAL (was in service, was missing from switchSchema) ────────────────
 
 describe("validatePerspectiveAccess — VERTICAL", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("allows access to a vertical in the same business", async () => {
     mockViewer({ role: { level: 3 } });
-    (prisma.vertical.findUnique as any).mockResolvedValueOnce({ businessId: "b1" });
+    (prisma.vertical.findUnique as any).mockResolvedValueOnce({
+      businessId: "b1",
+    });
 
     await expect(
       validatePerspectiveAccess("viewer1", "VERTICAL", "v1"),
