@@ -42,7 +42,7 @@ export const defaultDashboardConfigs: Record<string, DefaultWidgetConfig[]> = {
     { widget: 'upcoming_events', position: 8, priority: 'critical', colSpan: { xs: 1, sm: 1, md: 1, lg: 2, xl: 2 }, height: 'large' },
     { widget: 'assignment_queue', position: 9, priority: 'high', colSpan: { xs: 1, sm: 1, md: 1, lg: 2, xl: 2 }, height: 'medium' },
     { widget: 'kpi_score', position: 10, priority: 'high', colSpan: { xs: 1, sm: 1, md: 1, lg: 2, xl: 2 }, height: 'medium' },
-    { widget: 'forecast', position: 11, priority: 'high', colSpan: { xs: 1, sm: 1, md: 1, lg: 2, xl: 2 }, height: 'medium' },
+    { widget: 'revenue_trend', position: 11, priority: 'high', colSpan: { xs: 1, sm: 1, md: 1, lg: 2, xl: 2 }, height: 'medium' },
     { widget: 'compliance', position: 12, priority: 'high', colSpan: { xs: 1, sm: 1, md: 1, lg: 2, xl: 2 }, height: 'medium' },
     { widget: 'calendar', position: 13, priority: 'medium', colSpan: { xs: 1, sm: 2, md: 2, lg: 4, xl: 5 }, height: 'large' }
   ],

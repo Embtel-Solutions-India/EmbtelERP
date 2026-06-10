@@ -7,6 +7,7 @@ import { validateBody } from "../middleware/validate.middleware.js";
 import {
   requireRole,
   requireEmployeeScope,
+  requirePermission,
   ROLE_LEVEL,
 } from "../middleware/rbac.middleware.js";
 import {
@@ -23,7 +24,7 @@ const createEmployeeSchema = z.object({
   departmentId: z.string().min(1).nullable().optional(),
   teamId: z.string().min(1).nullable().optional(),
   roleId: z.string().min(1),
-  reportsToId: z.string().min(1).nullable().optional(),
+  managerId: z.string().min(1).nullable().optional(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   email: z.string().email(),
@@ -55,6 +56,7 @@ employeesRouter.get(
 employeesRouter.post(
   "/",
   requireRole(ROLE_LEVEL.HEAD),
+  requirePermission("employees:write"),
   validateBody(createEmployeeSchema),
   asyncHandler(async (req, res) => {
     const actorId = req.user?.employeeId;
@@ -66,6 +68,7 @@ employeesRouter.post(
 employeesRouter.patch(
   "/:id",
   requireRole(ROLE_LEVEL.HEAD),
+  requirePermission("employees:write"),
   asyncHandler(async (req, res) => {
     const actorId = req.user?.employeeId;
     const employee = await updateEmployee(String(req.params.id), req.body, actorId);
@@ -76,6 +79,7 @@ employeesRouter.patch(
 employeesRouter.delete(
   "/:id",
   requireRole(ROLE_LEVEL.HEAD),
+  requirePermission("employees:write"),
   asyncHandler(async (req, res) => {
     const actorId = req.user?.employeeId;
     await deactivateEmployee(String(req.params.id), actorId);

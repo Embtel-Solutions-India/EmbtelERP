@@ -9,8 +9,6 @@
     "test": "vitest",
     "prisma:generate": "prisma generate",
     "prisma:seed": "tsx prisma/seed.ts",
-    "db:backfill": "tsx prisma/backfill/employee_fields.ts",
-    "db:manager-backfill": "tsx prisma/backfill/manager_and_hierarchy.ts",
     "lint": "eslint src prisma --ext .ts"
   },
   "dependencies": {

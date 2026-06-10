@@ -52,6 +52,12 @@ import OwnerDashboard        from './modules/owner/dashboard/OwnerDashboard'
 import AdminDashboard        from './modules/admin/dashboard/AdminDashboard'
 import OrgExplorer           from './modules/admin/dashboard/OrgExplorer'
 
+// ── HR Module screens ────────────────────────────────────────────────────────
+import HRRecruitment         from './modules/hr/recruitment/HRRecruitment'
+import HRAttendance          from './modules/hr/attendance/HRAttendance'
+import HRPerformance         from './modules/hr/performance/HRPerformance'
+import HRReports             from './modules/hr/reports/HRReports'
+
 /**
  * Sends authenticated users to the route that matches their role.
  */
@@ -167,10 +173,10 @@ export default function App() {
             <Route path="hr-executive/dashboard"    element={<HRDashboard />} />
             <Route path="recruitment/dashboard"     element={<HRDashboard />} />
             <Route path="hr/employees"              element={<EmployeesPage />} />
-            <Route path="hr/recruitment"            element={<Tasks />} />
-            <Route path="hr/attendance"             element={<Tasks />} />
-            <Route path="hr/performance"            element={<Performance />} />
-            <Route path="hr/reports"                element={<Reports />} />
+            <Route path="hr/recruitment"            element={<HRRecruitment />} />
+            <Route path="hr/attendance"             element={<HRAttendance />} />
+            <Route path="hr/performance"            element={<HRPerformance />} />
+            <Route path="hr/reports"                element={<HRReports />} />
             <Route path="hr/profile"                element={<Profile />} />
           </Route>
 

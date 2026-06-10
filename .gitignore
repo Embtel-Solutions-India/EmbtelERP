@@ -1,0 +1,34 @@
+# Build outputs — never commit compiled artefacts
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Prisma generated client (regenerated on install)
+Server/node_modules/.prisma/
+
+# Test results
+Server/node_modules/.vite/
+
+# TypeScript build info
+*.tsbuildinfo

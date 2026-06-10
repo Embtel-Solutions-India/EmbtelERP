@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../config/prisma.js";
 import { authenticate } from "../middleware/auth.middleware.js";
-import { requireRole, ROLE_LEVEL } from "../middleware/rbac.middleware.js";
+import { requireRole, requirePermission, ROLE_LEVEL } from "../middleware/rbac.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 
@@ -12,6 +12,7 @@ adminRouter.use(authenticate, requireRole(ROLE_LEVEL.SUPER_ADMIN));
 // GET /admin/global-analytics
 adminRouter.get(
   "/global-analytics",
+  requirePermission("audit:read"),
   asyncHandler(async (req, res) => {
     const [
       businessCount,
@@ -151,6 +152,7 @@ adminRouter.get(
 // CRUD for Businesses
 adminRouter.post(
   "/config/businesses",
+  requirePermission("roles:write"),
   asyncHandler(async (req, res) => {
     const { name, code, organizationId } = req.body;
     if (!name || !code) throw new ApiError(400, "Missing required fields");
@@ -176,6 +178,7 @@ adminRouter.post(
 
 adminRouter.patch(
   "/config/businesses/:id",
+  requirePermission("roles:write"),
   asyncHandler(async (req, res) => {
     const { name, code, isActive } = req.body;
     const updated = await prisma.business.update({
@@ -193,6 +196,7 @@ adminRouter.patch(
 // CRUD for Verticals
 adminRouter.post(
   "/config/verticals",
+  requirePermission("roles:write"),
   asyncHandler(async (req, res) => {
     const { name, code, businessId } = req.body;
     if (!name || !code || !businessId) throw new ApiError(400, "Missing required fields");
@@ -210,6 +214,7 @@ adminRouter.post(
 
 adminRouter.patch(
   "/config/verticals/:id",
+  requirePermission("roles:write"),
   asyncHandler(async (req, res) => {
     const { name, code, isActive } = req.body;
     const updated = await prisma.vertical.update({
@@ -227,6 +232,7 @@ adminRouter.patch(
 // CRUD for Teams
 adminRouter.post(
   "/config/teams",
+  requirePermission("roles:write"),
   asyncHandler(async (req, res) => {
     const { name, code, businessId, verticalId } = req.body;
     if (!name || !code || !businessId) throw new ApiError(400, "Missing required fields");
@@ -245,6 +251,7 @@ adminRouter.post(
 
 adminRouter.patch(
   "/config/teams/:id",
+  requirePermission("roles:write"),
   asyncHandler(async (req, res) => {
     const { name, code, isActive, verticalId } = req.body;
     const updated = await prisma.team.update({
@@ -263,6 +270,7 @@ adminRouter.patch(
 // CRUD/PATCH for Users (Employees)
 adminRouter.patch(
   "/config/users/:id",
+  requirePermission("roles:write"),
   asyncHandler(async (req, res) => {
     const { firstName, lastName, email, designation, level, businessId, teamId, roleId, isActive } = req.body;
     const updated = await prisma.employee.update({

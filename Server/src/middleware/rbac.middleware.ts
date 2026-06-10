@@ -21,6 +21,17 @@ export function requireRole(minLevel: number) {
   };
 }
 
+/** Deny requests whose caller's role does not carry the named permission code. */
+export function requirePermission(code: string) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!(req.user?.permissions ?? []).includes(code)) {
+      next(new ApiError(403, "Permission denied"));
+      return;
+    }
+    next();
+  };
+}
+
 /** Verify that req.params[idParam] is within the caller's visible employees. */
 export function requireEmployeeScope(idParam = "id") {
   return (req: Request, _res: Response, next: NextFunction): void => {

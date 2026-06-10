@@ -41,7 +41,7 @@ dashboardRouter.get(
   }),
 );
 
-// GET /dashboard/insights - AI-like insights generated from real data
+// GET /dashboard/insights - Threshold-rule alerts generated from real data
 dashboardRouter.get(
   "/insights",
   asyncHandler(async (req, res) => {

@@ -35,8 +35,10 @@ export const updateLeadStatusAsync = createAsyncThunk(
       let backendStatus = 'NEW';
       if (s === 'new') backendStatus = 'NEW';
       else if (s === 'contacted') backendStatus = 'CONTACTED';
-      else if (s === 'qualified' || s === 'proposal' || s === 'negotiation') backendStatus = 'QUALIFIED';
-      else if (s === 'won' || s === 'converted') backendStatus = 'CONVERTED';
+      else if (s === 'qualified') backendStatus = 'QUALIFIED';
+      else if (s === 'proposal') backendStatus = 'PROPOSAL';
+      else if (s === 'negotiation') backendStatus = 'NEGOTIATION';
+      else if (s === 'won' || s === 'converted') backendStatus = 'WON';
       else if (s === 'lost') backendStatus = 'LOST';
 
       const res = await leadService.updateStatus(id, backendStatus)
