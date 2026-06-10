@@ -20,7 +20,7 @@ import {
   Home as HomeIcon,
   ChevronRight,
 } from '@mui/icons-material'
-import { Badge, Tooltip } from '@mui/material'
+import { Tooltip } from '@mui/material'
 import {
   FaUserPlus,
   FaCalendarAlt,
@@ -60,11 +60,11 @@ const MARKETING_QUICK_ACTIONS = [
 ]
 
 const NOTIFICATION_ICON_MAP = {
-  lead: { Icon: FaUserPlus, cls: 'text-indigo-500' },
-  meeting: { Icon: FaCalendarAlt, cls: 'text-cyan-500' },
-  target: { Icon: FaBullseye, cls: 'text-purple-500' },
-  client: { Icon: FaCommentDots, cls: 'text-emerald-500' },
-  system: { Icon: FaCog, cls: 'text-slate-400' },
+  lead:    { Icon: FaUserPlus,    bg: 'bg-indigo-100 dark:bg-indigo-900/30',   cls: 'text-indigo-600 dark:text-indigo-400' },
+  meeting: { Icon: FaCalendarAlt, bg: 'bg-cyan-100 dark:bg-cyan-900/30',       cls: 'text-cyan-600 dark:text-cyan-400' },
+  target:  { Icon: FaBullseye,    bg: 'bg-purple-100 dark:bg-purple-900/30',   cls: 'text-purple-600 dark:text-purple-400' },
+  client:  { Icon: FaCommentDots, bg: 'bg-emerald-100 dark:bg-emerald-900/30', cls: 'text-emerald-600 dark:text-emerald-400' },
+  system:  { Icon: FaCog,         bg: 'bg-neutral-100 dark:bg-neutral-700',    cls: 'text-neutral-500 dark:text-neutral-400' },
 }
 
 export default function Navbar({ onToggleSidebar }) {
@@ -86,7 +86,10 @@ export default function Navbar({ onToggleSidebar }) {
   const isViewingOther = activePerspective !== null
 
   const dropdownClass =
-    'absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-100 dark:border-gray-700 z-50 overflow-hidden'
+    'absolute right-0 top-full mt-2 bg-white dark:bg-neutral-800 rounded-2xl shadow-card-hover border border-neutral-200 dark:border-neutral-700 z-50 overflow-hidden'
+
+  const iconBtnClass =
+    'w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center text-neutral-600 dark:text-neutral-400 transition-colors'
 
   const handleResetPerspective = () => {
     dispatch(resetPerspective()).then(() => {
@@ -101,27 +104,33 @@ export default function Navbar({ onToggleSidebar }) {
   }
 
   return (
-    <header className="sticky top-0 z-20 h-16 flex items-center gap-3 px-4 md:px-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-gray-700/50">
-      <button onClick={onToggleSidebar} className="btn-ghost p-2">
-        <MenuIcon fontSize="small" />
+    <header className="sticky top-0 z-20 flex items-center gap-2 px-4 md:px-6 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 h-[72px]">
+      {/* Hamburger */}
+      <button
+        onClick={onToggleSidebar}
+        className={iconBtnClass}
+        aria-label="Toggle sidebar"
+      >
+        <MenuIcon style={{ fontSize: 20 }} />
       </button>
 
+      {/* Perspective breadcrumb */}
       {isViewingOther && currentInfo?.breadcrumb && (
-        <div className="hidden lg:flex items-center gap-1.5">
+        <div className="hidden lg:flex items-center gap-1.5 ml-1">
           <button
             onClick={handleResetPerspective}
-            className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+            className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
           >
             <HomeIcon style={{ fontSize: 14 }} />
           </button>
           {currentInfo.breadcrumb.map((crumb, index) => (
             <span key={crumb.id} className="flex items-center gap-1">
-              <ChevronRight style={{ fontSize: 14 }} className="text-slate-300 dark:text-slate-600" />
+              <ChevronRight style={{ fontSize: 14 }} className="text-neutral-300 dark:text-neutral-600" />
               <span
                 className={`text-xs font-medium ${
                   index === currentInfo.breadcrumb.length - 1
                     ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-slate-500 dark:text-slate-400'
+                    : 'text-neutral-500 dark:text-neutral-400'
                 }`}
               >
                 {crumb.label}
@@ -131,13 +140,14 @@ export default function Navbar({ onToggleSidebar }) {
         </div>
       )}
 
+      {/* Perspective pill */}
       {isViewingOther && (
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30"
         >
-          <VisibilityIcon style={{ fontSize: 14 }} className="text-amber-600 dark:text-amber-400" />
+          <VisibilityIcon style={{ fontSize: 13 }} className="text-amber-600 dark:text-amber-400" />
           <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 max-w-32 truncate">
             {currentInfo?.label || 'Perspective'}
           </span>
@@ -150,50 +160,70 @@ export default function Navbar({ onToggleSidebar }) {
         </motion.div>
       )}
 
-      <div className="flex-1 max-w-md relative hidden md:block">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+      {/* Search bar */}
+      <div className="flex-1 max-w-sm md:max-w-md relative hidden md:block mx-2">
+        <SearchIcon
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+          style={{ fontSize: 17 }}
+        />
         <input
           type="text"
-          placeholder="Search leads, contacts, deals..."
+          placeholder="Search leads, contacts, deals…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input-field pl-9 py-2 text-sm"
+          className="h-10 w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl pl-9 pr-3 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all text-neutral-900 dark:text-neutral-100"
         />
       </div>
 
-      <div className="ml-auto flex items-center gap-1.5">
+      {/* Right actions */}
+      <div className="ml-auto flex items-center gap-2">
+        {/* Theme toggle */}
         <Tooltip title={isDark ? 'Light mode' : 'Dark mode'}>
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => dispatch(toggleTheme())}
-            className="btn-ghost p-2 rounded-xl"
+            className={iconBtnClass}
+            aria-label="Toggle theme"
           >
-            {isDark ? <LightMode fontSize="small" /> : <DarkMode fontSize="small" />}
+            {isDark
+              ? <LightMode style={{ fontSize: 18 }} />
+              : <DarkMode style={{ fontSize: 18 }} />}
           </motion.button>
         </Tooltip>
 
+        {/* Messages */}
         <Tooltip title="Messages">
-          <button className="btn-ghost p-2 rounded-xl relative">
-            <Badge badgeContent={3} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, minWidth: 16, height: 16 } }}>
-              <MessageIcon fontSize="small" />
-            </Badge>
-          </button>
+          <div className="relative">
+            <button className={iconBtnClass} aria-label="Messages">
+              <MessageIcon style={{ fontSize: 18 }} />
+            </button>
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none pointer-events-none">
+              3
+            </span>
+          </div>
         </Tooltip>
 
+        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <Tooltip title="Notifications">
-            <button
-              onClick={() => {
-                setShowNotifications(!showNotifications)
-                setShowProfile(false)
-                setShowQuickActions(false)
-              }}
-              className="btn-ghost p-2 rounded-xl relative"
-            >
-              <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, minWidth: 16, height: 16 } }}>
-                <NotificationsIcon fontSize="small" />
-              </Badge>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowNotifications(!showNotifications)
+                  setShowProfile(false)
+                  setShowQuickActions(false)
+                }}
+                className={iconBtnClass}
+                aria-label="Notifications"
+              >
+                <NotificationsIcon style={{ fontSize: 18 }} />
+              </button>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none pointer-events-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </div>
           </Tooltip>
 
           <AnimatePresence>
@@ -205,47 +235,71 @@ export default function Navbar({ onToggleSidebar }) {
                 transition={{ duration: 0.15 }}
                 className={`${dropdownClass} w-80`}
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-gray-700">
-                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">
-                    Notifications {unreadCount > 0 && <span className="ml-1 badge badge-primary">{unreadCount} new</span>}
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
+                  <span className="font-semibold text-sm text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                    Notifications
+                    {unreadCount > 0 && (
+                      <span className="px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-[10px] font-bold rounded-full">
+                        {unreadCount} new
+                      </span>
+                    )}
                   </span>
                   {unreadCount > 0 && (
-                    <button onClick={() => dispatch(markAllRead())} className="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
-                      <CheckIcon style={{ fontSize: 13 }} /> Mark all read
+                    <button
+                      onClick={() => dispatch(markAllRead())}
+                      className="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+                    >
+                      <CheckIcon style={{ fontSize: 13 }} />
+                      Mark all read
                     </button>
                   )}
                 </div>
-                <div className="max-h-72 overflow-y-auto divide-y divide-slate-50 dark:divide-gray-700">
+
+                {/* List */}
+                <div className="max-h-72 overflow-y-auto divide-y divide-neutral-50 dark:divide-neutral-700/60">
                   {notifications.slice(0, 6).map((n) => {
                     const entry = NOTIFICATION_ICON_MAP[n.type] || NOTIFICATION_ICON_MAP.system
                     const { Icon } = entry
                     return (
-                      <div key={n.id} className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${!n.read ? 'bg-primary-50/40 dark:bg-primary-900/10' : ''}`}>
-                        <div className="flex gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-700 flex items-center justify-center">
+                      <div
+                        key={n.id}
+                        className={`px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-700/40 cursor-pointer transition-colors ${
+                          !n.read ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''
+                        }`}
+                      >
+                        <div className="flex gap-3 items-start">
+                          <div className={`flex-shrink-0 w-9 h-9 rounded-full ${entry.bg} flex items-center justify-center`}>
                             <Icon className={entry.cls} size={14} />
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 leading-snug">
                               {n.title}
-                              {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-primary-600 inline-block" />}
+                              {!n.read && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary-600 inline-block flex-shrink-0" />
+                              )}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{n.message}</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{timeAgo(n.time)}</p>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1">{n.message}</p>
+                            <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">{timeAgo(n.time)}</p>
                           </div>
                         </div>
                       </div>
                     )
                   })}
                 </div>
-                <div className="px-4 py-2.5 border-t border-slate-100 dark:border-gray-700 text-center">
-                  <button className="text-xs text-primary-600 dark:text-primary-400 font-medium hover:underline">View all notifications</button>
+
+                {/* Footer */}
+                <div className="px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-700 text-center">
+                  <button className="text-xs text-primary-600 dark:text-primary-400 font-semibold hover:underline">
+                    View all notifications
+                  </button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
+        {/* Quick Add */}
         <div className="relative">
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -254,7 +308,7 @@ export default function Navbar({ onToggleSidebar }) {
               setShowNotifications(false)
               setShowProfile(false)
             }}
-            className="btn-primary flex items-center gap-1.5 text-sm px-3 py-2"
+            className="h-9 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-brand active:scale-95"
           >
             <AddIcon style={{ fontSize: 18 }} />
             <span className="hidden sm:inline">Quick Add</span>
@@ -267,30 +321,33 @@ export default function Navbar({ onToggleSidebar }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className={`${dropdownClass} w-48`}
+                className={`${dropdownClass} w-52`}
               >
-                {(() => {
-                  const isMarketing = user?.role === 'Marketing Executive'
-                  const actionsList = isMarketing ? MARKETING_QUICK_ACTIONS : QUICK_ACTIONS
-                  return actionsList.map((a) => (
-                    <button
-                      key={a.label}
-                      onClick={() => {
-                        navigate(a.path)
-                        setShowQuickActions(false)
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-gray-700/50 text-left text-sm text-slate-700 dark:text-slate-300 transition-colors"
-                    >
-                      <a.Icon className="text-slate-400" size={14} />
-                      <span className="font-medium">{a.label}</span>
-                    </button>
-                  ))
-                })()}
+                <div className="py-1">
+                  {(() => {
+                    const isMarketing = user?.role === 'Marketing Executive'
+                    const actionsList = isMarketing ? MARKETING_QUICK_ACTIONS : QUICK_ACTIONS
+                    return actionsList.map((a) => (
+                      <button
+                        key={a.label}
+                        onClick={() => {
+                          navigate(a.path)
+                          setShowQuickActions(false)
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 text-left text-sm text-neutral-700 dark:text-neutral-300 transition-colors"
+                      >
+                        <a.Icon className="text-neutral-400 flex-shrink-0" size={13} />
+                        <span className="font-medium">{a.label}</span>
+                      </button>
+                    ))
+                  })()}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
+        {/* Profile */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => {
@@ -298,13 +355,15 @@ export default function Navbar({ onToggleSidebar }) {
               setShowNotifications(false)
               setShowQuickActions(false)
             }}
-            className="flex items-center gap-2 p-1.5 pr-2 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-700/50 transition-colors"
+            className="flex items-center gap-2.5 pl-1 pr-3 h-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {getInitials(user?.name)}
             </div>
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 hidden sm:block">{user?.name?.split(' ')[0]}</span>
-            <KeyboardArrowDown style={{ fontSize: 16 }} className="text-slate-400 hidden sm:block" />
+            <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 hidden sm:block leading-none">
+              {user?.name?.split(' ')[0]}
+            </span>
+            <KeyboardArrowDown style={{ fontSize: 16 }} className="text-neutral-400 hidden sm:block" />
           </button>
 
           <AnimatePresence>
@@ -316,37 +375,57 @@ export default function Navbar({ onToggleSidebar }) {
                 transition={{ duration: 0.15 }}
                 className={`${dropdownClass} w-56`}
               >
-                <div className="px-4 py-3 border-b border-slate-100 dark:border-gray-700">
-                  <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">{user?.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
-                  <span className="badge badge-primary mt-1">{user?.role}</span>
+                {/* User info header */}
+                <div className="px-4 py-3.5 border-b border-neutral-100 dark:border-neutral-700">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      {getInitials(user?.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-neutral-800 dark:text-neutral-100 truncate leading-tight">
+                        {user?.name}
+                      </p>
+                      <p className="text-xs text-neutral-400 dark:text-neutral-500 truncate leading-tight mt-0.5">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400">
+                    {user?.role}
+                  </span>
                 </div>
-                {(() => {
-                  const activeModule = location.pathname.split('/').filter(Boolean)[0] || 'sales'
-                  const profileItems = [
-                    { icon: <PersonIcon fontSize="small" />, label: 'View Profile', path: `/${activeModule}/profile` },
-                    { icon: <SettingsIcon fontSize="small" />, label: 'Settings', path: `/${activeModule}/settings` },
-                  ]
-                  return profileItems.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => {
-                        navigate(item.path)
-                        setShowProfile(false)
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-gray-700/50 text-left text-sm text-slate-700 dark:text-slate-300 transition-colors"
-                    >
-                      <span className="text-slate-400">{item.icon}</span>
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  ))
-                })()}
-                <div className="border-t border-slate-100 dark:border-gray-700">
+
+                {/* Profile menu items */}
+                <div className="py-1">
+                  {(() => {
+                    const activeModule = location.pathname.split('/').filter(Boolean)[0] || 'sales'
+                    const profileItems = [
+                      { icon: <PersonIcon style={{ fontSize: 17 }} />, label: 'View Profile', path: `/${activeModule}/profile` },
+                      { icon: <SettingsIcon style={{ fontSize: 17 }} />, label: 'Settings', path: `/${activeModule}/settings` },
+                    ]
+                    return profileItems.map((item) => (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          navigate(item.path)
+                          setShowProfile(false)
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 text-left text-sm text-neutral-700 dark:text-neutral-300 transition-colors"
+                      >
+                        <span className="text-neutral-400 dark:text-neutral-500">{item.icon}</span>
+                        <span className="font-medium">{item.label}</span>
+                      </button>
+                    ))
+                  })()}
+                </div>
+
+                {/* Logout */}
+                <div className="border-t border-neutral-100 dark:border-neutral-700 py-1">
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-left text-sm text-red-600 dark:text-red-400 transition-colors"
                   >
-                    <LogoutIcon fontSize="small" />
+                    <LogoutIcon style={{ fontSize: 17 }} />
                     <span className="font-medium">Sign out</span>
                   </button>
                 </div>

@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <WelcomeSection />
 
-      {loading && <div className="text-center py-2 text-sm text-slate-400">Loading system data...</div>}
+      {loading && <div className="text-center py-2 text-sm text-neutral-400">Loading system data...</div>}
 
       <DashboardLayoutEngine role="super_admin" />
     </div>

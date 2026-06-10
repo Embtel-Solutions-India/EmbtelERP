@@ -810,8 +810,7 @@ export async function getRoleWorkspace(scope, viewer, perspective) {
     const roleLevel = viewer.roleLevel ?? employee?.role.level ?? 0;
     const designation = (employee?.designation ?? employee?.role.name ?? "").toLowerCase();
     const taskStats = await getTaskStats(employeeIds, businessIds);
-    const [activityCount, employeeCount, documentCount, pendingDocuments, marketingCampaigns, marketingTasks, marketingLeads, marketingActivities, marketingBudgetRows, notificationApprovals,] = await Promise.all([
-        prisma.activity.count({ where: { businessId: { in: businessIds } } }),
+    const [employeeCount, documentCount, pendingDocuments, marketingCampaigns, marketingTasks, marketingLeads, notificationApprovals,] = await Promise.all([
         prisma.employee.count({ where: { id: { in: employeeIds } } }),
         businessIds.length
             ? prisma.document.count({ where: { businessId: { in: businessIds } } })
@@ -854,23 +853,6 @@ export async function getRoleWorkspace(scope, viewer, perspective) {
                 select: { status: true, estimatedValue: true },
             })
             : Promise.resolve([]),
-        businessIds.length || employeeIds.length || teamIds.length
-            ? prisma.marketingActivity.count({
-                where: {
-                    OR: [
-                        ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
-                        ...(teamIds.length ? [{ teamId: { in: teamIds } }] : []),
-                        ...(employeeIds.length ? [{ actorId: { in: employeeIds } }] : []),
-                    ],
-                },
-            })
-            : Promise.resolve(0),
-        businessIds.length
-            ? prisma.marketingCampaign.findMany({
-                where: { businessId: { in: businessIds } },
-                select: { budget: true, budgetSpent: true },
-            })
-            : Promise.resolve([]),
         businessIds.length || employeeIds.length
             ? prisma.notification.count({
                 where: {
@@ -886,9 +868,8 @@ export async function getRoleWorkspace(scope, viewer, perspective) {
     const activeMarketingCampaigns = marketingCampaigns.filter((campaign) => campaign.status === "ACTIVE").length;
     const completedMarketingTasks = marketingTasks.filter((task) => task.status === "COMPLETED").length;
     const pendingMarketingTasks = marketingTasks.filter((task) => !["COMPLETED", "CANCELLED"].includes(task.status)).length;
-    const convertedLeads = marketingLeads.filter((lead) => lead.status === "CONVERTED").length;
     const leadValue = marketingLeads.reduce((sum, lead) => sum + Number(lead.estimatedValue ?? 0), 0);
-    const budget = marketingBudgetRows.reduce((acc, row) => ({
+    const budget = marketingCampaigns.reduce((acc, row) => ({
         allocated: acc.allocated + Number(row.budget ?? 0),
         spent: acc.spent + Number(row.budgetSpent ?? 0),
     }), { allocated: 0, spent: 0 });

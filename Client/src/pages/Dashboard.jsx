@@ -64,9 +64,9 @@ export default function Dashboard() {
   );
 
   if (isSalesRole) {
-    if (level <= 0) return <div className="space-y-6 max-w-[1600px] mx-auto"><WelcomeSection /><SalesInternDashboard /></div>
-    if (level === 1) return <div className="space-y-6 max-w-[1600px] mx-auto"><WelcomeSection /><SalesExecutiveDashboard /></div>
-    if (level === 2) return <div className="space-y-6 max-w-[1600px] mx-auto"><WelcomeSection /><SalesHeadDashboard /></div>
+    if (level <= 0) return <SalesInternDashboard />
+    if (level === 1) return <SalesExecutiveDashboard />
+    if (level === 2) return <SalesHeadDashboard />
   }
 
   // Generic / higher-level fallback dashboard
@@ -177,7 +177,7 @@ export default function Dashboard() {
       <WelcomeSection />
 
       {loading && (
-        <div className="text-center py-2 text-sm text-slate-400">
+        <div className="text-center py-2 text-sm text-neutral-400">
           Loading dashboard data...
         </div>
       )}
@@ -246,15 +246,15 @@ export default function Dashboard() {
       </div>
 
       {teams && teams.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-700 p-4">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
+          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
             Team Rankings
           </h3>
           <div className="space-y-2">
             {teams.map((team) => (
               <div
                 key={team.id}
-                className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-gray-800 rounded-lg"
+                className="flex items-center justify-between px-3 py-2 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -262,19 +262,19 @@ export default function Dashboard() {
                       team.ranking === 1
                         ? "bg-yellow-500"
                         : team.ranking === 2
-                          ? "bg-slate-400"
+                          ? "bg-neutral-400"
                           : team.ranking === 3
                             ? "bg-amber-600"
-                            : "bg-slate-300 dark:bg-slate-600"
+                            : "bg-neutral-300 dark:bg-neutral-600"
                     }`}
                   >
                     {team.ranking}
                   </span>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     {team.name}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-4 text-xs text-neutral-500">
                   <span>{team.memberCount} members</span>
                   <span
                     className={`font-semibold ${

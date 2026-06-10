@@ -93,12 +93,12 @@ export default function Meetings() {
           }).length, color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20', Icon: FaCalendarAlt },
         ].map((s) => (
           <div key={s.label} className={`card p-4 flex items-center gap-3 ${s.bg}`}>
-            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center ${s.color}`}>
+            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 shadow-sm flex items-center justify-center ${s.color}`}>
               <s.Icon size={18} />
             </div>
             <div>
               <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{s.label}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
             </div>
           </div>
         ))}
@@ -119,8 +119,8 @@ export default function Meetings() {
                   {getInitials(meeting.client)}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-100">{meeting.client}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{meeting.company}</p>
+                  <p className="font-semibold text-neutral-800 dark:text-neutral-100">{meeting.client}</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{meeting.company}</p>
                 </div>
               </div>
               <span className={STATUS_COLORS[meeting.status] || 'badge-primary'}>{meeting.status}</span>
@@ -128,10 +128,10 @@ export default function Meetings() {
 
             <div className="flex items-center gap-2 mb-1">
               {(() => { const t = TYPE_MAP[meeting.type] || DEFAULT_TYPE; return <t.Icon className={t.color} size={16} /> })()}
-              <span className="font-semibold text-slate-700 dark:text-slate-300">{meeting.type}</span>
+              <span className="font-semibold text-neutral-700 dark:text-neutral-300">{meeting.type}</span>
             </div>
 
-            <div className="flex flex-wrap gap-3 mt-3 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap gap-3 mt-3 text-sm text-neutral-500 dark:text-neutral-400">
               <span className="flex items-center gap-1.5">
                 <Schedule fontSize="small" /> {formatDate(meeting.date)} · {formatTime(meeting.date)}
               </span>
@@ -142,7 +142,7 @@ export default function Meetings() {
             </div>
 
             {meeting.status === 'Scheduled' && (
-              <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-gray-700">
+              <div className="flex gap-2 mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-700">
                 {meeting.link && (
                   <a href={meeting.link} target="_blank" rel="noopener noreferrer"
                     className="btn-primary flex items-center gap-1.5 text-sm">

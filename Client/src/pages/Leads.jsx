@@ -162,7 +162,7 @@ export default function Leads() {
       {/* Filters */}
       <div className="card p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" style={{ fontSize: 18 }} />
           <input
             type="text"
             placeholder="Search leads, companies…"
@@ -183,13 +183,13 @@ export default function Leads() {
             <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
           ))}
         </select>
-        <div className="flex gap-1 bg-slate-100 dark:bg-gray-700 rounded-xl p-1">
+        <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-700 rounded-xl p-1">
           {['table','grid'].map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === mode ? 'bg-white dark:bg-gray-600 text-primary-600 shadow-sm' : 'text-slate-500'
+                viewMode === mode ? 'bg-white dark:bg-neutral-600 text-primary-600 shadow-sm' : 'text-neutral-500'
               }`}
             >
               {mode === 'table' ? '☰ Table' : '⊞ Grid'}
@@ -204,13 +204,13 @@ export default function Leads() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
+                <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
                   {['Lead', 'Contact', 'Status', 'Priority', 'Deal Value', 'Assignee', 'Actions'].map(h => (
-                    <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                    <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+              <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
                 <AnimatePresence>
                   {leads.map((lead, i) => (
                     <motion.tr
@@ -219,7 +219,7 @@ export default function Leads() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors group"
+                      className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group"
                     >
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
@@ -227,14 +227,14 @@ export default function Leads() {
                             {getInitials(lead.name)}
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{lead.name}</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">{lead.company}</p>
+                            <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{lead.name}</p>
+                            <p className="text-xs text-neutral-400 dark:text-neutral-500">{lead.company}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-3">
-                        <p className="text-xs text-slate-600 dark:text-slate-400">{lead.email}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{lead.phone}</p>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400">{lead.email}</p>
+                        <p className="text-xs text-neutral-400 dark:text-neutral-500">{lead.phone}</p>
                       </td>
                       <td className="px-5 py-3">
                         <span className={STATUS_COLORS[lead.status] || 'badge-primary'}>
@@ -245,7 +245,7 @@ export default function Leads() {
                       <td className="px-5 py-3">
                         <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{formatCurrency(lead.estimatedValue ?? lead.value)}</span>
                       </td>
-                      <td className="px-5 py-3 text-xs text-slate-500 dark:text-slate-400">
+                      <td className="px-5 py-3 text-xs text-neutral-500 dark:text-neutral-400">
                         {lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : 'Unassigned'}
                       </td>
                       <td className="px-5 py-3">
@@ -256,19 +256,19 @@ export default function Leads() {
                             { icon: <Email style={{ fontSize: 15 }} />, color: 'text-blue-600 hover:bg-blue-50', tip: 'Email' },
                           ].map(({ icon, color, tip }) => (
                             <Tooltip key={tip} title={tip}>
-                              <button className={`p-1.5 rounded-lg ${color} dark:hover:bg-gray-700 transition-colors`}>{icon}</button>
+                              <button className={`p-1.5 rounded-lg ${color} dark:hover:bg-neutral-700 transition-colors`}>{icon}</button>
                             </Tooltip>
                           ))}
                           {canEdit && (
                             <Tooltip title="Edit">
-                              <button onClick={() => handleEditClick(lead)} className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors">
+                              <button onClick={() => handleEditClick(lead)} className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-neutral-700 transition-colors">
                                 <Edit style={{ fontSize: 15 }} />
                               </button>
                             </Tooltip>
                           )}
                           {canDelete && (
                             <Tooltip title="Delete">
-                              <button onClick={() => handleDeleteClick(lead.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors">
+                              <button onClick={() => handleDeleteClick(lead.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-neutral-700 transition-colors">
                                 <Delete style={{ fontSize: 15 }} />
                               </button>
                             </Tooltip>
@@ -299,17 +299,17 @@ export default function Leads() {
                     {getInitials(lead.name)}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.name}</p>
-                    <p className="text-xs text-slate-400">{lead.company}</p>
+                    <p className="text-sm font-bold text-neutral-800 dark:text-neutral-100">{lead.name}</p>
+                    <p className="text-xs text-neutral-400">{lead.company}</p>
                   </div>
                 </div>
                 <PriorityBadge priority={lead.priority} />
               </div>
               <div className="space-y-1.5 mb-3">
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{lead.email}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{lead.phone}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{lead.email}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{lead.phone}</p>
               </div>
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-gray-700">
+              <div className="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-neutral-700">
                 <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{formatCurrency(lead.estimatedValue ?? lead.value)}</span>
                 <div className="flex items-center gap-2">
                   <span className={STATUS_COLORS[lead.status] || 'badge-primary'}>

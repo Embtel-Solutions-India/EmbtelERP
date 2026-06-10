@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { prisma } from "../config/prisma.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { attachScope } from "../middleware/scope.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -7,6 +8,16 @@ import { getDescendants, getFullOrganizationTree, getBusinessHierarchyTree, getN
 import { getAvailablePerspectives } from "../services/perspective.service.js";
 import { getHierarchyTreeHandler } from "../controllers/hierarchy.controller.js";
 export const hierarchyRouter = Router();
+// Config/metadata — only needs auth, not scope
+hierarchyRouter.get("/meta", authenticate, asyncHandler(async (_req, res) => {
+    const [businesses, departments, teams, roles] = await Promise.all([
+        prisma.business.findMany({ where: { isActive: true } }),
+        prisma.department.findMany({ where: { isActive: true } }),
+        prisma.team.findMany({ where: { isActive: true } }),
+        prisma.role.findMany(),
+    ]);
+    res.json({ data: { businesses, departments, teams, roles } });
+}));
 hierarchyRouter.use(authenticate, attachScope);
 /**
  * GET /hierarchy/tree

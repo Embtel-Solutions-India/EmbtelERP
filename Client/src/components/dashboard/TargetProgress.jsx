@@ -38,19 +38,19 @@ export default function TargetProgress() {
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{targetAchievement}%</span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">achieved</span>
+            <span className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">{targetAchievement}%</span>
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">achieved</span>
           </div>
         </div>
 
         <div className="flex-1 space-y-3">
           {[
-            { label: 'Monthly Target', val: formatCurrency(monthlyTarget), color: 'text-slate-600 dark:text-slate-400' },
+            { label: 'Monthly Target', val: formatCurrency(monthlyTarget), color: 'text-neutral-600 dark:text-neutral-400' },
             { label: 'Achieved',       val: formatCurrency(monthlyRevenue), color: 'text-emerald-600 dark:text-emerald-400' },
             { label: 'Remaining',      val: formatCurrency(remaining),     color: 'text-amber-600 dark:text-amber-400' },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">{item.label}</span>
               <span className={`text-sm font-bold ${item.color}`}>{item.val}</span>
             </div>
           ))}
@@ -58,11 +58,11 @@ export default function TargetProgress() {
       </div>
 
       <div className="mt-4">
-        <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mb-1.5">
+        <div className="flex justify-between text-xs text-neutral-400 dark:text-neutral-500 mb-1.5">
           <span>Progress</span>
           <span>{targetAchievement}% of 100%</span>
         </div>
-        <div className="h-2.5 bg-slate-100 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${targetAchievement}%` }}

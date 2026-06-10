@@ -76,14 +76,14 @@ export default function Profile() {
             <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-brand">
               {getInitials(user?.name)}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-800" />
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white dark:border-neutral-800" />
           </div>
 
           <div className="flex-1">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{user?.name}</h2>
-                <p className="text-slate-500 dark:text-slate-400 mt-0.5">{user?.role}</p>
+                <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100">{user?.name}</h2>
+                <p className="text-neutral-500 dark:text-neutral-400 mt-0.5">{user?.role}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <span className="badge badge-primary">{user?.department}</span>
                   <span className="badge badge-info">{user?.team}</span>
@@ -101,8 +101,8 @@ export default function Profile() {
                 { icon: <Business fontSize="small" />, label: user?.department },
                 { icon: <CalendarToday fontSize="small" />, label: `Joined ${formatDate(user?.joinDate)}` },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <span className="text-slate-400 dark:text-slate-500">{item.icon}</span>
+                <div key={i} className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                  <span className="text-neutral-400 dark:text-neutral-500">{item.icon}</span>
                   {item.label}
                 </div>
               ))}
@@ -118,7 +118,7 @@ export default function Profile() {
             className="card p-4 text-center">
             <div className={`flex justify-center mb-2 ${s.color}`}><s.Icon size={22} /></div>
             <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.label}</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{s.label}</p>
           </motion.div>
         ))}
       </div>

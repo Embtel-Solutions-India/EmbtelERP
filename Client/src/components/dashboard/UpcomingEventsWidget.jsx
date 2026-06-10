@@ -12,7 +12,7 @@ const TYPE_CONFIG = {
   task: { Icon: FaTasks, bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' },
   campaign_start: { Icon: FaRocket, bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' },
   campaign_end: { Icon: FaFlag, bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400' },
-  generic: { Icon: FaHourglassHalf, bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-500' },
+  generic: { Icon: FaHourglassHalf, bg: 'bg-neutral-100 dark:bg-neutral-800', text: 'text-neutral-500' },
 }
 
 export default function UpcomingEventsWidget() {
@@ -107,15 +107,15 @@ export default function UpcomingEventsWidget() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-800/40 transition-colors"
+                className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
               >
                 <div className={`w-9 h-9 rounded-xl ${config.bg} ${config.text} flex items-center justify-center flex-shrink-0`}>
                   <Icon size={15} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{e.title}</p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{e.details}</p>
-                  <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-bold text-neutral-800 dark:text-neutral-100 truncate">{e.title}</p>
+                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-0.5 truncate">{e.details}</p>
+                  <div className="flex items-center gap-1 mt-1 text-[10px] text-neutral-500 dark:text-neutral-400">
                     <Schedule style={{ fontSize: 11 }} />
                     <span>{formatDate(e.date)} at {formatTime(e.date)}</span>
                   </div>
@@ -124,7 +124,7 @@ export default function UpcomingEventsWidget() {
             )
           })
         ) : (
-          <p className="text-xs text-slate-400 italic text-center py-4">No upcoming events scheduled.</p>
+          <p className="text-xs text-neutral-400 italic text-center py-4">No upcoming events scheduled.</p>
         )}
       </div>
     </SectionCard>

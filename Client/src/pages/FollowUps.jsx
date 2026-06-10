@@ -73,12 +73,12 @@ export default function FollowUps() {
           { label: 'Upcoming', value: upcoming.length, color: 'text-cyan-600',  bg: 'bg-cyan-50 dark:bg-cyan-900/20',   Icon: FaCalendarAlt         },
         ].map(s => (
           <div key={s.label} className={`card p-4 flex items-center gap-3 ${s.bg}`}>
-            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center ${s.color}`}>
+            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 shadow-sm flex items-center justify-center ${s.color}`}>
               <s.Icon size={18} />
             </div>
             <div>
               <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{s.label}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
             </div>
           </div>
         ))}
@@ -88,28 +88,28 @@ export default function FollowUps() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
+              <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
                 {['Lead', 'Company', 'Last Contact', 'Next Follow Up', 'Priority', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                  <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
               {followUps.map((lead, i) => {
                 const due = getDueBadge(lead.nextFollowUp)
                 return (
                   <motion.tr key={lead.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                    className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors group">
+                    className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                           {getInitials(lead.name)}
                         </div>
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{lead.name}</span>
+                        <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{lead.name}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{lead.company}</td>
-                    <td className="px-5 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(lead.lastContact)}</td>
+                    <td className="px-5 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{lead.company}</td>
+                    <td className="px-5 py-3 text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(lead.lastContact)}</td>
                     <td className="px-5 py-3">
                       <span className={`badge ${due.color === 'error' ? 'badge-error' : due.color === 'warning' ? 'badge-warning' : 'badge-info'}`}>
                         {due.label}
@@ -128,7 +128,7 @@ export default function FollowUps() {
                           { icon: <Visibility style={{ fontSize: 15 }} />, color: 'text-primary-600 hover:bg-primary-50', tip: 'View' },
                         ].map(({ icon, color, tip }) => (
                           <Tooltip key={tip} title={tip}>
-                            <button className={`p-1.5 rounded-lg ${color} dark:hover:bg-gray-700 transition-colors`}>{icon}</button>
+                            <button className={`p-1.5 rounded-lg ${color} dark:hover:bg-neutral-700 transition-colors`}>{icon}</button>
                           </Tooltip>
                         ))}
                       </div>

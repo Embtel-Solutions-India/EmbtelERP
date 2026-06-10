@@ -5,6 +5,7 @@ import { fetchRoleWorkspace, fetchDashboardOverview, fetchDashboardPerformance }
 import { fetchTasks } from '../../../redux/slices/taskSlice'
 import { fetchCalendarEvents } from '../../../redux/slices/calendarSlice'
 import DashboardLayoutEngine from '../../../components/dashboard/DashboardLayoutEngine'
+import WelcomeSection from '../../../components/dashboard/WelcomeSection'
 
 export default function SalesExecutiveDashboard() {
   const dispatch = useDispatch()
@@ -21,7 +22,8 @@ export default function SalesExecutiveDashboard() {
   }, [dispatch])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
+      <WelcomeSection />
       <DashboardLayoutEngine role="sales_executive" />
     </div>
   )

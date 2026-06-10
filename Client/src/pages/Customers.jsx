@@ -41,23 +41,23 @@ export default function Customers() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div key={s.label} className={`card p-4 flex items-center gap-3 ${s.bg}`}>
-            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center ${s.color}`}>
+            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 shadow-sm flex items-center justify-center ${s.color}`}>
               <s.Icon size={18} />
             </div>
             <div>
               <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{s.label}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
             </div>
           </div>
         ))}
       </div>
 
       {loading && (
-        <div className="text-center py-4 text-sm text-slate-400">Loading customers...</div>
+        <div className="text-center py-4 text-sm text-neutral-400">Loading customers...</div>
       )}
 
       {!loading && customers.length === 0 ? (
-        <div className="text-center py-12 card text-slate-400">No leads have been converted to clients yet.</div>
+        <div className="text-center py-12 card text-neutral-400">No leads have been converted to clients yet.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {customers.map((c, i) => (
@@ -69,19 +69,19 @@ export default function Customers() {
                 </div>
                 <span className={STATUS_COLORS[c.status] || 'badge-success'}>Converted</span>
               </div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-0.5">{c.name}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{c.company}</p>
-              <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 mb-3">
+              <h3 className="font-bold text-neutral-800 dark:text-neutral-100 mb-0.5">{c.name}</h3>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">{c.company}</p>
+              <div className="space-y-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-3">
                 <p className="truncate">{c.email}</p>
                 <p>{c.phone}</p>
               </div>
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-gray-700">
+              <div className="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-neutral-700">
                 <div>
-                  <p className="text-xs text-slate-400">Client Since</p>
+                  <p className="text-xs text-neutral-400">Client Since</p>
                   <p className="font-bold text-primary-600 dark:text-primary-400 text-[11px] whitespace-nowrap">{c.createdAt ? formatDate(c.createdAt) : '—'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-slate-400">Deal Value</p>
+                  <p className="text-xs text-neutral-400">Deal Value</p>
                   <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{formatCurrency(c.estimatedValue ?? c.value ?? 0)}</p>
                 </div>
               </div>

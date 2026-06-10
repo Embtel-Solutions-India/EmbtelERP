@@ -42,7 +42,7 @@ export default function VerificationPage() {
       {/* Filter Bar */}
       <div className="card p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" style={{ fontSize: 18 }} />
           <input
             type="text"
             placeholder="Search documents for verification check…"
@@ -58,30 +58,30 @@ export default function VerificationPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
+              <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
                 {['Document File', 'Kind / Format', 'Uploader', 'Date Uploaded', 'QC Actions'].map(h => (
-                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                  <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
               {loading && (
                 <tr>
-                  <td colSpan="5" className="text-center py-6 text-slate-400">Loading QC queue...</td>
+                  <td colSpan="5" className="text-center py-6 text-neutral-400">Loading QC queue...</td>
                 </tr>
               )}
               {!loading && filteredDocs.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center py-6 text-slate-400">All documents verified. QC Queue is empty.</td>
+                  <td colSpan="5" className="text-center py-6 text-neutral-400">All documents verified. QC Queue is empty.</td>
                 </tr>
               )}
               {!loading && filteredDocs.map((doc, i) => (
                 <motion.tr key={doc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                  className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors">
-                  <td className="px-5 py-4 font-semibold text-slate-800 dark:text-slate-200">{doc.title}</td>
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors">
+                  <td className="px-5 py-4 font-semibold text-neutral-800 dark:text-neutral-200">{doc.title}</td>
                   <td className="px-5 py-4"><span className="badge badge-info">{doc.kind}</span></td>
-                  <td className="px-5 py-4 text-xs text-slate-500">{doc.createdBy ? `${doc.createdBy.firstName} ${doc.createdBy.lastName}` : 'System'}</td>
-                  <td className="px-5 py-4 text-xs text-slate-500">{doc.createdAt ? formatDate(doc.createdAt) : '—'}</td>
+                  <td className="px-5 py-4 text-xs text-neutral-500">{doc.createdBy ? `${doc.createdBy.firstName} ${doc.createdBy.lastName}` : 'System'}</td>
+                  <td className="px-5 py-4 text-xs text-neutral-500">{doc.createdAt ? formatDate(doc.createdAt) : '—'}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
                       <button

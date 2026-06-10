@@ -81,7 +81,7 @@ export default function DocumentsPage() {
       {/* Filter Bar */}
       <div className="card p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" style={{ fontSize: 18 }} />
           <input
             type="text"
             placeholder="Search document title or format…"
@@ -95,10 +95,10 @@ export default function DocumentsPage() {
       {/* List view */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {loading && (
-          <div className="col-span-full text-center py-6 text-sm text-slate-400">Loading document vault...</div>
+          <div className="col-span-full text-center py-6 text-sm text-neutral-400">Loading document vault...</div>
         )}
         {!loading && filteredDocs.length === 0 && (
-          <div className="col-span-full text-center py-12 card text-slate-400">No documents found. Click upload to add one.</div>
+          <div className="col-span-full text-center py-12 card text-neutral-400">No documents found. Click upload to add one.</div>
         )}
         {!loading && filteredDocs.map((doc, i) => (
           <motion.div
@@ -115,22 +115,22 @@ export default function DocumentsPage() {
                 </div>
                 <span className="badge badge-info text-[10px] uppercase tracking-wide font-bold">{doc.kind}</span>
               </div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug">{doc.title}</h3>
-              <p className="text-xs text-slate-400 mt-2">
+              <h3 className="font-bold text-neutral-800 dark:text-neutral-100 line-clamp-2 leading-snug">{doc.title}</h3>
+              <p className="text-xs text-neutral-400 mt-2">
                 Uploaded by: {doc.createdBy ? `${doc.createdBy.firstName} ${doc.createdBy.lastName}` : 'System'}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+              <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1">
                 {doc.createdAt ? formatDate(doc.createdAt) : '—'}
               </p>
             </div>
 
-            <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-gray-800">
+            <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
               <Tooltip title="Download Link">
                 <a
                   href={doc.storageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-600 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-600 dark:hover:bg-neutral-700 transition-colors"
                 >
                   <GetApp style={{ fontSize: 16 }} />
                 </a>
@@ -138,7 +138,7 @@ export default function DocumentsPage() {
               <Tooltip title="Delete Document">
                 <button
                   onClick={() => handleDelete(doc.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 dark:hover:bg-neutral-700 transition-colors"
                 >
                   <Delete style={{ fontSize: 16 }} />
                 </button>

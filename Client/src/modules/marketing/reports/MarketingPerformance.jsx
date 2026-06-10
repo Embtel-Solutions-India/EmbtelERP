@@ -41,7 +41,7 @@ export default function MarketingPerformance() {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowPickerAlert(true)}
-              className="btn-secondary text-xs flex items-center gap-1.5 border border-slate-200"
+              className="btn-secondary text-xs flex items-center gap-1.5 border border-neutral-200"
             >
               <FaLock size={10} className="text-amber-500" /> Select Team Member
             </button>
@@ -56,7 +56,7 @@ export default function MarketingPerformance() {
             <p className="font-bold">Team Picker Access Blocked</p>
             <p className="mt-0.5">Team metrics aggregation is restricted to Department Owner or Business Administrator roles. Marketing Executive is limited to personal campaign outputs.</p>
           </div>
-          <button onClick={() => setShowPickerAlert(false)} className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+          <button onClick={() => setShowPickerAlert(false)} className="absolute top-3 right-3 text-neutral-400 hover:text-neutral-600 text-xs font-bold">✕</button>
         </div>
       )}
 
@@ -66,7 +66,7 @@ export default function MarketingPerformance() {
             className="card p-4 text-center">
             <div className={`flex justify-center mb-2 ${k.color}`}><k.Icon size={22} /></div>
             <p className={`text-xl font-bold ${k.color}`}>{k.value}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{k.label}</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{k.label}</p>
             <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">{k.change}</p>
           </motion.div>
         ))}
@@ -128,8 +128,8 @@ export default function MarketingPerformance() {
               {conversionRatioData.map((d, i) => (
                 <div key={d.name} className="flex items-center gap-3">
                   <span className="w-3 h-3 rounded-full" style={{ background: COLORS[i] }} />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">{d.name}</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-100 ml-auto">{d.value}</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{d.name}</span>
+                  <span className="font-bold text-neutral-800 dark:text-neutral-100 ml-auto">{d.value}</span>
                 </div>
               ))}
             </div>
@@ -141,7 +141,7 @@ export default function MarketingPerformance() {
           <SectionCard title="Team Performance Metrics" subtitle="Multi-member budget efficiency and CPL tracking" delay={0.25}>
             <div style={{ height: 280 }} className="flex flex-col items-center justify-center text-center opacity-30 select-none blur-[2px]">
               {/* Dummy chart contents under the blur */}
-              <div className="w-full h-40 bg-slate-100 dark:bg-gray-800 rounded-lg flex items-end justify-between p-4 mb-4">
+              <div className="w-full h-40 bg-neutral-100 dark:bg-neutral-800 rounded-lg flex items-end justify-between p-4 mb-4">
                 {[40, 70, 50, 90, 30].map((h, i) => (
                   <div key={i} className="w-12 bg-indigo-200 rounded-t" style={{ height: `${h}%` }} />
                 ))}
@@ -151,12 +151,12 @@ export default function MarketingPerformance() {
           </SectionCard>
           
           {/* Restricted overlay */}
-          <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/80 backdrop-blur-[4px] rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-dashed border-slate-200 dark:border-gray-700">
+          <div className="absolute inset-0 bg-white/70 dark:bg-neutral-900/80 backdrop-blur-[4px] rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-dashed border-neutral-200 dark:border-neutral-700">
             <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
               <FaLock className="text-amber-500" size={20} />
             </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Department Metrics Restricted</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+            <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-200">Department Metrics Restricted</h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mt-1">
               Team efficiency comparisons are restricted to Department Owners. Individual performance is displayed in the other sections.
             </p>
           </div>

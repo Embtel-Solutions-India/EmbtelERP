@@ -175,7 +175,7 @@ export default function Employees() {
       {/* Filters */}
       <div className="card p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[250px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" style={{ fontSize: 18 }} />
           <input
             type="text"
             placeholder="Search employee name, code, email, designation…"
@@ -191,44 +191,44 @@ export default function Employees() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
+              <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
                 {['Employee', 'Code', 'Role / Title', 'Business Unit', 'Team', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                  <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
               {loading && (
                 <tr>
-                  <td colSpan="7" className="text-center py-6 text-sm text-slate-400">Loading directory data...</td>
+                  <td colSpan="7" className="text-center py-6 text-sm text-neutral-400">Loading directory data...</td>
                 </tr>
               )}
               {!loading && filteredEmployees.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="text-center py-6 text-sm text-slate-400">No employees found.</td>
+                  <td colSpan="7" className="text-center py-6 text-sm text-neutral-400">No employees found.</td>
                 </tr>
               )}
               {!loading && filteredEmployees.map((emp, i) => (
                 <motion.tr key={emp.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
-                  className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors group text-sm">
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group text-sm">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                         {getInitials(`${emp.firstName} ${emp.lastName}`)}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-800 dark:text-slate-100">{emp.firstName} {emp.lastName}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{emp.email}</p>
+                        <p className="font-semibold text-neutral-800 dark:text-neutral-100">{emp.firstName} {emp.lastName}</p>
+                        <p className="text-xs text-neutral-400 dark:text-neutral-500">{emp.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-600 dark:text-slate-400 font-mono text-xs">{emp.employeeCode || '—'}</td>
+                  <td className="px-5 py-3.5 text-neutral-600 dark:text-neutral-400 font-mono text-xs">{emp.employeeCode || '—'}</td>
                   <td className="px-5 py-3.5">
-                    <p className="font-medium text-slate-700 dark:text-slate-300">{emp.designation}</p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wide font-bold">{emp.role?.name || 'Staff'}</p>
+                    <p className="font-medium text-neutral-700 dark:text-neutral-300">{emp.designation}</p>
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wide font-bold">{emp.role?.name || 'Staff'}</p>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-600 dark:text-slate-400">{emp.business?.name || '—'}</td>
-                  <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">{emp.team?.name || '—'}</td>
+                  <td className="px-5 py-3.5 text-neutral-600 dark:text-neutral-400">{emp.business?.name || '—'}</td>
+                  <td className="px-5 py-3.5 text-neutral-500 dark:text-neutral-400">{emp.team?.name || '—'}</td>
                   <td className="px-5 py-3.5">
                     <span className={emp.isActive ? 'badge-success' : 'badge-error'}>
                       {emp.isActive ? 'Active' : 'Inactive'}
@@ -238,13 +238,13 @@ export default function Employees() {
                     {canManage && (
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Tooltip title="Edit Profile">
-                          <button onClick={() => handleEditClick(emp)} className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 dark:hover:bg-gray-700 transition-colors">
+                          <button onClick={() => handleEditClick(emp)} className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 dark:hover:bg-neutral-700 transition-colors">
                             <Edit style={{ fontSize: 16 }} />
                           </button>
                         </Tooltip>
                         {emp.isActive && (
                           <Tooltip title="Deactivate">
-                            <button onClick={() => handleDeactivate(emp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 dark:hover:bg-gray-700 transition-colors">
+                            <button onClick={() => handleDeactivate(emp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 dark:hover:bg-neutral-700 transition-colors">
                               <Block style={{ fontSize: 16 }} />
                             </button>
                           </Tooltip>

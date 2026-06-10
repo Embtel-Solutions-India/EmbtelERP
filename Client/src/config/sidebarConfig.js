@@ -43,32 +43,37 @@ export const salesMenu = salesExecutiveMenu
 // ─── MARKETING MODULE MENUS ──────────────────────────────────────────────────
 
 export const marketingInternMenu = [
-  { id: 'dashboard',  label: 'Dashboard', icon: 'Dashboard',     path: '/marketing-intern/dashboard' },
-  { id: 'tasks',      label: 'Tasks',     icon: 'TaskAlt',       path: '/marketing/tasks'            },
-  { id: 'assets',     label: 'Content',   icon: 'People',        path: '/marketing/assets'           },
-  { id: 'campaigns',  label: 'Campaigns', icon: 'TrendingUp',    path: '/marketing/campaigns'        },
-  { id: 'profile',    label: 'Profile',   icon: 'AccountCircle', path: '/marketing/profile'          },
+  { id: 'dashboard',  label: 'Dashboard',  icon: 'Dashboard',     path: '/marketing-intern/dashboard' },
+  { id: 'tasks',      label: 'Tasks',      icon: 'TaskAlt',       path: '/marketing/tasks'            },
+  { id: 'campaigns',  label: 'Campaigns',  icon: 'TrendingUp',    path: '/marketing/campaigns'        },
+  { id: 'assets',     label: 'Content',    icon: 'RequestQuote',  path: '/marketing/assets'           },
+  { id: 'activities', label: 'Activities', icon: 'CalendarMonth', path: '/marketing/activities'       },
+  { id: 'profile',    label: 'Profile',    icon: 'AccountCircle', path: '/marketing/profile'          },
 ]
 
 export const marketingExecutiveMenu = [
   { id: 'dashboard',       label: 'Dashboard',       icon: 'Dashboard',     path: '/marketing/dashboard'       },
-  { id: 'campaigns',       label: 'Campaigns',       icon: 'TrendingUp',    path: '/marketing/campaigns'       },
-  { id: 'email-marketing', label: 'Email Marketing', icon: 'VideoCall',     path: '/marketing/email-marketing' },
-  { id: 'assets',          label: 'Assets',          icon: 'People',        path: '/marketing/assets'          },
-  { id: 'leads',           label: 'Lead Funnels',    icon: 'PersonAdd',     path: '/marketing/leads'           },
-  { id: 'tasks',           label: 'Tasks',           icon: 'TaskAlt',       path: '/marketing/tasks'           },
-  { id: 'reports',         label: 'Reports',         icon: 'Assessment',    path: '/marketing/reports'         },
-  { id: 'profile',         label: 'Profile',         icon: 'AccountCircle', path: '/marketing/profile'         },
+  { id: 'campaigns',       label: 'Campaigns',        icon: 'TrendingUp',    path: '/marketing/campaigns'       },
+  { id: 'leads',           label: 'Lead Funnels',     icon: 'PersonAdd',     path: '/marketing/leads'           },
+  { id: 'email-marketing', label: 'Email Marketing',  icon: 'Assessment',    path: '/marketing/email-marketing' },
+  { id: 'assets',          label: 'Assets & Content', icon: 'RequestQuote',  path: '/marketing/assets'          },
+  { id: 'tasks',           label: 'Tasks',            icon: 'TaskAlt',       path: '/marketing/tasks'           },
+  { id: 'activities',      label: 'Activities',       icon: 'CalendarMonth', path: '/marketing/activities'      },
+  { id: 'performance',     label: 'Performance',      icon: 'Leaderboard',   path: '/marketing/performance'     },
+  { id: 'reports',         label: 'Reports',          icon: 'Assessment',    path: '/marketing/reports'         },
+  { id: 'profile',         label: 'Profile',          icon: 'AccountCircle', path: '/marketing/profile'         },
 ]
 
 export const marketingManagerMenu = [
   { id: 'dashboard',       label: 'Dashboard',       icon: 'Dashboard',     path: '/marketing-manager/dashboard' },
-  { id: 'campaigns',       label: 'Campaigns',       icon: 'TrendingUp',    path: '/marketing/campaigns'         },
-  { id: 'approvals',       label: 'Approvals',       icon: 'TaskAlt',       path: '/marketing/approvals'         },
-  { id: 'team',            label: 'Team',            icon: 'People',        path: '/marketing/team'              },
-  { id: 'performance',     label: 'Performance',     icon: 'Leaderboard',   path: '/marketing/performance'       },
-  { id: 'reports',         label: 'Reports',         icon: 'Assessment',    path: '/marketing/reports'           },
-  { id: 'profile',         label: 'Profile',         icon: 'AccountCircle', path: '/marketing/profile'           },
+  { id: 'campaigns',       label: 'Campaigns',        icon: 'TrendingUp',    path: '/marketing/campaigns'         },
+  { id: 'team',            label: 'Team',             icon: 'People',        path: '/marketing/team'              },
+  { id: 'leads',           label: 'Lead Funnels',     icon: 'PersonAdd',     path: '/marketing/leads'             },
+  { id: 'performance',     label: 'Performance',      icon: 'Leaderboard',   path: '/marketing/performance'       },
+  { id: 'approvals',       label: 'Approvals',        icon: 'TaskAlt',       path: '/marketing/approvals'         },
+  { id: 'reports',         label: 'Reports',          icon: 'Assessment',    path: '/marketing/reports'           },
+  { id: 'activities',      label: 'Activities',       icon: 'CalendarMonth', path: '/marketing/activities'        },
+  { id: 'profile',         label: 'Profile',          icon: 'AccountCircle', path: '/marketing/profile'           },
 ]
 
 // Legacy alias
@@ -116,7 +121,15 @@ export const evaluationMenu = [
   { id: 'dashboard', label: 'Dashboard', icon: 'Dashboard', path: '/evaluation/dashboard' },
 ]
 
-export const headEvaluationMenu = withDashboardPath(evaluationMenu, '/head-evaluation/dashboard')
+export const headEvaluationMenu = [
+  { id: 'dashboard',    label: 'Dashboard',    icon: 'Dashboard',     path: '/head-evaluation/dashboard' },
+  { id: 'evaluations',  label: 'Evaluations',  icon: 'Assessment',    path: '/evaluation/cases'          },
+  { id: 'team',         label: 'Team',         icon: 'People',        path: '/evaluation/team'           },
+  { id: 'performance',  label: 'Performance',  icon: 'Leaderboard',   path: '/evaluation/performance'    },
+  { id: 'approvals',    label: 'Approvals',    icon: 'TaskAlt',       path: '/evaluation/approvals'      },
+  { id: 'reports',      label: 'Reports',      icon: 'TrendingUp',    path: '/evaluation/reports'        },
+  { id: 'profile',      label: 'Profile',      icon: 'AccountCircle', path: '/evaluation/profile'        },
+]
 export const professorMenu      = withDashboardPath(evaluationMenu, '/professor/dashboard')
 
 // ─── HR MODULE ────────────────────────────────────────────────────────────────
@@ -146,9 +159,17 @@ export const ownerMenu = [
   { id: 'profile',     label: 'Profile',    icon: 'AccountCircle', path: '/owner/profile'     },
 ]
 
-// Immigration Head and Vertical Manager share the same sub-pages as Owner
-// but have their own dashboard entry points.
-export const headMenu     = withDashboardPath(ownerMenu, '/head/dashboard')
+// Immigration Head has its own tailored menu; Vertical Manager shares Owner sub-pages.
+export const headMenu = [
+  { id: 'dashboard',   label: 'Dashboard',    icon: 'Dashboard',     path: '/head/dashboard'    },
+  { id: 'cases',       label: 'Active Cases', icon: 'RequestQuote',  path: '/owner/cases'       },
+  { id: 'team',        label: 'Team',         icon: 'People',        path: '/owner/employees'   },
+  { id: 'leads',       label: 'Lead Funnel',  icon: 'PersonAdd',     path: '/owner/businesses'  },
+  { id: 'performance', label: 'Performance',  icon: 'Leaderboard',   path: '/owner/analytics'   },
+  { id: 'reports',     label: 'Reports',      icon: 'Assessment',    path: '/owner/reports'     },
+  { id: 'approvals',   label: 'Approvals',    icon: 'TaskAlt',       path: '/owner/approvals'   },
+  { id: 'profile',     label: 'Profile',      icon: 'AccountCircle', path: '/owner/profile'     },
+]
 export const verticalMenu = withDashboardPath(ownerMenu, '/vertical/dashboard')
 
 // ─── ADMIN MODULE ─────────────────────────────────────────────────────────────

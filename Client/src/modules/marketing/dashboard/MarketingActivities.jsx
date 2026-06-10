@@ -100,7 +100,7 @@ export default function MarketingActivities() {
       {/* Filter Bar */}
       <div className="card p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" style={{ fontSize: 18 }} />
           <input
             type="text"
             placeholder="Search work logs…"
@@ -122,7 +122,7 @@ export default function MarketingActivities() {
 
       {/* Activity Timeline List */}
       <div className="card p-6">
-        <div className="relative border-l border-slate-200 dark:border-gray-700 ml-4 space-y-8">
+        <div className="relative border-l border-neutral-200 dark:border-neutral-700 ml-4 space-y-8">
           <AnimatePresence>
             {filteredActivities.map((act, i) => (
               <motion.div
@@ -134,18 +134,18 @@ export default function MarketingActivities() {
                 className="relative pl-8"
               >
                 {/* Node icon */}
-                <div className="absolute -left-5 top-1.5 w-10 h-10 rounded-xl bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 flex items-center justify-center shadow-sm">
-                  {TYPE_ICONS[act.type] || <AccessTime className="text-slate-400" />}
+                <div className="absolute -left-5 top-1.5 w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shadow-sm">
+                  {TYPE_ICONS[act.type] || <AccessTime className="text-neutral-400" />}
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">{act.title}</h3>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1">
+                    <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">{act.title}</h3>
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium flex items-center gap-1">
                       <AccessTime style={{ fontSize: 11 }} /> {formatDate(act.time)}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-[800px]">{act.description}</p>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-[800px]">{act.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -153,7 +153,7 @@ export default function MarketingActivities() {
         </div>
 
         {filteredActivities.length === 0 && (
-          <div className="text-center py-12 text-slate-400">
+          <div className="text-center py-12 text-neutral-400">
             No work activity logs match the selected filters.
           </div>
         )}

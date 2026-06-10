@@ -1,4 +1,4 @@
-import { createMarketingActivity, createMarketingCampaign, createMarketingKPI, createMarketingLead, createMarketingTask, getMarketingCampaign, getMarketingExecutiveDashboard, getMarketingInternDashboard, getMarketingManagerDashboard, getMarketingTask, listMarketingActivities, listMarketingCampaigns, listMarketingKPIs, listMarketingLeads, listMarketingTasks, updateMarketingActivity, updateMarketingCampaign, updateMarketingKPI, updateMarketingLead, updateMarketingTask, } from "../services/marketing.service.js";
+import { createMarketingActivity, createMarketingCampaign, createMarketingKPI, createMarketingLead, createMarketingTask, getMarketingCampaign, getMarketingExecutiveDashboard, getMarketingInternDashboard, getMarketingManagerDashboard, getMarketingTask, listMarketingActivities, listMarketingCampaigns, listMarketingKPIs, listMarketingLeads, listMarketingTasks, updateMarketingActivity, updateMarketingCampaign, updateMarketingKPI, updateMarketingLead, updateMarketingTask, deleteMarketingCampaign, deleteMarketingTask, deleteMarketingLead, } from "../services/marketing.service.js";
 function marketingContext(req) {
     return {
         viewer: req.user,
@@ -70,4 +70,16 @@ export async function executiveDashboard(req, res) {
 }
 export async function internDashboard(req, res) {
     res.json({ data: await getMarketingInternDashboard(marketingContext(req)) });
+}
+export async function deleteCampaign(req, res) {
+    await deleteMarketingCampaign(marketingContext(req), String(req.params.id));
+    res.status(204).end();
+}
+export async function deleteTask(req, res) {
+    await deleteMarketingTask(marketingContext(req), String(req.params.id));
+    res.status(204).end();
+}
+export async function deleteLead(req, res) {
+    await deleteMarketingLead(marketingContext(req), String(req.params.id));
+    res.status(204).end();
 }

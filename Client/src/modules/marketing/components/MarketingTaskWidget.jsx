@@ -49,15 +49,15 @@ export default function MarketingTaskWidget() {
         </span>
       }
     >
-      <div className="flex gap-1 mb-4 bg-slate-100 dark:bg-gray-700 rounded-xl p-1">
+      <div className="flex gap-1 mb-4 bg-neutral-100 dark:bg-neutral-700 rounded-xl p-1">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === tab
-                ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
             }`}
           >
             {tab}
@@ -75,7 +75,7 @@ export default function MarketingTaskWidget() {
           className="space-y-2"
         >
           {filtered.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-8 text-neutral-400 dark:text-neutral-500">
               <FaCheckCircle className="mx-auto mb-2 text-emerald-400" size={28} />
               <p className="text-sm font-medium">No {activeTab.toLowerCase()} tasks</p>
             </div>
@@ -85,14 +85,14 @@ export default function MarketingTaskWidget() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/40 transition-colors border ${
-                task.status === 'done' ? 'border-transparent opacity-60' : 'border-transparent hover:border-slate-100 dark:hover:border-gray-700'
+              className={`flex items-start gap-3 p-3 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-700/40 transition-colors border ${
+                task.status === 'done' ? 'border-transparent opacity-60' : 'border-transparent hover:border-neutral-100 dark:hover:border-neutral-700'
               }`}
             >
               <button
                 onClick={() => dispatch(toggleMarketingTask(task.id))}
                 className={`flex-shrink-0 mt-0.5 transition-colors ${
-                  task.status === 'done' ? 'text-emerald-500' : 'text-slate-300 dark:text-slate-600 hover:text-primary-500'
+                  task.status === 'done' ? 'text-emerald-500' : 'text-neutral-300 dark:text-neutral-600 hover:text-primary-500'
                 }`}
               >
                 {task.status === 'done'
@@ -102,14 +102,14 @@ export default function MarketingTaskWidget() {
               </button>
 
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold ${task.status === 'done' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100'}`}>
+                <p className={`text-sm font-semibold ${task.status === 'done' ? 'line-through text-neutral-400' : 'text-neutral-800 dark:text-neutral-100'}`}>
                   {task.title}
                 </p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {task.lead && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">{task.lead}</span>
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500">{task.lead}</span>
                   )}
-                  <span className="flex items-center gap-0.5 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="flex items-center gap-0.5 text-xs text-neutral-400 dark:text-neutral-500">
                     {task.status === 'overdue'
                       ? <Warning style={{ fontSize: 12 }} className="text-red-400" />
                       : <AccessTime style={{ fontSize: 12 }} />

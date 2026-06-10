@@ -44,13 +44,13 @@ const EMPTY_FORM = {
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</label>
+      <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">{label}</label>
       {children}
     </div>
   )
 }
 
-const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-400 transition'
+const inputCls = 'w-full px-3 py-2 text-sm border border-neutral-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-400 transition'
 const selectCls = inputCls
 
 // ─── Create / Edit Modal ──────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ function EventModal({ isOpen, onClose, initialData, onSave, saving, title }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/50 px-4 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -76,13 +76,13 @@ function EventModal({ isOpen, onClose, initialData, onSave, saving, title }) {
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 16 }}
           onClick={e => e.stopPropagation()}
-          className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+          className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-gray-800">
-            <h2 className="font-bold text-slate-800 dark:text-slate-100 text-base">{title}</h2>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors">
-              <Close fontSize="small" className="text-slate-400" />
+          <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
+            <h2 className="font-bold text-neutral-800 dark:text-neutral-100 text-base">{title}</h2>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+              <Close fontSize="small" className="text-neutral-400" />
             </button>
           </div>
 
@@ -151,7 +151,7 @@ function EventModal({ isOpen, onClose, initialData, onSave, saving, title }) {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-100 dark:border-gray-800">
+          <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-neutral-100 dark:border-neutral-800">
             <button onClick={onClose} className="btn-secondary text-sm px-4 py-2 rounded-xl">Cancel</button>
             <button
               onClick={() => onSave(form)}
@@ -179,7 +179,7 @@ function EventDrawer({ event, onClose, onEdit, onDelete, deleting }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-end sm:justify-center bg-slate-950/40 px-0 sm:px-4 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-end sm:justify-center bg-neutral-950/40 px-0 sm:px-4 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -188,18 +188,18 @@ function EventDrawer({ event, onClose, onEdit, onDelete, deleting }) {
           exit={{ x: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           onClick={e => e.stopPropagation()}
-          className="bg-white dark:bg-gray-900 border-l border-slate-200 dark:border-gray-700 h-full w-full sm:w-96 sm:h-auto sm:rounded-2xl shadow-2xl flex flex-col"
+          className="bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-700 h-full w-full sm:w-96 sm:h-auto sm:rounded-2xl shadow-2xl flex flex-col"
         >
           {/* Top strip */}
           <div className="h-1.5 w-full rounded-t-2xl" style={{ backgroundColor: color }} />
 
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-gray-800">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{label}</span>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors" title="Edit event">
+              <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors" title="Edit event">
                 <Edit fontSize="small" className="text-primary-500" />
               </button>
               <button
@@ -210,16 +210,16 @@ function EventDrawer({ event, onClose, onEdit, onDelete, deleting }) {
               >
                 <Delete fontSize="small" className="text-red-500" />
               </button>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors">
-                <Close fontSize="small" className="text-slate-400" />
+              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                <Close fontSize="small" className="text-neutral-400" />
               </button>
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
             <div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">{event.title}</h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500 flex items-center gap-1.5 mt-1.5">
+              <h3 className="font-bold text-neutral-800 dark:text-neutral-100 text-lg leading-tight">{event.title}</h3>
+              <p className="text-sm text-neutral-400 dark:text-neutral-500 flex items-center gap-1.5 mt-1.5">
                 <Schedule style={{ fontSize: 14 }} />
                 {format(new Date(event.date), 'EEEE, MMMM d, yyyy')}
                 {event.startTime && ` · ${event.startTime}${event.endTime ? ' – ' + event.endTime : ''}`}
@@ -227,27 +227,27 @@ function EventDrawer({ event, onClose, onEdit, onDelete, deleting }) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-50 dark:bg-gray-800/50 rounded-xl p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Priority</p>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{event.priority}</p>
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-0.5">Priority</p>
+                <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">{event.priority}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-gray-800/50 rounded-xl p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Status</p>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{event.status?.replace('_', ' ')}</p>
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-0.5">Status</p>
+                <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">{event.status?.replace('_', ' ')}</p>
               </div>
             </div>
 
             {event.description && (
-              <div className="bg-slate-50 dark:bg-gray-800/50 rounded-xl p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Notes</p>
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">{event.description}</p>
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Notes</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed whitespace-pre-line">{event.description}</p>
               </div>
             )}
 
             {event.relatedModule && (
-              <div className="bg-slate-50 dark:bg-gray-800/50 rounded-xl p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Related Module</p>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 capitalize">{event.relatedModule}</p>
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-0.5">Related Module</p>
+                <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-200 capitalize">{event.relatedModule}</p>
               </div>
             )}
           </div>
@@ -417,15 +417,15 @@ export default function CalendarWidget() {
         actions={
           <div className="flex items-center gap-2">
             {/* View mode toggle */}
-            <div className="flex items-center bg-slate-100 dark:bg-gray-800 rounded-xl p-1 gap-0.5">
+            <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-xl p-1 gap-0.5">
               {['month', 'week', 'day'].map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
                     viewMode === mode
-                      ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                      : 'text-slate-500'
+                      ? 'bg-white dark:bg-neutral-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                      : 'text-neutral-500'
                   }`}
                 >
                   {mode}
@@ -452,7 +452,7 @@ export default function CalendarWidget() {
               className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase transition-all ${
                 filterType === ft
                   ? 'text-white shadow-sm'
-                  : 'bg-slate-100 dark:bg-gray-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-gray-700'
+                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700'
               }`}
               style={filterType === ft ? { backgroundColor: ft === 'ALL' ? '#6366f1' : EVENT_COLORS[ft] } : {}}
             >
@@ -463,7 +463,7 @@ export default function CalendarWidget() {
 
         {/* ── Navigation ────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+          <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-100">
             {viewMode === 'month' && format(current, 'MMMM yyyy')}
             {viewMode === 'week'  && `Week of ${format(weekStart, 'MMM d, yyyy')}`}
             {viewMode === 'day'   && format(current, 'EEEE, MMM d, yyyy')}
@@ -485,7 +485,7 @@ export default function CalendarWidget() {
         {viewMode !== 'day' && (
           <div className="grid grid-cols-7 gap-px mb-1 text-center">
             {DAY_LABELS.map(d => (
-              <div key={d} className="text-xs font-semibold text-slate-400 dark:text-slate-500 py-1">{d}</div>
+              <div key={d} className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 py-1">{d}</div>
             ))}
           </div>
         )}
@@ -510,11 +510,11 @@ export default function CalendarWidget() {
                   selected
                     ? 'bg-primary-50 dark:bg-primary-950/20 border-2 border-primary-500'
                     : today
-                    ? 'bg-slate-100 dark:bg-gray-800 border-2 border-transparent'
-                    : 'hover:bg-slate-50 dark:hover:bg-gray-800/40 border-2 border-transparent'
+                    ? 'bg-neutral-100 dark:bg-neutral-800 border-2 border-transparent'
+                    : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 border-2 border-transparent'
                 }`}
               >
-                <span className={`text-xs font-bold ${today ? 'text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                <span className={`text-xs font-bold ${today ? 'text-primary-600 dark:text-primary-400' : 'text-neutral-700 dark:text-neutral-300'}`}>
                   {viewMode === 'day' ? format(day, 'EEEE, MMMM d') : format(day, 'd')}
                 </span>
 
@@ -531,7 +531,7 @@ export default function CalendarWidget() {
                       </div>
                     ))}
                     {dayEvts.length > 2 && (
-                      <div className="text-[9px] text-center text-slate-400 font-bold">+{dayEvts.length - 2}</div>
+                      <div className="text-[9px] text-center text-neutral-400 font-bold">+{dayEvts.length - 2}</div>
                     )}
                   </div>
                 )}
@@ -550,9 +550,9 @@ export default function CalendarWidget() {
         </div>
 
         {/* ── Selected Day Event List ────────────────────────────────────────── */}
-        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-gray-800">
+        <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
           <div className="flex items-center justify-between mb-2">
-            <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <h5 className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
               {format(selectedDay, 'MMM d')} — {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
             </h5>
             <button
@@ -568,22 +568,22 @@ export default function CalendarWidget() {
                 <div
                   key={e.id}
                   onClick={() => setDetailEvent(e)}
-                  className="flex items-center gap-2 p-2 rounded-xl border border-slate-100 dark:border-gray-800 hover:bg-slate-50 dark:hover:bg-gray-800/40 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 p-2 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 cursor-pointer transition-colors"
                 >
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: EVENT_COLORS[e.eventType] || '#94a3b8' }} />
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex-1 truncate">{e.title}</span>
-                  {e.startTime && <span className="text-[10px] text-slate-400 flex-shrink-0">{e.startTime}</span>}
-                  <span className="text-[10px] text-slate-400 capitalize flex-shrink-0">{EVENT_TYPE_LABELS[e.eventType] || e.eventType}</span>
+                  <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 flex-1 truncate">{e.title}</span>
+                  {e.startTime && <span className="text-[10px] text-neutral-400 flex-shrink-0">{e.startTime}</span>}
+                  <span className="text-[10px] text-neutral-400 capitalize flex-shrink-0">{EVENT_TYPE_LABELS[e.eventType] || e.eventType}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">No events. Double-click a day or tap "+ Add" to schedule.</p>
+            <p className="text-xs text-neutral-400 italic">No events. Double-click a day or tap "+ Add" to schedule.</p>
           )}
         </div>
 
         {loading && (
-          <div className="mt-2 text-center text-xs text-slate-400 animate-pulse">Loading events…</div>
+          <div className="mt-2 text-center text-xs text-neutral-400 animate-pulse">Loading events…</div>
         )}
       </SectionCard>
 

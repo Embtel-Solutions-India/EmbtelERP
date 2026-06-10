@@ -5,7 +5,7 @@ import {
 } from 'react-icons/fa'
 import StatCard        from '../../../components/common/StatCard'
 import RoleWorkspacePanel from '../../../components/dashboard/RoleWorkspacePanel'
-import MarketingWelcomeSection from './MarketingWelcomeSection'
+import WelcomeSection from '../../../components/dashboard/WelcomeSection'
 import MarketingPipelineBoard  from '../campaigns/MarketingPipelineBoard'
 import MarketingCampaignPerformanceTable from '../components/MarketingCampaignPerformanceTable'
 import MarketingLaunchCards    from '../components/MarketingLaunchCards'
@@ -40,10 +40,9 @@ export default function MarketingDashboard() {
   const level = Number(user?.employeeLevel ?? user?.roleLevel ?? 1)
   const designation = (user?.designation || '').toLowerCase()
   if (designation.includes('marketing') || level <= 2) {
-    const wrap = (child) => <div className="space-y-6 max-w-[1600px] mx-auto"><MarketingWelcomeSection />{child}</div>
-    if (level <= 0) return wrap(<MarketingInternDashboard />)
-    if (level === 1) return wrap(<MarketingExecutiveDashboard />)
-    if (level === 2) return wrap(<MarketingManagerDashboard />)
+    if (level <= 0) return <MarketingInternDashboard />
+    if (level === 1) return <MarketingExecutiveDashboard />
+    if (level === 2) return <MarketingManagerDashboard />
   }
 
   const statCards = [
@@ -91,10 +90,10 @@ export default function MarketingDashboard() {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      <MarketingWelcomeSection />
+      <WelcomeSection />
 
       {loading && (
-        <div className="text-center py-2 text-sm text-slate-400">
+        <div className="text-center py-2 text-sm text-neutral-400">
           Loading marketing metrics...
         </div>
       )}

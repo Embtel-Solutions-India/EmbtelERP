@@ -164,12 +164,12 @@ export default function MarketingCampaigns() {
         ].map(s => (
           <div key={s.label} className="card p-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-gray-700/50 flex items-center justify-center text-slate-600 dark:text-slate-300">
+              <div className="w-12 h-12 rounded-2xl bg-neutral-50 dark:bg-neutral-700/50 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
                 <s.Icon size={20} className={s.color} />
               </div>
               <div>
-                <p className={`text-2xl font-bold text-slate-800 dark:text-slate-100`}>{s.value}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{s.label}</p>
+                <p className={`text-2xl font-bold text-neutral-800 dark:text-neutral-100`}>{s.value}</p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
               </div>
             </div>
           </div>
@@ -181,26 +181,26 @@ export default function MarketingCampaigns() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
+              <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
                 {['Campaign Name', 'Type / Channel', 'Target Segment', 'Budget', 'Leads Generated', 'Revenues', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                  <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
               {campaigns.map((opp, i) => (
                 <motion.tr key={opp.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
-                  className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors group">
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group">
                   <td className="px-5 py-4">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{opp.campaign_name}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">Starts: {opp.start_date ? formatDate(opp.start_date) : '—'}</p>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{opp.campaign_name}</p>
+                    <p className="text-xs text-neutral-400 dark:text-neutral-500">Starts: {opp.start_date ? formatDate(opp.start_date) : '—'}</p>
                   </td>
-                  <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap font-medium">{opp.campaign_type}</td>
-                  <td className="px-5 py-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{opp.target_audience}</td>
+                  <td className="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap font-medium">{opp.campaign_type}</td>
+                  <td className="px-5 py-4 text-sm text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{opp.target_audience}</td>
                   <td className="px-5 py-4">
                     <span className="text-sm font-bold text-primary-600 dark:text-primary-400 whitespace-nowrap">{formatCurrency(opp.budget)}</span>
                   </td>
-                  <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400">{opp.leads_generated || 0}</td>
+                  <td className="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-400">{opp.leads_generated || 0}</td>
                   <td className="px-5 py-4 text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(opp.revenue_generated || 0)}</td>
                   <td className="px-5 py-4">
                     <span className={STATUS_COLORS[opp.status] || 'badge-primary'}>{opp.status}</span>
@@ -208,13 +208,13 @@ export default function MarketingCampaigns() {
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Tooltip title={opp.status === 'Paused' ? 'Resume' : 'Pause'}>
-                        <button onClick={() => handleTogglePause(opp)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-600 dark:hover:bg-gray-700 transition-colors">
+                        <button onClick={() => handleTogglePause(opp)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-600 dark:hover:bg-neutral-700 transition-colors">
                           {opp.status === 'Paused' ? <PlayArrow style={{ fontSize: 16 }} /> : <Pause style={{ fontSize: 16 }} />}
                         </button>
                       </Tooltip>
-                      <Tooltip title="Archive (Cancel)"><button onClick={() => handleArchive(opp)} className="p-1.5 rounded-lg hover:bg-slate-50 text-slate-500 dark:hover:bg-gray-700 transition-colors"><Lock style={{ fontSize: 16 }} /></button></Tooltip>
-                      <Tooltip title="Edit Campaign"><button onClick={() => handleEditClick(opp)} className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 dark:hover:bg-gray-700 transition-colors"><Edit style={{ fontSize: 16 }} /></button></Tooltip>
-                      <Tooltip title="Delete Campaign"><button onClick={() => handleDeleteClick(opp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 dark:hover:bg-gray-700 transition-colors"><Delete style={{ fontSize: 16 }} /></button></Tooltip>
+                      <Tooltip title="Archive (Cancel)"><button onClick={() => handleArchive(opp)} className="p-1.5 rounded-lg hover:bg-neutral-50 text-neutral-500 dark:hover:bg-neutral-700 transition-colors"><Lock style={{ fontSize: 16 }} /></button></Tooltip>
+                      <Tooltip title="Edit Campaign"><button onClick={() => handleEditClick(opp)} className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 dark:hover:bg-neutral-700 transition-colors"><Edit style={{ fontSize: 16 }} /></button></Tooltip>
+                      <Tooltip title="Delete Campaign"><button onClick={() => handleDeleteClick(opp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 dark:hover:bg-neutral-700 transition-colors"><Delete style={{ fontSize: 16 }} /></button></Tooltip>
                     </div>
                   </td>
                 </motion.tr>

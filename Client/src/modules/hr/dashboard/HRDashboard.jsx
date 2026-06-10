@@ -30,7 +30,7 @@ export default function HRDashboard() {
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <WelcomeSection />
 
-      {loading && <div className="text-center py-2 text-sm text-slate-400">Loading HR data...</div>}
+      {loading && <div className="text-center py-2 text-sm text-neutral-400">Loading HR data...</div>}
 
       {overview?.perspective && (
         <div className="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/10 dark:to-blue-900/10 border border-primary-200 dark:border-primary-800 rounded-xl px-4 py-3 mb-6">

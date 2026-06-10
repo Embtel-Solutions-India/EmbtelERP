@@ -15,7 +15,7 @@ const ICON_MAP = {
   content_published: { Icon: FaFileAlt,     bg: 'bg-cyan-100 dark:bg-cyan-900/30',       text: 'text-cyan-600 dark:text-cyan-400'      },
   asset_uploaded:    { Icon: FaImage,       bg: 'bg-purple-100 dark:bg-purple-900/30',   text: 'text-purple-600 dark:text-purple-400'  },
 }
-const DEFAULT = { Icon: FaMapPin, bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-500' }
+const DEFAULT = { Icon: FaMapPin, bg: 'bg-neutral-100 dark:bg-neutral-700', text: 'text-neutral-500' }
 
 export default function MarketingActivityTimeline() {
   const { activities } = useSelector((s) => s.marketingDashboard)
@@ -38,18 +38,18 @@ export default function MarketingActivityTimeline() {
                 className="flex gap-4 group"
               >
                 <div
-                  className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${entry.bg} ${entry.text} border-2 border-white dark:border-gray-800 shadow-sm group-hover:scale-110 transition-transform`}
+                  className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${entry.bg} ${entry.text} border-2 border-white dark:border-neutral-800 shadow-sm group-hover:scale-110 transition-transform`}
                 >
                   <Icon size={15} />
                 </div>
 
-                <div className="flex-1 min-w-0 pb-3 border-b border-slate-50 dark:border-gray-700/50 last:border-0">
+                <div className="flex-1 min-w-0 pb-3 border-b border-neutral-50 dark:border-neutral-700/50 last:border-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{activity.title}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{activity.description}</p>
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">{activity.title}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{activity.description}</p>
                     </div>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0 mt-0.5">{timeAgo(activity.time)}</span>
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500 flex-shrink-0 mt-0.5">{timeAgo(activity.time)}</span>
                   </div>
                 </div>
               </motion.div>

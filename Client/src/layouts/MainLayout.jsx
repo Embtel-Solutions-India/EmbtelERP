@@ -44,7 +44,7 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-950" style={{ backgroundColor: 'var(--body-bg)' }}>
       {/* Mobile overlay */}
       <AnimatePresence>
         {mobileSidebarOpen && (
@@ -84,7 +84,7 @@ export default function MainLayout() {
                 <span className="animate-pulse bg-white text-amber-600 rounded px-1.5 py-0.5 text-[10px] font-bold shadow-sm">
                   IMPERSONATION ACTIVE
                 </span>
-                <span className="text-slate-100">
+                <span className="text-neutral-100">
                   Currently viewing scope as:{" "}
                   <strong className="text-white underline font-bold">
                     {currentInfo?.label || "Target employee/department"}

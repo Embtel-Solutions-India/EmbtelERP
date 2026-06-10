@@ -112,7 +112,7 @@ export default function MarketingTasks() {
         ].map(s => (
           <div key={s.label} className={`card p-4 text-center ${s.bg}`}>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{s.label}</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
           </div>
         ))}
       </div>
@@ -126,7 +126,7 @@ export default function MarketingTasks() {
               <span className="badge badge-primary">{groups[key].length}</span>
             </div>
             {groups[key].length === 0 ? (
-              <p className="text-sm text-slate-400 dark:text-slate-500 italic ml-6">No {label.toLowerCase()} tasks</p>
+              <p className="text-sm text-neutral-400 dark:text-neutral-500 italic ml-6">No {label.toLowerCase()} tasks</p>
             ) : (
               <div className="space-y-2">
                 {groups[key].map((task, i) => (
@@ -139,17 +139,17 @@ export default function MarketingTasks() {
                   >
                     <button
                       onClick={() => dispatch(toggleMarketingTask(task.id))}
-                      className={task.status === 'done' ? 'text-emerald-500 mt-0.5' : 'text-slate-300 hover:text-primary-500 mt-0.5'}
+                      className={task.status === 'done' ? 'text-emerald-500 mt-0.5' : 'text-neutral-300 hover:text-primary-500 mt-0.5'}
                     >
                       {task.status === 'done' ? <CheckCircle /> : <RadioButtonUnchecked />}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className={`font-semibold ${task.status === 'done' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100'}`}>
+                      <p className={`font-semibold ${task.status === 'done' ? 'line-through text-neutral-400' : 'text-neutral-800 dark:text-neutral-100'}`}>
                         {task.title}
                       </p>
                       <div className="flex items-center gap-3 mt-1 flex-wrap">
-                        {task.lead && <span className="text-xs text-slate-400">— {task.lead}</span>}
-                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                        {task.lead && <span className="text-xs text-neutral-400">— {task.lead}</span>}
+                        <span className="flex items-center gap-1 text-xs text-neutral-400">
                           <AccessTime style={{ fontSize: 12 }} /> {formatDate(task.dueDate)}
                         </span>
                         <span className="badge badge-info text-xs capitalize">{task.category}</span>
@@ -157,7 +157,7 @@ export default function MarketingTasks() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`${PRIORITY_MAP[task.priority] || 'badge-info'}`}>{task.priority}</span>
-                      <button onClick={() => dispatch(deleteMarketingTask(task.id))} className="text-slate-300 hover:text-red-500 transition-colors">
+                      <button onClick={() => dispatch(deleteMarketingTask(task.id))} className="text-neutral-300 hover:text-red-500 transition-colors">
                         <DeleteOutline fontSize="small" />
                       </button>
                     </div>
