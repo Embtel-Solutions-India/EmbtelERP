@@ -101,12 +101,12 @@ export default function MarketingEmail() {
           { label: 'Live Platform Streams', value: broadcasts.filter(b => b.link && b.status === 'Scheduled').length, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-900/20', Icon: PlayCircle },
         ].map((s) => (
           <div key={s.label} className={`card p-4 flex items-center gap-3 ${s.bg}`}>
-            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center ${s.color}`}>
+            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 shadow-sm flex items-center justify-center ${s.color}`}>
               <s.Icon size={18} />
             </div>
             <div>
               <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{s.label}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
             </div>
           </div>
         ))}
@@ -116,16 +116,16 @@ export default function MarketingEmail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Templates column */}
         <div className="space-y-4 lg:col-span-1">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 px-1">
+          <h2 className="text-base font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 px-1">
             <ContentCopy fontSize="small" /> Email Newsletters Templates
           </h2>
           {TEMPLATES.map((tpl) => (
-            <div key={tpl.id} className="card p-4 space-y-3 border-l-4 border-indigo-500 bg-slate-50/50 dark:bg-gray-800/30">
+            <div key={tpl.id} className="card p-4 space-y-3 border-l-4 border-indigo-500 bg-neutral-50/50 dark:bg-neutral-800/30">
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.title}</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium italic mt-0.5">Subject: "{tpl.subject}"</p>
+                <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">{tpl.title}</h3>
+                <p className="text-xs text-neutral-400 dark:text-neutral-500 font-medium italic mt-0.5">Subject: "{tpl.subject}"</p>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{tpl.description}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">{tpl.description}</p>
               <button 
                 onClick={() => handleDuplicateTemplate(tpl)}
                 className="btn-secondary w-full text-xs py-1.5 flex items-center justify-center gap-1.5"
@@ -138,7 +138,7 @@ export default function MarketingEmail() {
 
         {/* Scheduled broadcast grid */}
         <div className="space-y-4 lg:col-span-2">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 px-1">
+          <h2 className="text-base font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 px-1">
             <Mail fontSize="small" /> Scheduled Broadcast Queue
           </h2>
           <div className="grid grid-cols-1 gap-4">
@@ -153,13 +153,13 @@ export default function MarketingEmail() {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">{broadcast.client}</span>
-                    <h3 className="font-bold text-slate-800 dark:text-slate-100 mt-0.5">{broadcast.company}</h3>
+                    <h3 className="font-bold text-neutral-800 dark:text-neutral-100 mt-0.5">{broadcast.company}</h3>
                   </div>
                   <span className={STATUS_COLORS[broadcast.status] || 'badge-primary'}>{broadcast.status}</span>
                 </div>
 
-                <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  <span className="flex items-center gap-1 bg-slate-100 dark:bg-gray-800 px-2.5 py-1 rounded-md font-semibold text-slate-600 dark:text-slate-300">
+                <div className="flex flex-wrap gap-4 text-xs text-neutral-500 dark:text-neutral-400 mt-2">
+                  <span className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-md font-semibold text-neutral-600 dark:text-neutral-300">
                     {broadcast.type}
                   </span>
                   <span className="flex items-center gap-1 px-1">
@@ -171,7 +171,7 @@ export default function MarketingEmail() {
                 </div>
 
                 {broadcast.status === 'Scheduled' && (
-                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-gray-700">
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-700">
                     {broadcast.link && (
                       <a href={broadcast.link} target="_blank" rel="noopener noreferrer"
                         className="btn-primary flex items-center gap-1.5 text-xs py-1.5">

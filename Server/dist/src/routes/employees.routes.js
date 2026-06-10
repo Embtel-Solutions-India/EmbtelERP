@@ -5,7 +5,7 @@ import { attachScope } from "../middleware/scope.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validateBody } from "../middleware/validate.middleware.js";
 import { requireRole, requireEmployeeScope, ROLE_LEVEL, } from "../middleware/rbac.middleware.js";
-import { createEmployee, getEmployeeById, listEmployees, } from "../services/employee.service.js";
+import { createEmployee, getEmployeeById, listEmployees, updateEmployee, deactivateEmployee, } from "../services/employee.service.js";
 const createEmployeeSchema = z.object({
     organizationId: z.string().min(1),
     businessId: z.string().min(1),
@@ -33,4 +33,14 @@ employeesRouter.post("/", requireRole(ROLE_LEVEL.HEAD), validateBody(createEmplo
     const actorId = req.user?.employeeId;
     const employee = await createEmployee(req.body, actorId);
     res.status(201).json({ data: employee });
+}));
+employeesRouter.patch("/:id", requireRole(ROLE_LEVEL.HEAD), asyncHandler(async (req, res) => {
+    const actorId = req.user?.employeeId;
+    const employee = await updateEmployee(String(req.params.id), req.body, actorId);
+    res.json({ data: employee });
+}));
+employeesRouter.delete("/:id", requireRole(ROLE_LEVEL.HEAD), asyncHandler(async (req, res) => {
+    const actorId = req.user?.employeeId;
+    await deactivateEmployee(String(req.params.id), actorId);
+    res.status(204).end();
 }));

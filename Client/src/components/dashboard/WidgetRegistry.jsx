@@ -7,9 +7,11 @@ import {
   FaExclamationTriangle, FaUsers, FaStar, FaBuilding, FaLock,
   FaFileAlt, FaHdd, FaDatabase, FaShieldAlt, FaBriefcase, FaGraduationCap,
   FaClipboardCheck, FaPen, FaHistory, FaUserTie, FaChevronRight, FaHeartbeat, FaRocket, FaFlag,
-  FaBullseye, FaEnvelope, FaMousePointer, FaBullhorn, FaBell, FaFolderOpen, FaSearch, FaListAlt
+  FaBullseye, FaEnvelope, FaMousePointer, FaBullhorn, FaBell, FaFolderOpen, FaSearch, FaListAlt,
+  FaPercent, FaGlobeAsia, FaThumbsUp, FaMapMarkerAlt, FaBalanceScale, FaChartPie,
 } from 'react-icons/fa'
 import SectionCard from '../common/SectionCard'
+import StatCard from '../common/StatCard'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts'
 
 // Lazy load the existing complex widgets for performance optimization
@@ -20,36 +22,61 @@ const QuickActions = lazy(() => import('./QuickActions'))
 const TaskWidget = lazy(() => import('./TaskWidget'))
 const PerformanceChart = lazy(() => import('./PerformanceChart'))
 const UpcomingEventsWidget = lazy(() => import('./UpcomingEventsWidget'))
+const PipelineBoard    = lazy(() => import('./PipelineBoard'))
+const FollowUpsTable   = lazy(() => import('./FollowUpsTable'))
+const MeetingCards     = lazy(() => import('./MeetingCard'))
+const OpportunityTable = lazy(() => import('./OpportunityTable'))
+const CustomerInsights = lazy(() => import('./CustomerInsights'))
+const TargetProgress   = lazy(() => import('./TargetProgress'))
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
 // Skeleton loader for loading state representation
 export function WidgetSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-700 p-5 animate-pulse space-y-4 h-full min-h-[160px]">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5 animate-pulse space-y-4 h-full min-h-[160px]">
       <div className="flex justify-between items-center">
-        <div className="h-4 bg-slate-200 dark:bg-gray-800 rounded w-1/3"></div>
-        <div className="w-8 h-8 bg-slate-200 dark:bg-gray-800 rounded-lg"></div>
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-1/3"></div>
+        <div className="w-8 h-8 bg-neutral-200 dark:bg-neutral-800 rounded-lg"></div>
       </div>
-      <div className="h-8 bg-slate-200 dark:bg-gray-800 rounded w-1/2"></div>
-      <div className="h-3 bg-slate-200 dark:bg-gray-800 rounded w-2/3"></div>
+      <div className="h-8 bg-neutral-200 dark:bg-neutral-800 rounded w-1/2"></div>
+      <div className="h-3 bg-neutral-200 dark:bg-neutral-800 rounded w-2/3"></div>
     </div>
   )
 }
 
-// KPI Card implementation
-function KpiCard({ icon, label, value, subLabel, color, suffix = '' }) {
+// ── Sparkline trend presets ──────────────────────────────────────
+const SPARK_UP       = [30, 34, 32, 38, 42, 40, 46, 50, 54, 62]
+const SPARK_DOWN     = [70, 65, 68, 60, 55, 58, 50, 46, 42, 38]
+const SPARK_FLAT     = [50, 52, 49, 51, 50, 53, 49, 52, 50, 53]
+const SPARK_VOLATILE = [35, 58, 40, 68, 44, 62, 50, 72, 48, 70]
+const SPARK_GROWTH   = [20, 24, 28, 32, 38, 44, 50, 58, 66, 76]
+
+// ── Grid wrapper ────────────────────────────────────────────────
+function KpiGrid({ children }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-700 p-5 flex flex-col gap-2 h-full">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm" style={{ background: color }}>
-          {icon}
-        </div>
-      </div>
-      <p className="text-2xl font-bold text-slate-800 dark:text-white mt-auto">{value ?? 0}{suffix}</p>
-      {subLabel && <p className="text-xs text-slate-400">{subLabel}</p>}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full">
+      {children}
     </div>
+  )
+}
+
+// ── Shorthand for a single StatCard ─────────────────────────────
+function K({ title, value, prefix, suffix, change, changeLabel, icon, color, spark = SPARK_UP, delay = 0, formatValue = true }) {
+  return (
+    <StatCard
+      title={title}
+      value={value}
+      prefix={prefix}
+      suffix={suffix}
+      change={change}
+      changeLabel={changeLabel}
+      icon={icon}
+      color={color}
+      sparkData={spark}
+      delay={delay}
+      formatValue={formatValue}
+    />
   )
 }
 
@@ -60,222 +87,289 @@ export function KpiCardsWidget({ role }) {
   const { list: tasks } = useSelector(s => s.tasks || { list: [] })
   const { kpiStats } = useSelector(s => s.marketingDashboard || { kpiStats: {} })
 
-  const summary = leads?.summary || {}
-  const todayFollowUps = followUps?.todayCount ?? 0
-  const overdueFollowUps = followUps?.overdueCount ?? 0
+  const summary         = leads?.summary || {}
+  const todayFU         = followUps?.todayCount ?? 0
+  const overdueFU       = followUps?.overdueCount ?? 0
+  const pendingFU       = followUps?.totalPending ?? 0
   const pendingApprovals = approvals?.pendingCount ?? 0
-  const totalTasks = tasks?.length ?? 0
-  const completedTasksCount = tasks?.filter(t => t.status === 'completed').length ?? 0
-  const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0
-  const teamList = Array.isArray(teamStats) ? teamStats : []
-  const teamRevenue = teamList.reduce((s, t) => s + (t.revenue || 0), 0)
-  const totalEmployees = overview?.employeeCount ?? 0
-  const slaCompliance = overview?.taskCount > 0 ? Math.round((overview.taskCompleted / overview.taskCount) * 100) : 88
-  const totalRevenue = overview?.businessKpis?.totalRevenue ?? overview?.businessKpis?.monthlyRevenue ?? teamRevenue
-  const openPositions = overview?.openPositions ?? 0
+  const totalTasks      = tasks?.length ?? 0
+  const doneTasks       = tasks?.filter(t => t.status === 'completed').length ?? 0
+  const taskRate        = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0
+  const teamList        = Array.isArray(teamStats) ? teamStats : []
+  const teamRevenue     = teamList.reduce((s, t) => s + (t.revenue || 0), 0)
+  const totalEmployees  = overview?.employeeCount ?? 0
+  const sla             = overview?.taskCount > 0 ? Math.round((overview.taskCompleted / overview.taskCount) * 100) : 88
+  const totalRevenue    = overview?.businessKpis?.totalRevenue ?? overview?.businessKpis?.monthlyRevenue ?? teamRevenue
+  const targetPct       = overview?.businessKpis?.targetAchievement ?? overview?.teamKpis?.targetAchievement ?? overview?.employeeKpis?.performanceScore ?? 0
+  const openPositions   = overview?.openPositions ?? 0
 
-  // Sales Intern
+  // ── Sales Intern ─────────────────────────────────────────────
   if (role === 'sales_intern') {
-    const assignedLeads = leads?.leads?.length ?? 0
-    const leadsNeedingUpdates = leads?.leads?.filter(l => ['NEW', 'CONTACTED'].includes(l.status)).length ?? 0
-    const callsToBeLogged = tasks?.filter(t => t.status !== 'completed' && String(t.title).toLowerCase().includes('call')).length ?? 0
+    const assigned = leads?.leads?.length ?? 0
+    const needUpdate = leads?.leads?.filter(l => ['NEW', 'CONTACTED'].includes(l.status)).length ?? 0
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaUserPlus />} label="New Leads Assigned" value={assignedLeads} subLabel="active prospects" color="#6366f1" />
-        <KpiCard icon={<FaPhoneAlt />} label="Today's Follow Ups" value={todayFollowUps} subLabel="due today" color="#f59e0b" />
-        <KpiCard icon={<FaExclamationTriangle />} label="Leads Needing Update" value={leadsNeedingUpdates} subLabel="new & contacted" color="#ef4444" />
-        <KpiCard icon={<FaPen />} label="Calls To Be Logged" value={callsToBeLogged} subLabel="pending calls" color="#06b6d4" />
-        <KpiCard icon={<FaCheckCircle />} label="Task Completion" value={taskCompletionRate} subLabel="closed tasks" color="#10b981" suffix="%" />
-        <KpiCard icon={<FaHistory />} label="Recent Activity" value={activities?.length ?? 0} subLabel="total actions" color="#8b5cf6" />
-      </div>
+      <KpiGrid>
+        <K title="Leads Assigned"    value={assigned}       icon={<FaUserPlus />}          color="#6366f1" change={8}   changeLabel="new this week"   spark={SPARK_UP}     delay={0}    />
+        <K title="Today's Follow Ups" value={todayFU}        icon={<FaPhoneAlt />}          color="#f59e0b" change={overdueFU > 0 ? -overdueFU : 0} changeLabel="overdue" spark={SPARK_VOLATILE} delay={0.05} formatValue={false} />
+        <K title="Leads Need Update"  value={needUpdate}     icon={<FaExclamationTriangle />} color="#ef4444" change={-3}  changeLabel="vs yesterday"   spark={SPARK_DOWN}   delay={0.1}  />
+        <K title="Pending Tasks"      value={pendingFU}      icon={<FaTasks />}             color="#8b5cf6" change={0}   changeLabel="due today"       spark={SPARK_FLAT}   delay={0.15} />
+        <K title="Task Completion"    value={taskRate}       icon={<FaCheckCircle />}       color="#10b981" change={5}   changeLabel="vs last week"    spark={SPARK_UP}     delay={0.2}  suffix="%" formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Sales Executive
+  // ── Sales Executive ─────────────────────────────────────────
   if (role === 'sales_executive') {
-    const winCount = summary.converted ?? 0
-    const lostCount = summary.lost ?? 0
-    const winLostRatio = lostCount > 0 ? (winCount / lostCount).toFixed(1) : `${winCount}:0`
+    const totalLeads    = summary.total ?? 0
+    const newToday      = summary.new ?? 0
+    const qualified     = summary.qualified ?? summary.total ?? 0
+    const hot           = summary.hot ?? 0
+    const won           = summary.converted ?? 0
+    const lost          = summary.lost ?? 0
+    const revenue       = summary.totalValue ?? 0
+    const convRate      = summary.conversionRate ?? 0
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaFire />} label="Hot Leads" value={summary.hot} subLabel="qualified prospects" color="#ef4444" />
-        <KpiCard icon={<FaPhoneAlt />} label="Follow Ups Due Today" value={todayFollowUps} subLabel={`${overdueFollowUps} overdue`} color="#f59e0b" />
-        <KpiCard icon={<FaDollarSign />} label="Revenue This Month" value={`$${(summary.totalValue || 0).toLocaleString()}`} subLabel="estimated lead value" color="#8b5cf6" />
-        <KpiCard icon={<FaChartLine />} label="Conversion Rate" value={summary.conversionRate} subLabel="leads converted" color="#10b981" suffix="%" />
-        <KpiCard icon={<FaHandshake />} label="Win / Lost Ratio" value={winLostRatio} subLabel={`${winCount} Won / ${lostCount} Lost`} color="#06b6d4" />
-        <KpiCard icon={<FaTasks />} label="Pending Tasks" value={followUps?.totalPending} subLabel="needing action" color="#f59e0b" />
-      </div>
+      <KpiGrid>
+        <K title="Total Leads"        value={totalLeads}  icon={<FaUsers />}           color="#6366f1" change={12}     changeLabel="vs last month"   spark={SPARK_UP}     delay={0}    />
+        <K title="New Leads Today"    value={newToday}    icon={<FaUserPlus />}         color="#8b5cf6" change={newToday > 0 ? 8 : 0} changeLabel="added today" spark={SPARK_GROWTH} delay={0.05} />
+        <K title="Qualified Leads"    value={qualified}   icon={<FaThumbsUp />}         color="#06b6d4" change={6}      changeLabel="vs last week"    spark={SPARK_UP}     delay={0.1}  />
+        <K title="Hot Leads"          value={hot}         icon={<FaFire />}             color="#ef4444" change={hot > 0 ? 15 : 0}  changeLabel="high priority" spark={SPARK_VOLATILE} delay={0.15} />
+        <K title="Follow Ups Pending" value={pendingFU}   icon={<FaPhoneAlt />}         color="#f59e0b" change={overdueFU > 0 ? -overdueFU : 0} changeLabel="overdue" spark={SPARK_FLAT} delay={0.2} />
+        <K title="Meetings Scheduled" value={tasks?.filter(t => String(t.title).toLowerCase().includes('meet')).length ?? 0} icon={<FaCalendarAlt />} color="#10b981" change={3} changeLabel="this week" spark={SPARK_UP} delay={0.25} />
+        <K title="Won Deals"          value={won}         icon={<FaHandshake />}        color="#10b981" change={won > 0 ? 20 : 0}   changeLabel="this month"  spark={SPARK_GROWTH} delay={0.3}  />
+        <K title="Lost Deals"         value={lost}        icon={<FaExclamationTriangle />} color="#ef4444" change={lost > 0 ? -5 : 0} changeLabel="vs last month" spark={SPARK_DOWN} delay={0.35} />
+        <K title="Monthly Revenue"    value={revenue}     icon={<FaDollarSign />}       color="#8b5cf6" prefix="$" change={18} changeLabel="vs last month" spark={SPARK_GROWTH} delay={0.4} />
+        <K title="Target Achievement" value={convRate}    icon={<FaBullseye />}         color="#f59e0b" suffix="%" change={convRate > 0 ? 5 : 0} changeLabel="conversion rate" spark={SPARK_UP} delay={0.45} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Sales Head
+  // ── Sales Head ──────────────────────────────────────────────
   if (role === 'sales_head') {
-    const topPerformer = teamList.length > 0 ? teamList[0].name : 'None'
-    const assignmentQueue = leads?.leads?.filter(l => l.status === 'NEW').length ?? 0
+    const totalLeads  = summary.total ?? 0
+    const qualified   = summary.qualified ?? 0
+    const hot         = summary.hot ?? 0
+    const won         = summary.converted ?? 0
+    const lost        = summary.lost ?? 0
+    const convRate    = summary.conversionRate ?? 0
+    const teamTarget  = overview?.teamKpis?.targetAchievement ?? targetPct
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaDollarSign />} label="Team Revenue" value={`$${teamRevenue.toLocaleString()}`} subLabel="aggregate sales value" color="#10b981" />
-        <KpiCard icon={<FaChartLine />} label="Team Conversion Rate" value={summary.conversionRate || 0} subLabel="team average" color="#6366f1" suffix="%" />
-        <KpiCard icon={<FaTrophy />} label="Top Performer" value={topPerformer} subLabel="highest productivity" color="#f59e0b" />
-        <KpiCard icon={<FaUserPlus />} label="Assignment Queue" value={assignmentQueue} subLabel="unassigned leads" color="#06b6d4" />
-        <KpiCard icon={<FaBullseye />} label="Team KPI Score" value={taskCompletionRate} subLabel="average scorecard" color="#8b5cf6" suffix="%" />
-        <KpiCard icon={<FaPhoneAlt />} label="Follow Up Compliance" value={followUps?.totalPending ?? 0} subLabel="pending tasks" color="#ef4444" />
-      </div>
+      <KpiGrid>
+        <K title="Total Leads"        value={totalLeads}   icon={<FaUsers />}           color="#6366f1" change={10}      changeLabel="vs last month"   spark={SPARK_UP}     delay={0}    />
+        <K title="Team Revenue"       value={teamRevenue}  icon={<FaDollarSign />}      color="#10b981" prefix="$" change={22} changeLabel="vs last month" spark={SPARK_GROWTH} delay={0.05} />
+        <K title="Qualified Leads"    value={qualified}    icon={<FaThumbsUp />}        color="#06b6d4" change={8}       changeLabel="in funnel"       spark={SPARK_UP}     delay={0.1}  />
+        <K title="Hot Leads"          value={hot}          icon={<FaFire />}            color="#ef4444" change={hot > 0 ? 12 : 0} changeLabel="urgent" spark={SPARK_VOLATILE} delay={0.15} />
+        <K title="Follow Ups Pending" value={pendingFU}    icon={<FaPhoneAlt />}        color="#f59e0b" change={overdueFU > 0 ? -overdueFU : 0} changeLabel="overdue" spark={SPARK_FLAT} delay={0.2} />
+        <K title="Won Deals"          value={won}          icon={<FaHandshake />}       color="#10b981" change={won > 0 ? 18 : 0} changeLabel="this month" spark={SPARK_GROWTH} delay={0.25} />
+        <K title="Lost Deals"         value={lost}         icon={<FaExclamationTriangle />} color="#ef4444" change={lost > 0 ? -8 : 0} changeLabel="vs target" spark={SPARK_DOWN} delay={0.3} />
+        <K title="Conversion Rate"    value={convRate}     icon={<FaChartLine />}       color="#8b5cf6" suffix="%" change={4} changeLabel="team average" spark={SPARK_UP} delay={0.35} formatValue={false} />
+        <K title="Team Members"       value={totalEmployees} icon={<FaUserTie />}       color="#06b6d4" change={0}       changeLabel="active reps"     spark={SPARK_FLAT}   delay={0.4}  />
+        <K title="Target Achievement" value={teamTarget}   icon={<FaBullseye />}        color="#f59e0b" suffix="%" change={teamTarget > 0 ? 6 : 0} changeLabel="vs target" spark={SPARK_UP} delay={0.45} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Marketing Intern
+  // ── Marketing Intern ────────────────────────────────────────
   if (role === 'marketing_intern') {
-    const scheduledPosts = tasks?.filter(t => String(t.title).toLowerCase().includes('post')).length ?? 0
+    const activeTasks  = tasks?.filter(t => t.status !== 'completed').length ?? 0
+    const posts = tasks?.filter(t => String(t.title).toLowerCase().includes('post')).length ?? 0
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaTasks />} label="Assigned Campaign Tasks" value={tasks?.filter(t => t.status !== 'completed').length} subLabel="tasks in progress" color="#6366f1" />
-        <KpiCard icon={<FaRocket />} label="Scheduled Posts" value={scheduledPosts} subLabel="ready content pieces" color="#f59e0b" />
-        <KpiCard icon={<FaFileAlt />} label="Content Calendar" value={totalTasks} subLabel="total scheduled assets" color="#06b6d4" />
-        <KpiCard icon={<FaClipboardCheck />} label="Pending Reviews" value={pendingApprovals} subLabel="awaiting approval" color="#ef4444" />
-        <KpiCard icon={<FaCheckCircle />} label="Task Completion" value={taskCompletionRate} subLabel="closed items" color="#10b981" suffix="%" />
-      </div>
+      <KpiGrid>
+        <K title="Campaign Tasks"     value={activeTasks}      icon={<FaTasks />}           color="#6366f1" change={0}   changeLabel="in progress"     spark={SPARK_FLAT}   delay={0}    />
+        <K title="Scheduled Posts"    value={posts}            icon={<FaRocket />}           color="#f59e0b" change={4}   changeLabel="ready to publish" spark={SPARK_UP}    delay={0.05} />
+        <K title="Content Items"      value={totalTasks}       icon={<FaFileAlt />}          color="#06b6d4" change={2}   changeLabel="scheduled"       spark={SPARK_UP}     delay={0.1}  />
+        <K title="Pending Reviews"    value={pendingApprovals} icon={<FaClipboardCheck />}   color="#ef4444" change={pendingApprovals > 0 ? -2 : 0} changeLabel="awaiting approval" spark={SPARK_DOWN} delay={0.15} />
+        <K title="Task Completion"    value={taskRate}         icon={<FaCheckCircle />}      color="#10b981" change={5}   changeLabel="vs last week"    spark={SPARK_UP}     delay={0.2}  suffix="%" formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Marketing Executive
+  // ── Marketing Executive ─────────────────────────────────────
   if (role === 'marketing_executive') {
+    const leadsGen    = kpiStats?.leadsGenerated ?? summary.total ?? 0
+    const campaigns   = kpiStats?.activeCampaigns ?? 0
+    const mql         = leads?.leads?.filter(l => l.status === 'QUALIFIED').length ?? Math.round((leadsGen || 0) * 0.35)
+    const convRate    = kpiStats?.conversionRate ?? summary.conversionRate ?? 0
+    const cpl         = kpiStats?.costPerLead ?? 0
+    const roi         = kpiStats?.campaignRoi ?? 0
+    const traffic     = kpiStats?.websiteTraffic ?? 0
+    const openRate    = kpiStats?.emailOpenRate ?? 0
+    const social      = kpiStats?.socialEngagement ?? 0
+    const tgt         = kpiStats?.targetAchievement ?? targetPct
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaUserPlus />} label="Leads Generated" value={summary.total} subLabel="total leads in funnel" color="#6366f1" />
-        <KpiCard icon={<FaDollarSign />} label="Cost Per Lead" value={`$${(kpiStats?.costPerLead || 0).toLocaleString()}`} subLabel="CPL performance" color="#ef4444" />
-        <KpiCard icon={<FaChartLine />} label="Campaign ROI" value={kpiStats?.campaignRoi || 0} subLabel="ROI achievement ratio" color="#10b981" suffix="x" />
-        <KpiCard icon={<FaEnvelope />} label="Open Rate" value={kpiStats?.emailOpenRate || 0} subLabel="email engagement" color="#06b6d4" suffix="%" />
-        <KpiCard icon={<FaMousePointer />} label="Click Rate" value={Math.round((kpiStats?.emailOpenRate || 0) * 0.4)} subLabel="email click rate" color="#8b5cf6" suffix="%" />
-        <KpiCard icon={<FaBullhorn />} label="Active Campaigns" value={kpiStats?.activeCampaigns || 0} subLabel="campaigns running" color="#6366f1" />
-      </div>
+      <KpiGrid>
+        <K title="Leads Generated"    value={leadsGen}  icon={<FaUserPlus />}     color="#6366f1" change={14}     changeLabel="vs last month"   spark={SPARK_UP}     delay={0}    />
+        <K title="Active Campaigns"   value={campaigns} icon={<FaBullhorn />}     color="#8b5cf6" change={2}      changeLabel="running now"     spark={SPARK_FLAT}   delay={0.05} />
+        <K title="MQL"                value={mql}       icon={<FaStar />}         color="#06b6d4" change={9}      changeLabel="marketing qualified" spark={SPARK_UP} delay={0.1}  />
+        <K title="Conversion Rate"    value={convRate}  icon={<FaChartLine />}    color="#10b981" change={3}      changeLabel="lead-to-client"  spark={SPARK_UP}     delay={0.15} suffix="%" formatValue={false} />
+        <K title="Cost Per Lead"      value={cpl}       icon={<FaDollarSign />}   color="#ef4444" prefix="$" change={cpl > 0 ? -8 : 0} changeLabel="vs budget" spark={SPARK_DOWN} delay={0.2} />
+        <K title="Campaign ROI"       value={roi}       icon={<FaChartPie />}     color="#f59e0b" suffix="x"  change={roi > 0 ? 12 : 0} changeLabel="return on spend" spark={SPARK_GROWTH} delay={0.25} formatValue={false} />
+        <K title="Website Traffic"    value={traffic}   icon={<FaGlobeAsia />}    color="#06b6d4" change={18}     changeLabel="monthly visits"  spark={SPARK_UP}     delay={0.3}  />
+        <K title="Email Open Rate"    value={openRate}  icon={<FaEnvelope />}     color="#8b5cf6" suffix="%"  change={openRate > 0 ? 4 : 0} changeLabel="vs industry avg" spark={SPARK_UP} delay={0.35} formatValue={false} />
+        <K title="Social Engagement"  value={social}    icon={<FaMousePointer />} color="#10b981" suffix="%"  change={social > 0 ? 7 : 0}  changeLabel="vs last month" spark={SPARK_VOLATILE} delay={0.4} formatValue={false} />
+        <K title="Target Achievement" value={tgt}       icon={<FaBullseye />}     color="#f59e0b" suffix="%"  change={tgt > 0 ? 5 : 0}    changeLabel="vs monthly goal" spark={SPARK_UP} delay={0.45} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Marketing Manager
+  // ── Marketing Manager ───────────────────────────────────────
   if (role === 'marketing_manager') {
-    const leadQualityScore = summary.total > 0 ? Math.round(((summary.hot || 0) / summary.total) * 100) : 0
+    const leadsGen  = kpiStats?.leadsGenerated ?? summary.total ?? 0
+    const campaigns = kpiStats?.activeCampaigns ?? 0
+    const mql       = Math.round((leadsGen || 0) * 0.35)
+    const convRate  = kpiStats?.conversionRate ?? summary.conversionRate ?? 0
+    const cpl       = kpiStats?.costPerLead ?? 0
+    const roi       = kpiStats?.campaignRoi ?? 0
+    const traffic   = kpiStats?.websiteTraffic ?? 0
+    const openRate  = kpiStats?.emailOpenRate ?? 0
+    const social    = kpiStats?.socialEngagement ?? 0
+    const tgt       = kpiStats?.targetAchievement ?? targetPct
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaDollarSign />} label="Team Campaign ROI" value="2.4" subLabel="revenue vs budget" color="#10b981" suffix="x" />
-        <KpiCard icon={<FaCheckCircle />} label="Budget Utilization" value={kpiStats?.budgetUsage || 84} subLabel="overall spent" color="#6366f1" suffix="%" />
-        <KpiCard icon={<FaStar />} label="Lead Quality Score" value={leadQualityScore} subLabel="percentage hot leads" color="#f59e0b" suffix="%" />
-        <KpiCard icon={<FaChartLine />} label="Conversion Analytics" value={summary.conversionRate} subLabel="team conversion rate" color="#8b5cf6" suffix="%" />
-        <KpiCard icon={<FaUsers />} label="Team Productivity" value={taskCompletionRate} subLabel="average scorecard" color="#06b6d4" suffix="%" />
-        <KpiCard icon={<FaBell />} label="Team KPIs" value={pendingApprovals} subLabel="approvals needing check" color="#ef4444" />
-      </div>
+      <KpiGrid>
+        <K title="Leads Generated"    value={leadsGen}  icon={<FaUserPlus />}     color="#6366f1" change={16}     changeLabel="vs last month"   spark={SPARK_UP}     delay={0}    />
+        <K title="Active Campaigns"   value={campaigns} icon={<FaBullhorn />}     color="#8b5cf6" change={campaigns > 0 ? 1 : 0} changeLabel="team managed" spark={SPARK_FLAT} delay={0.05} />
+        <K title="MQL"                value={mql}       icon={<FaStar />}         color="#06b6d4" change={11}     changeLabel="marketing qualified" spark={SPARK_UP} delay={0.1}  />
+        <K title="Conversion Rate"    value={convRate}  icon={<FaChartLine />}    color="#10b981" change={4}      changeLabel="team conversion" spark={SPARK_UP}     delay={0.15} suffix="%" formatValue={false} />
+        <K title="Cost Per Lead"      value={cpl}       icon={<FaDollarSign />}   color="#ef4444" prefix="$" change={cpl > 0 ? -10 : 0} changeLabel="below budget" spark={SPARK_DOWN} delay={0.2} />
+        <K title="Campaign ROI"       value={roi}       icon={<FaChartPie />}     color="#f59e0b" suffix="x"  change={roi > 0 ? 15 : 0} changeLabel="return on spend" spark={SPARK_GROWTH} delay={0.25} formatValue={false} />
+        <K title="Website Traffic"    value={traffic}   icon={<FaGlobeAsia />}    color="#06b6d4" change={20}     changeLabel="monthly visits"  spark={SPARK_UP}     delay={0.3}  />
+        <K title="Email Open Rate"    value={openRate}  icon={<FaEnvelope />}     color="#8b5cf6" suffix="%"  change={openRate > 0 ? 5 : 0} changeLabel="above avg" spark={SPARK_UP} delay={0.35} formatValue={false} />
+        <K title="Social Engagement"  value={social}    icon={<FaMousePointer />} color="#10b981" suffix="%"  change={social > 0 ? 9 : 0}  changeLabel="vs last month" spark={SPARK_VOLATILE} delay={0.4} formatValue={false} />
+        <K title="Target Achievement" value={tgt}       icon={<FaBullseye />}     color="#f59e0b" suffix="%"  change={tgt > 0 ? 6 : 0}    changeLabel="team goal"  spark={SPARK_UP} delay={0.45} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Documentation Executive
+  // ── Documentation Executive ─────────────────────────────────
   if (role === 'documentation_executive') {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaTasks />} label="Active Cases" value={overview?.taskCount || 0} subLabel="cases in pipeline" color="#6366f1" />
-        <KpiCard icon={<FaFolderOpen />} label="Pending Documents" value={overview?.taskPending || 0} subLabel="awaiting verification" color="#f59e0b" />
-        <KpiCard icon={<FaSearch />} label="Verification Queue" value={followUps?.totalPending || 0} subLabel="pending files" color="#06b6d4" />
-        <KpiCard icon={<FaExclamationTriangle />} label="Missing Documents" value={overview?.taskPending || 0} subLabel="actions required" color="#ef4444" />
-        <KpiCard icon={<FaShieldAlt />} label="SLA Compliance" value={slaCompliance} subLabel="compliance rate" color="#10b981" suffix="%" />
-        <KpiCard icon={<FaTasks />} label="Due Cases" value={overview?.taskOverdue || 0} subLabel="overdue cases" color="#ef4444" />
-      </div>
+      <KpiGrid>
+        <K title="Active Cases"       value={overview?.taskCount ?? 0}    icon={<FaTasks />}           color="#6366f1" change={3}   changeLabel="in pipeline"    spark={SPARK_FLAT}   delay={0}    />
+        <K title="Pending Documents"  value={overview?.taskPending ?? 0}  icon={<FaFolderOpen />}      color="#f59e0b" change={-2}  changeLabel="awaiting verification" spark={SPARK_DOWN} delay={0.05} />
+        <K title="Verification Queue" value={pendingFU}                   icon={<FaSearch />}          color="#06b6d4" change={0}   changeLabel="pending files"  spark={SPARK_FLAT}   delay={0.1}  />
+        <K title="Missing Documents"  value={overview?.taskPending ?? 0}  icon={<FaExclamationTriangle />} color="#ef4444" change={-4} changeLabel="action required" spark={SPARK_DOWN} delay={0.15} />
+        <K title="SLA Compliance"     value={sla}                         icon={<FaShieldAlt />}       color="#10b981" change={2}   changeLabel="vs last month"  spark={SPARK_UP}     delay={0.2}  suffix="%" formatValue={false} />
+        <K title="Due Cases"          value={overview?.taskOverdue ?? 0}  icon={<FaFlag />}            color="#ef4444" change={overview?.taskOverdue > 0 ? -3 : 0} changeLabel="overdue" spark={SPARK_DOWN} delay={0.25} />
+      </KpiGrid>
     )
   }
 
-  // Documentation Manager
+  // ── Documentation Manager ───────────────────────────────────
   if (role === 'documentation_manager') {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaUsers />} label="Team Productivity" value={teamList.length} subLabel="active team counts" color="#6366f1" />
-        <KpiCard icon={<FaCheckCircle />} label="Verification Rate" value={overview?.taskCompleted || 0} subLabel="verifications done" color="#10b981" />
-        <KpiCard icon={<FaSearch />} label="QC Queue" value={followUps?.totalPending || 0} subLabel="pending reviews" color="#f59e0b" />
-        <KpiCard icon={<FaExclamationTriangle />} label="Escalated Cases" value={overview?.taskOverdue || 0} subLabel="due cases" color="#ef4444" />
-        <KpiCard icon={<FaShieldAlt />} label="SLA Compliance" value={slaCompliance} subLabel="compliance rate" color="#10b981" suffix="%" />
-        <KpiCard icon={<FaTasks />} label="Case Turnaround" value="2.4" subLabel="average days" color="#8b5cf6" suffix="d" />
-      </div>
+      <KpiGrid>
+        <K title="Team Size"          value={teamList.length || totalEmployees} icon={<FaUsers />}       color="#6366f1" change={0}  changeLabel="active members" spark={SPARK_FLAT} delay={0}    />
+        <K title="Verified Cases"     value={overview?.taskCompleted ?? 0}      icon={<FaCheckCircle />} color="#10b981" change={8}  changeLabel="this month"     spark={SPARK_UP}  delay={0.05} />
+        <K title="QC Queue"           value={pendingFU}                         icon={<FaSearch />}      color="#f59e0b" change={-2} changeLabel="pending review" spark={SPARK_DOWN} delay={0.1} />
+        <K title="Escalated Cases"    value={overview?.taskOverdue ?? 0}        icon={<FaExclamationTriangle />} color="#ef4444" change={overview?.taskOverdue > 0 ? -5 : 0} changeLabel="overdue" spark={SPARK_DOWN} delay={0.15} />
+        <K title="SLA Compliance"     value={sla}                               icon={<FaShieldAlt />}   color="#10b981" change={3}  changeLabel="vs target"      spark={SPARK_UP}  delay={0.2}  suffix="%" formatValue={false} />
+        <K title="Avg Turnaround"     value={2.4}                               icon={<FaHistory />}     color="#8b5cf6" suffix="d"  change={-0.3} changeLabel="days faster" spark={SPARK_DOWN} delay={0.25} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Vertical Manager
+  // ── Vertical Manager ────────────────────────────────────────
   if (role === 'vertical_manager') {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaDollarSign />} label="Vertical Revenue" value={`$${totalRevenue.toLocaleString()}`} subLabel="estimated value" color="#10b981" />
-        <KpiCard icon={<FaChartLine />} label="Sales Performance" value={85} subLabel="sales vertical rate" color="#6366f1" suffix="%" />
-        <KpiCard icon={<FaBullseye />} label="Marketing Performance" value={slaCompliance} subLabel="marketing achievement" color="#f59e0b" suffix="%" />
-        <KpiCard icon={<FaShieldAlt />} label="Documentation Performance" value={77} subLabel="documentation SLA" color="#ef4444" suffix="%" />
-        <KpiCard icon={<FaUsers />} label="Cross Team KPI" value={83} subLabel="average target %" color="#06b6d4" suffix="%" />
-        <KpiCard icon={<FaBell />} label="Approval Queue" value={pendingApprovals} subLabel="requests pending" color="#8b5cf6" />
-      </div>
+      <KpiGrid>
+        <K title="Vertical Revenue"   value={totalRevenue}     icon={<FaDollarSign />}  color="#10b981" prefix="$" change={18} changeLabel="vs last month"   spark={SPARK_GROWTH} delay={0}    />
+        <K title="Sales Performance"  value={85}               icon={<FaChartLine />}   color="#6366f1" suffix="%"  change={5}  changeLabel="vs last quarter" spark={SPARK_UP}     delay={0.05} formatValue={false} />
+        <K title="Marketing KPI"      value={sla}              icon={<FaBullhorn />}    color="#f59e0b" suffix="%"  change={3}  changeLabel="achievement"     spark={SPARK_UP}     delay={0.1}  formatValue={false} />
+        <K title="Documentation SLA"  value={77}               icon={<FaShieldAlt />}   color="#06b6d4" suffix="%"  change={2}  changeLabel="compliance"      spark={SPARK_FLAT}   delay={0.15} formatValue={false} />
+        <K title="Team Productivity"  value={taskRate}         icon={<FaUsers />}       color="#8b5cf6" suffix="%"  change={4}  changeLabel="overall score"   spark={SPARK_UP}     delay={0.2}  formatValue={false} />
+        <K title="Approval Queue"     value={pendingApprovals} icon={<FaBell />}        color="#ef4444" change={pendingApprovals > 0 ? -3 : 0} changeLabel="pending" spark={SPARK_DOWN} delay={0.25} />
+      </KpiGrid>
     )
   }
 
-  // Immigration Head
+  // ── Immigration Head ────────────────────────────────────────
   if (role === 'immigration_head') {
+    const totalRev    = totalRevenue
+    const vertRev     = Math.round(totalRev * 0.75)
+    const activeClients = totalEmployees || 0
+    const activeCases = overview?.taskPending ?? 0
+    const convRate    = summary.conversionRate ?? 0
+    const pipelineVal = summary.totalValue ?? 0
+    const revGrowth   = 14
+    const teamProd    = taskRate
+    const tgt         = targetPct
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaDollarSign />} label="Revenue By Vertical" value={`$${totalRevenue.toLocaleString()}`} subLabel="immigration business" color="#10b981" />
-        <KpiCard icon={<FaUsers />} label="Team Strength" value={totalEmployees} subLabel="active headcount" color="#6366f1" />
-        <KpiCard icon={<FaTasks />} label="Active Cases" value={overview?.taskPending || 12} subLabel="cases in verification" color="#f59e0b" />
-        <KpiCard icon={<FaTrophy />} label="Lead Funnel" value={summary.total} subLabel="total leads handled" color="#8b5cf6" />
-        <KpiCard icon={<FaChartLine />} label="Conversion Analytics" value={summary.conversionRate} subLabel="conversion rate" color="#06b6d4" suffix="%" />
-        <KpiCard icon={<FaShieldAlt />} label="SLA Status" value={slaCompliance} subLabel="compliance score" color="#10b981" suffix="%" />
-      </div>
+      <KpiGrid>
+        <K title="Total Revenue"      value={totalRev}      icon={<FaDollarSign />}    color="#10b981" prefix="$" change={revGrowth}  changeLabel="vs last month"   spark={SPARK_GROWTH} delay={0}    />
+        <K title="Revenue by Vertical" value={vertRev}      icon={<FaChartPie />}      color="#6366f1" prefix="$" change={11}        changeLabel="immigration share" spark={SPARK_UP}   delay={0.05} />
+        <K title="Active Clients"     value={activeClients} icon={<FaUsers />}         color="#8b5cf6" change={3}                    changeLabel="in scope"        spark={SPARK_FLAT}   delay={0.1}  />
+        <K title="Active Cases"       value={activeCases}   icon={<FaFolderOpen />}    color="#f59e0b" change={activeCases > 0 ? 5 : 0} changeLabel="in pipeline" spark={SPARK_UP}    delay={0.15} />
+        <K title="Lead Conversion"    value={convRate}      icon={<FaChartLine />}     color="#06b6d4" suffix="%" change={4}          changeLabel="lead-to-client"  spark={SPARK_UP}    delay={0.2}  formatValue={false} />
+        <K title="Pipeline Value"     value={pipelineVal}   icon={<FaBalanceScale />}  color="#8b5cf6" prefix="$" change={20}         changeLabel="total value"     spark={SPARK_GROWTH} delay={0.25} />
+        <K title="Revenue Growth"     value={revGrowth}     icon={<FaRocket />}        color="#10b981" suffix="%" change={revGrowth}  changeLabel="month-over-month" spark={SPARK_UP}   delay={0.3}  formatValue={false} />
+        <K title="SLA Compliance"     value={sla}           icon={<FaShieldAlt />}     color="#06b6d4" suffix="%" change={2}          changeLabel="vs SLA target"   spark={SPARK_UP}    delay={0.35} formatValue={false} />
+        <K title="Team Productivity"  value={teamProd}      icon={<FaUserTie />}       color="#f59e0b" suffix="%" change={4}          changeLabel="avg performance" spark={SPARK_UP}    delay={0.4}  formatValue={false} />
+        <K title="Target Achievement" value={tgt}           icon={<FaBullseye />}      color="#ef4444" suffix="%" change={tgt > 0 ? 6 : 0} changeLabel="vs monthly goal" spark={SPARK_UP} delay={0.45} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Evaluation Head
+  // ── Evaluation Head ─────────────────────────────────────────
   if (role === 'evaluation_head') {
+    const evalRev    = overview?.businessKpis?.monthlyRevenue ?? 42000
+    const activeEval = overview?.taskPending ?? 0
+    const profProd   = sla || 88
+    const tgt        = targetPct
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaDollarSign />} label="Evaluation Revenue" value={`$${(overview?.businessKpis?.monthlyRevenue ?? 42000).toLocaleString()}`} subLabel="monthly vertical share" color="#10b981" />
-        <KpiCard icon={<FaGraduationCap />} label="Active Evaluations" value={overview?.taskPending || 0} subLabel="evaluations in progress" color="#6366f1" />
-        <KpiCard icon={<FaStar />} label="Professor Productivity" value={slaCompliance || 88} subLabel="average scorecard" color="#8b5cf6" suffix="%" />
-        <KpiCard icon={<FaShieldAlt />} label="SLA Compliance" value={slaCompliance} subLabel="task completion rate" color="#10b981" suffix="%" />
-        <KpiCard icon={<FaClipboardCheck />} label="Pending Reviews" value={pendingApprovals} subLabel="professor submissions" color="#f59e0b" />
-        <KpiCard icon={<FaExclamationTriangle />} label="QC Status" value="Good" subLabel="quality control health" color="#06b6d4" />
-      </div>
+      <KpiGrid>
+        <K title="Evaluation Revenue" value={evalRev}        icon={<FaDollarSign />}      color="#10b981" prefix="$" change={12}   changeLabel="monthly revenue"   spark={SPARK_GROWTH} delay={0}    />
+        <K title="Active Evaluations" value={activeEval}     icon={<FaGraduationCap />}   color="#6366f1" change={activeEval > 0 ? 3 : 0} changeLabel="in progress" spark={SPARK_FLAT} delay={0.05} />
+        <K title="Completed Reviews"  value={overview?.taskCompleted ?? 0} icon={<FaCheckCircle />} color="#8b5cf6" change={8} changeLabel="this month"  spark={SPARK_UP}     delay={0.1}  />
+        <K title="Pending Reviews"    value={pendingApprovals} icon={<FaClipboardCheck />} color="#f59e0b" change={pendingApprovals > 0 ? -2 : 0} changeLabel="awaiting" spark={SPARK_DOWN} delay={0.15} />
+        <K title="Professor Productivity" value={profProd}   icon={<FaStar />}            color="#06b6d4" suffix="%" change={3} changeLabel="avg scorecard"   spark={SPARK_UP}     delay={0.2}  formatValue={false} />
+        <K title="SLA Compliance"     value={sla}            icon={<FaShieldAlt />}       color="#10b981" suffix="%" change={2} changeLabel="vs SLA target"   spark={SPARK_UP}     delay={0.25} formatValue={false} />
+        <K title="Overdue Cases"      value={overview?.taskOverdue ?? 0} icon={<FaExclamationTriangle />} color="#ef4444" change={overview?.taskOverdue > 0 ? -4 : 0} changeLabel="critical" spark={SPARK_DOWN} delay={0.3} />
+        <K title="QC Score"           value={92}             icon={<FaFlag />}            color="#8b5cf6" suffix="%" change={1} changeLabel="quality index"   spark={SPARK_FLAT}   delay={0.35} formatValue={false} />
+        <K title="Team Productivity"  value={taskRate}       icon={<FaUsers />}           color="#f59e0b" suffix="%" change={5} changeLabel="task completion"  spark={SPARK_UP}     delay={0.4}  formatValue={false} />
+        <K title="Target Achievement" value={tgt}            icon={<FaBullseye />}        color="#06b6d4" suffix="%" change={tgt > 0 ? 6 : 0} changeLabel="vs goal" spark={SPARK_UP} delay={0.45} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // HR Manager
+  // ── HR Manager ──────────────────────────────────────────────
   if (role === 'hr_manager') {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaUsers />} label="Employee Count" value={totalEmployees} subLabel="active staff headcount" color="#6366f1" />
-        <KpiCard icon={<FaCheckCircle />} label="Attendance" value="96.4" subLabel="monthly average" color="#10b981" suffix="%" />
-        <KpiCard icon={<FaUserPlus />} label="New Joiners" value={Math.round(totalEmployees * 0.08) || 1} subLabel="added this month" color="#06b6d4" />
-        <KpiCard icon={<FaBriefcase />} label="Open Positions" value={openPositions} subLabel="recruitment openings" color="#f59e0b" />
-        <KpiCard icon={<FaChartLine />} label="Recruitment Pipeline" value={tasks?.filter(t => String(t.title).toLowerCase().includes('interview')).length || 0} subLabel="active candidate tasks" color="#8b5cf6" />
-        <KpiCard icon={<FaExclamationTriangle />} label="Attrition Rate" value="1.8" subLabel="annual average attrition" color="#ef4444" suffix="%" />
-      </div>
+      <KpiGrid>
+        <K title="Total Employees"    value={totalEmployees}  icon={<FaUsers />}           color="#6366f1" change={2}   changeLabel="active staff"       spark={SPARK_FLAT}   delay={0}    />
+        <K title="Attendance Rate"    value={96.4}            icon={<FaCheckCircle />}     color="#10b981" suffix="%" change={0.4} changeLabel="monthly avg"  spark={SPARK_UP}     delay={0.05} formatValue={false} />
+        <K title="New Joiners"        value={Math.round(totalEmployees * 0.08) || 1} icon={<FaUserPlus />} color="#06b6d4" change={1} changeLabel="this month" spark={SPARK_UP} delay={0.1} />
+        <K title="Open Positions"     value={openPositions}   icon={<FaBriefcase />}       color="#f59e0b" change={0}   changeLabel="recruiting"         spark={SPARK_FLAT}   delay={0.15} />
+        <K title="Recruitment Tasks"  value={tasks?.filter(t => String(t.title).toLowerCase().includes('interview')).length ?? 0} icon={<FaClipboardCheck />} color="#8b5cf6" change={3} changeLabel="interviews scheduled" spark={SPARK_UP} delay={0.2} />
+        <K title="Attrition Rate"     value={1.8}             icon={<FaExclamationTriangle />} color="#ef4444" suffix="%" change={-0.2} changeLabel="annual avg" spark={SPARK_DOWN} delay={0.25} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Business Owner
+  // ── Business Owner ──────────────────────────────────────────
   if (role === 'business_owner') {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaDollarSign />} label="Total Revenue" value={`$${totalRevenue.toLocaleString()}`} subLabel="consolidated revenue" color="#10b981" />
-        <KpiCard icon={<FaBuilding />} label="Revenue By Business" value={`$${totalRevenue.toLocaleString()}`} subLabel="immigration & evaluation" color="#6366f1" />
-        <KpiCard icon={<FaDollarSign />} label="Revenue By Vertical" value={`$${Math.round(totalRevenue * 0.8).toLocaleString()}`} subLabel="immigration vertical share" color="#8b5cf6" />
-        <KpiCard icon={<FaUsers />} label="Active Employees" value={totalEmployees} subLabel="active staff" color="#06b6d4" />
-        <KpiCard icon={<FaCheckCircle />} label="Employee Productivity" value={slaCompliance} subLabel="average performance" color="#10b981" suffix="%" />
-        <KpiCard icon={<FaBullseye />} label="KPI Achievement" value={slaCompliance} subLabel="average target achievement" color="#f59e0b" suffix="%" />
-      </div>
+      <KpiGrid>
+        <K title="Total Revenue"      value={totalRevenue}                        icon={<FaDollarSign />}  color="#10b981" prefix="$" change={20}  changeLabel="vs last month"   spark={SPARK_GROWTH} delay={0}    />
+        <K title="Revenue by Business" value={totalRevenue}                       icon={<FaBuilding />}    color="#6366f1" prefix="$" change={18}  changeLabel="consolidated"    spark={SPARK_UP}     delay={0.05} />
+        <K title="Revenue by Vertical" value={Math.round(totalRevenue * 0.8)}     icon={<FaChartPie />}    color="#8b5cf6" prefix="$" change={15}  changeLabel="immigration share" spark={SPARK_UP}   delay={0.1}  />
+        <K title="Active Employees"   value={totalEmployees}                      icon={<FaUsers />}       color="#06b6d4" change={2}              changeLabel="active staff"    spark={SPARK_FLAT}   delay={0.15} />
+        <K title="Productivity Score" value={sla}                                 icon={<FaChartLine />}   color="#10b981" suffix="%" change={4}   changeLabel="avg performance" spark={SPARK_UP}     delay={0.2}  formatValue={false} />
+        <K title="KPI Achievement"    value={targetPct}                           icon={<FaBullseye />}    color="#f59e0b" suffix="%" change={targetPct > 0 ? 6 : 0} changeLabel="avg target" spark={SPARK_UP} delay={0.25} formatValue={false} />
+      </KpiGrid>
     )
   }
 
-  // Super Admin
+  // ── Super Admin ─────────────────────────────────────────────
   if (role === 'super_admin') {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
-        <KpiCard icon={<FaUsers />} label="Active Users" value={totalEmployees} subLabel="employees active" color="#10b981" />
-        <KpiCard icon={<FaBuilding />} label="Organizations" value={overview?.businessCount || 2} subLabel="businesses registered" color="#6366f1" />
-        <KpiCard icon={<FaHeartbeat />} label="System Health" value="Healthy" subLabel="express api status" color="#06b6d4" />
-        <KpiCard icon={<FaChartLine />} label="API Health" value="99.9%" subLabel="response rate (24h)" color="#10b981" />
-        <KpiCard icon={<FaExclamationTriangle />} label="Failed Logins" value="2" subLabel="security check required" color="#ef4444" />
-        <KpiCard icon={<FaListAlt />} label="Audit Logs" value={activities?.length || 0} subLabel="recorded audit events" color="#f59e0b" />
-      </div>
+      <KpiGrid>
+        <K title="Active Users"       value={totalEmployees}          icon={<FaUsers />}           color="#10b981" change={3}  changeLabel="employees active"  spark={SPARK_FLAT}   delay={0}    />
+        <K title="Organizations"      value={overview?.businessCount ?? 2} icon={<FaBuilding />}   color="#6366f1" change={0}  changeLabel="businesses"        spark={SPARK_FLAT}   delay={0.05} />
+        <K title="System Health"      value={100}                     icon={<FaHeartbeat />}       color="#10b981" suffix="%" change={0} changeLabel="all services up" spark={SPARK_FLAT} delay={0.1}  formatValue={false} />
+        <K title="API Uptime"         value={99.9}                    icon={<FaDatabase />}        color="#06b6d4" suffix="%" change={0} changeLabel="24h response"  spark={SPARK_FLAT} delay={0.15} formatValue={false} />
+        <K title="Failed Logins"      value={2}                       icon={<FaExclamationTriangle />} color="#ef4444" change={-1} changeLabel="security alerts" spark={SPARK_DOWN} delay={0.2} />
+        <K title="Audit Events"       value={activities?.length ?? 0} icon={<FaListAlt />}        color="#f59e0b" change={5}  changeLabel="recorded today"    spark={SPARK_UP}     delay={0.25} />
+      </KpiGrid>
     )
   }
 
@@ -301,7 +395,7 @@ function LeadPipelineWidget() {
           </ResponsiveContainer>
         </div>
       ) : (
-        <p className="text-sm text-slate-400 text-center py-8">No pipeline data available.</p>
+        <p className="text-sm text-neutral-400 text-center py-8">No pipeline data available.</p>
       )}
     </SectionCard>
   )
@@ -315,16 +409,16 @@ function HotLeadsWidget() {
       <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
         {hotLeads.length > 0 ? (
           hotLeads.slice(0, 6).map(lead => (
-            <div key={lead.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-gray-800 rounded-lg">
+            <div key={lead.id} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
               <div>
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">{lead.name}</p>
-                <p className="text-[10px] text-slate-400">{lead.email || lead.phone}</p>
+                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 truncate">{lead.name}</p>
+                <p className="text-[10px] text-neutral-400">{lead.email || lead.phone}</p>
               </div>
               <span className="text-xs font-bold text-emerald-600">${Number(lead.estimatedValue || 0).toLocaleString()}</span>
             </div>
           ))
         ) : (
-          <p className="text-xs text-slate-400 text-center py-4">No hot leads currently.</p>
+          <p className="text-xs text-neutral-400 text-center py-4">No hot leads currently.</p>
         )}
       </div>
     </SectionCard>
@@ -339,10 +433,10 @@ function TodayFollowupsWidget() {
       <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
         {todayTasks.length > 0 ? (
           todayTasks.slice(0, 6).map(task => (
-            <div key={task.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-gray-800 rounded-lg">
+            <div key={task.id} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
               <div>
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">{task.title}</p>
-                <p className="text-[10px] text-slate-400">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}</p>
+                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 truncate">{task.title}</p>
+                <p className="text-[10px] text-neutral-400">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}</p>
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
                 task.priority === 'high' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
@@ -350,7 +444,7 @@ function TodayFollowupsWidget() {
             </div>
           ))
         ) : (
-          <p className="text-xs text-slate-400 text-center py-4">No follow-ups scheduled today.</p>
+          <p className="text-xs text-neutral-400 text-center py-4">No follow-ups scheduled today.</p>
         )}
       </div>
     </SectionCard>
@@ -378,13 +472,13 @@ function WinLostWidget() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
-          <div className="text-center font-bold text-slate-700 pr-4">
+          <div className="text-center font-bold text-neutral-700 pr-4">
             <p className="text-lg text-emerald-600">{summary.converted ?? 0} Won</p>
             <p className="text-lg text-red-500">{summary.lost ?? 0} Lost</p>
           </div>
         </div>
       ) : (
-        <p className="text-xs text-slate-400 text-center py-6">No closed deals to calculate ratio.</p>
+        <p className="text-xs text-neutral-400 text-center py-6">No closed deals to calculate ratio.</p>
       )}
     </SectionCard>
   )
@@ -414,7 +508,7 @@ function SourceAnalyticsWidget() {
           </ResponsiveContainer>
         </div>
       ) : (
-        <p className="text-xs text-slate-400 text-center py-6">No source analytics available.</p>
+        <p className="text-xs text-neutral-400 text-center py-6">No source analytics available.</p>
       )}
     </SectionCard>
   )
@@ -428,14 +522,14 @@ function TeamLeaderboardWidget() {
       <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
         {leaderboard.length > 0 ? (
           leaderboard.slice(0, 6).map((member, i) => (
-            <div key={member.id || i} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-gray-800 rounded-xl">
+            <div key={member.id || i} className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                 style={{ background: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7c3a' : '#6366f1' }}>
                 {i + 1}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{member.name}</p>
-                <p className="text-[10px] text-slate-400 truncate">{member.designation}</p>
+                <p className="text-xs font-bold text-neutral-700 dark:text-neutral-200 truncate">{member.name}</p>
+                <p className="text-[10px] text-neutral-400 truncate">{member.designation}</p>
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="text-xs font-bold text-primary-600">{member.score}%</p>
@@ -443,7 +537,7 @@ function TeamLeaderboardWidget() {
             </div>
           ))
         ) : (
-          <p className="text-xs text-slate-400 text-center py-6">No team performance rankings.</p>
+          <p className="text-xs text-neutral-400 text-center py-6">No team performance rankings.</p>
         )}
       </div>
     </SectionCard>
@@ -459,10 +553,10 @@ function DepartmentHealthWidget() {
           { dept: 'Marketing', health: 91, color: '#10b981' },
           { dept: 'Documentation', health: 77, color: '#f59e0b' }
         ].map(d => (
-          <div key={d.dept} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-gray-800 rounded-xl">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{d.dept}</span>
+          <div key={d.dept} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl">
+            <span className="text-xs font-bold text-neutral-700 dark:text-neutral-200">{d.dept}</span>
             <div className="flex items-center gap-2">
-              <div className="w-24 h-2 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="w-24 h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${d.health}%`, backgroundColor: d.color }} />
               </div>
               <span className="text-xs font-bold" style={{ color: d.color }}>{d.health}%</span>
@@ -484,10 +578,10 @@ function BusinessHealthDetailsWidget() {
           { dept: 'HR', health: 80, color: '#f59e0b' },
           { dept: 'IT', health: 85, color: '#ef4444' }
         ].map(d => (
-          <div key={d.dept} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-gray-800 rounded-xl">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{d.dept}</span>
+          <div key={d.dept} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl">
+            <span className="text-xs font-bold text-neutral-700 dark:text-neutral-200">{d.dept}</span>
             <div className="flex items-center gap-2">
-              <div className="w-24 h-2 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="w-24 h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${d.health}%`, backgroundColor: d.color }} />
               </div>
               <span className="text-xs font-bold" style={{ color: d.color }}>{d.health}%</span>
@@ -554,4 +648,12 @@ export const WIDGET_REGISTRY = {
 
   // Marketing Executive extras
   campaign_activities: { title: 'Campaign Activities', component: ActivityTimeline },
+
+  // Rich dashboard components
+  pipeline_board:    { title: 'Lead Pipeline',       component: PipelineBoard    },
+  follow_ups:        { title: "Today's Follow Ups",   component: FollowUpsTable   },
+  meetings:          { title: 'Upcoming Meetings',    component: MeetingCards     },
+  opportunity_table: { title: 'Top Opportunities',    component: OpportunityTable },
+  customer_insights: { title: 'Customer Insights',   component: CustomerInsights },
+  sales_target:      { title: 'Sales Target',         component: TargetProgress   },
 }

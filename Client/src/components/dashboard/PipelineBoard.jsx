@@ -18,7 +18,7 @@ function LeadCard({ lead, onDragStart }) {
       whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
       draggable
       onDragStart={(e) => onDragStart(e, lead)}
-      className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-slate-100 dark:border-gray-700 cursor-grab active:cursor-grabbing shadow-sm"
+      className="bg-white dark:bg-neutral-800 rounded-xl p-3 border border-neutral-100 dark:border-neutral-700 cursor-grab active:cursor-grabbing shadow-sm"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -26,22 +26,22 @@ function LeadCard({ lead, onDragStart }) {
             {getInitials(lead.name)}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{lead.name}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{lead.company}</p>
+            <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 truncate">{lead.name}</p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 truncate">{lead.company}</p>
           </div>
         </div>
-        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${priorityColors[lead.priority] || 'bg-slate-300'}`} />
+        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${priorityColors[lead.priority] || 'bg-neutral-300'}`} />
       </div>
 
       <div className="space-y-1 mb-3">
-        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{lead.email}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{lead.phone}</p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{lead.email}</p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">{lead.phone}</p>
       </div>
 
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-primary-600 dark:text-primary-400">{formatCurrency(lead.value)}</span>
         {lead.nextFollowUp && (
-          <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(lead.nextFollowUp)}</span>
+          <span className="text-xs text-neutral-400 dark:text-neutral-500">{formatDate(lead.nextFollowUp)}</span>
         )}
       </div>
     </motion.div>
@@ -119,13 +119,13 @@ export default function PipelineBoard() {
                 }`}
               >
                 {/* Column header */}
-                <div className="flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl bg-slate-50 dark:bg-gray-700/50">
+                <div className="flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl bg-neutral-50 dark:bg-neutral-700/50">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: col.color }} />
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{col.label}</span>
+                    <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">{col.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">{formatCurrency(colValue)}</span>
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500">{formatCurrency(colValue)}</span>
                     <span
                       className="text-xs font-bold text-white px-1.5 py-0.5 rounded-md"
                       style={{ background: col.color }}
@@ -144,9 +144,9 @@ export default function PipelineBoard() {
                   </AnimatePresence>
                   {colLeads.length === 0 && (
                     <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
-                      isOver ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/10' : 'border-slate-200 dark:border-gray-700'
+                      isOver ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/10' : 'border-neutral-200 dark:border-neutral-700'
                     }`}>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">Drop leads here</p>
+                      <p className="text-xs text-neutral-400 dark:text-neutral-500">Drop leads here</p>
                     </div>
                   )}
                 </div>

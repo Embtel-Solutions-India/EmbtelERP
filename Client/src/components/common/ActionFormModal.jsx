@@ -35,7 +35,7 @@ export default function ActionFormModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/50 px-4 py-6 backdrop-blur-sm"
         >
           <motion.form
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
@@ -45,15 +45,15 @@ export default function ActionFormModal({
             onSubmit={handleSubmit}
             className="card w-full max-w-2xl max-h-[90vh] overflow-hidden"
           >
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 dark:border-gray-700">
+            <div className="flex items-start justify-between gap-4 border-b border-neutral-100 px-5 py-4 dark:border-neutral-700">
               <div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h2>
-                {subtitle && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>}
+                <h2 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">{title}</h2>
+                {subtitle && <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{subtitle}</p>}
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-gray-700 dark:hover:text-slate-200"
+                className="rounded-xl p-2 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
                 aria-label="Close form"
               >
                 <Close fontSize="small" />
@@ -75,7 +75,7 @@ export default function ActionFormModal({
 
                 return (
                   <label key={field.name} className={`block ${className}`}>
-                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                       {field.label}
                     </span>
                     {field.type === 'select' ? (
@@ -102,7 +102,7 @@ export default function ActionFormModal({
               })}
             </div>
 
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 dark:border-gray-700 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-neutral-100 px-5 py-4 dark:border-neutral-700 sm:flex-row sm:justify-end">
               <button type="button" onClick={onClose} className="btn-secondary text-sm">
                 Cancel
               </button>

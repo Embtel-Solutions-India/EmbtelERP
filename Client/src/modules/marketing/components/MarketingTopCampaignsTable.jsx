@@ -32,13 +32,13 @@ export default function MarketingTopCampaignsTable() {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-100 dark:border-gray-700">
+            <tr className="border-b border-neutral-100 dark:border-neutral-700">
               {['Campaign Name', 'Type', 'Budget', 'Leads Generated', 'Conversions', 'Revenue', 'ROI', 'Status'].map((h) => (
-                <th key={h} className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                <th key={h} className="text-left text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+          <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
             {topCampaigns.map((campaign, i) => {
               const roi = campaign.budget > 0 
                 ? (campaign.revenue_generated / campaign.budget).toFixed(1) + 'x'
@@ -49,23 +49,23 @@ export default function MarketingTopCampaignsTable() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors"
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors"
                 >
                   <td className="px-5 py-3">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{campaign.campaign_name}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">{campaign.target_audience}</p>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{campaign.campaign_name}</p>
+                    <p className="text-xs text-neutral-400 dark:text-neutral-500 whitespace-nowrap">{campaign.target_audience}</p>
                   </td>
                   <td className="px-5 py-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{campaign.campaign_type}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{campaign.campaign_type}</p>
                   </td>
                   <td className="px-5 py-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap font-medium">{formatCurrency(campaign.budget)}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap font-medium">{formatCurrency(campaign.budget)}</p>
                   </td>
                   <td className="px-5 py-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{campaign.leads_generated}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{campaign.leads_generated}</p>
                   </td>
                   <td className="px-5 py-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{campaign.conversions}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{campaign.conversions}</p>
                   </td>
                   <td className="px-5 py-3">
                     <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">{formatCurrency(campaign.revenue_generated)}</p>

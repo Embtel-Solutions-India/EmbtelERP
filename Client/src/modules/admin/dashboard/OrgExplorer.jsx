@@ -329,13 +329,13 @@ export default function OrgExplorer() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
       {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-neutral-800 dark:text-white flex items-center gap-2">
             <BusinessIcon className="text-primary-500" />
             Super Admin Control Center
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             Global administrative control center for businesses, role hierarchies, system settings, and analytics.
           </p>
         </div>
@@ -354,13 +354,13 @@ export default function OrgExplorer() {
       </div>
 
       {/* Main Tabs Navigation */}
-      <div className="flex border-b border-slate-200 dark:border-gray-800 gap-1 overflow-x-auto">
+      <div className="flex border-b border-neutral-200 dark:border-neutral-800 gap-1 overflow-x-auto">
         <button
           onClick={() => setActiveTab('explorer')}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'explorer'
               ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700'
+              : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700'
           }`}
         >
           <VerticalIcon style={{ fontSize: 18 }} />
@@ -371,7 +371,7 @@ export default function OrgExplorer() {
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'analytics'
               ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700'
+              : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700'
           }`}
         >
           <TrendingUpIcon style={{ fontSize: 18 }} />
@@ -382,7 +382,7 @@ export default function OrgExplorer() {
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'control'
               ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700'
+              : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700'
           }`}
         >
           <RuleIcon style={{ fontSize: 18 }} />
@@ -395,16 +395,16 @@ export default function OrgExplorer() {
         {activeTab === 'explorer' && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {/* Search, Filters, & Hierarchy list/tree */}
-            <div className="xl:col-span-5 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-3">
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Navigation Panel</h3>
-                <div className="flex gap-1 bg-slate-50 dark:bg-gray-800 p-1 rounded-lg">
+            <div className="xl:col-span-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                <h3 className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Navigation Panel</h3>
+                <div className="flex gap-1 bg-neutral-50 dark:bg-neutral-800 p-1 rounded-lg">
                   <button
                     onClick={() => setExplorerTabSub('tree')}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                       explorerTabSub === 'tree'
-                        ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400'
+                        ? 'bg-white dark:bg-neutral-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                        : 'text-neutral-500 dark:text-neutral-400'
                     }`}
                   >
                     Tree View
@@ -413,8 +413,8 @@ export default function OrgExplorer() {
                     onClick={() => setExplorerTabSub('list')}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                       explorerTabSub === 'list'
-                        ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400'
+                        ? 'bg-white dark:bg-neutral-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                        : 'text-neutral-500 dark:text-neutral-400'
                     }`}
                   >
                     Search/Filters
@@ -427,7 +427,7 @@ export default function OrgExplorer() {
                 <div className="space-y-3">
                   <div className="relative">
                     <SearchIcon
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
                       style={{ fontSize: 18 }}
                     />
                     <input
@@ -441,7 +441,7 @@ export default function OrgExplorer() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Business</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Business</label>
                       <select
                         value={businessFilter}
                         onChange={(e) => setBusinessFilter(e.target.value)}
@@ -457,7 +457,7 @@ export default function OrgExplorer() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Vertical</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Vertical</label>
                       <select
                         value={verticalFilter}
                         onChange={(e) => setVerticalFilter(e.target.value)}
@@ -473,7 +473,7 @@ export default function OrgExplorer() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Designation</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Designation</label>
                       <input
                         type="text"
                         placeholder="e.g. Sales, Intern"
@@ -484,7 +484,7 @@ export default function OrgExplorer() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Level</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Level</label>
                       <select
                         value={levelFilter}
                         onChange={(e) => setLevelFilter(e.target.value)}
@@ -501,7 +501,7 @@ export default function OrgExplorer() {
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-100 dark:border-gray-800 my-2 pt-2 max-h-[450px] overflow-y-auto space-y-1">
+                  <div className="border-t border-neutral-100 dark:border-neutral-800 my-2 pt-2 max-h-[450px] overflow-y-auto space-y-1">
                     {filteredEmployees.map((emp) => (
                       <button
                         key={emp.id}
@@ -509,7 +509,7 @@ export default function OrgExplorer() {
                         className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all text-xs font-semibold ${
                           selectedEmployeeId === emp.id
                             ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-900/30'
-                            : 'hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-700 dark:text-slate-300'
+                            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-700 dark:text-neutral-300'
                         }`}
                       >
                         <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -520,22 +520,22 @@ export default function OrgExplorer() {
                           <p className="truncate font-semibold">
                             {emp.firstName} {emp.lastName}
                           </p>
-                          <p className="text-[10px] text-slate-400 truncate">{emp.designation || 'Staff'}</p>
+                          <p className="text-[10px] text-neutral-400 truncate">{emp.designation || 'Staff'}</p>
                         </div>
-                        <span className="ml-auto text-[10px] bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                        <span className="ml-auto text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
                           L{emp.level ?? emp.role?.level}
                         </span>
                       </button>
                     ))}
                     {filteredEmployees.length === 0 && (
-                      <p className="text-center text-xs text-slate-400 py-6">No matching employees found.</p>
+                      <p className="text-center text-xs text-neutral-400 py-6">No matching employees found.</p>
                     )}
                   </div>
                 </div>
               ) : (
                 // Full Collapsible/Expandable Organization tree view
                 <div className="max-h-[550px] overflow-y-auto space-y-1 pr-1">
-                  {treeLoading && <p className="text-center text-xs text-slate-400 py-6">Loading organization structure...</p>}
+                  {treeLoading && <p className="text-center text-xs text-neutral-400 py-6">Loading organization structure...</p>}
                   {treeData?.businesses?.map((biz) => {
                     const bizNodeId = `biz-${biz.id}`
                     const isBizExpanded = !!expandedNodes[bizNodeId]
@@ -543,7 +543,7 @@ export default function OrgExplorer() {
                       <div key={biz.id} className="space-y-1">
                         <button
                           onClick={() => toggleNode(bizNodeId)}
-                          className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold bg-slate-50 dark:bg-gray-800/50 hover:bg-slate-100 dark:hover:bg-gray-800 border border-slate-100 dark:border-gray-800 text-slate-800 dark:text-slate-200"
+                          className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-100 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200"
                         >
                           <span className="flex-shrink-0">
                             {isBizExpanded ? (
@@ -562,7 +562,7 @@ export default function OrgExplorer() {
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
-                              className="pl-4 border-l border-slate-100 dark:border-gray-800 ml-3.5 space-y-1 pt-1"
+                              className="pl-4 border-l border-neutral-100 dark:border-neutral-800 ml-3.5 space-y-1 pt-1"
                             >
                               {/* Business Head */}
                               {biz.head && (
@@ -571,14 +571,14 @@ export default function OrgExplorer() {
                                   className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold transition-all ${
                                     selectedEmployeeId === biz.head.id
                                       ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                      : 'hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-600 dark:text-slate-400'
+                                      : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400'
                                   }`}
                                 >
                                   <PersonIcon style={{ fontSize: 14 }} className="text-indigo-500 flex-shrink-0" />
                                   <span className="truncate font-semibold">
                                     [Head] {biz.head.name}
                                   </span>
-                                  <span className="ml-auto text-[9px] text-slate-400 truncate">
+                                  <span className="ml-auto text-[9px] text-neutral-400 truncate">
                                     {biz.head.designation}
                                   </span>
                                 </button>
@@ -592,7 +592,7 @@ export default function OrgExplorer() {
                                   <div key={vert.id} className="space-y-1">
                                     <button
                                       onClick={() => toggleNode(vertNodeId)}
-                                      className="w-full flex items-center gap-2 p-1.5 rounded-lg text-left text-xs font-bold hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-700 dark:text-slate-300"
+                                      className="w-full flex items-center gap-2 p-1.5 rounded-lg text-left text-xs font-bold hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-700 dark:text-neutral-300"
                                     >
                                       <span className="flex-shrink-0">
                                         {isVertExpanded ? (
@@ -606,7 +606,7 @@ export default function OrgExplorer() {
                                     </button>
 
                                     {isVertExpanded && (
-                                      <div className="pl-4 border-l border-slate-100 dark:border-gray-800 ml-3.5 space-y-1 pt-1">
+                                      <div className="pl-4 border-l border-neutral-100 dark:border-neutral-800 ml-3.5 space-y-1 pt-1">
                                         {/* Vertical Manager */}
                                         {vert.manager && (
                                           <button
@@ -614,7 +614,7 @@ export default function OrgExplorer() {
                                             className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold transition-all ${
                                               selectedEmployeeId === vert.manager.id
                                                 ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                                : 'hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-600 dark:text-slate-400'
+                                                : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400'
                                             }`}
                                           >
                                             <PersonIcon style={{ fontSize: 14 }} className="text-amber-600 flex-shrink-0" />
@@ -632,7 +632,7 @@ export default function OrgExplorer() {
                                             <div key={team.id} className="space-y-1">
                                               <button
                                                 onClick={() => toggleNode(teamNodeId)}
-                                                className="w-full flex items-center gap-2 p-1.5 rounded-lg text-left text-xs font-bold hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-600 dark:text-slate-400"
+                                                className="w-full flex items-center gap-2 p-1.5 rounded-lg text-left text-xs font-bold hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400"
                                               >
                                                 <span className="flex-shrink-0">
                                                   {isTeamExpanded ? (
@@ -646,7 +646,7 @@ export default function OrgExplorer() {
                                               </button>
 
                                               {isTeamExpanded && (
-                                                <div className="pl-4 border-l border-slate-100 dark:border-gray-800 ml-3.5 space-y-1 pt-1">
+                                                <div className="pl-4 border-l border-neutral-100 dark:border-neutral-800 ml-3.5 space-y-1 pt-1">
                                                   {/* Team Manager */}
                                                   {team.manager && (
                                                     <button
@@ -654,7 +654,7 @@ export default function OrgExplorer() {
                                                       className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold transition-all ${
                                                         selectedEmployeeId === team.manager.id
                                                           ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                                          : 'hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-600 dark:text-slate-400'
+                                                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400'
                                                       }`}
                                                     >
                                                       <PersonIcon style={{ fontSize: 14 }} className="text-green-500 flex-shrink-0" />
@@ -672,12 +672,12 @@ export default function OrgExplorer() {
                                                       className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-medium transition-all ${
                                                         selectedEmployeeId === mem.id
                                                           ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                                          : 'hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-500 dark:text-slate-400'
+                                                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-500 dark:text-neutral-400'
                                                       }`}
                                                     >
-                                                      <PersonIcon style={{ fontSize: 14 }} className="text-slate-400 flex-shrink-0" />
+                                                      <PersonIcon style={{ fontSize: 14 }} className="text-neutral-400 flex-shrink-0" />
                                                       <span className="truncate">{mem.name}</span>
-                                                      <span className="ml-auto text-[8px] bg-slate-100 dark:bg-gray-800 px-1 py-0.5 rounded text-slate-400 flex-shrink-0">
+                                                      <span className="ml-auto text-[8px] bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-neutral-400 flex-shrink-0">
                                                         L{mem.roleLevel}
                                                       </span>
                                                     </button>
@@ -705,13 +705,13 @@ export default function OrgExplorer() {
             {/* Detailed employee profile/inspector */}
             <div className="xl:col-span-7 space-y-6">
               {detailsLoading ? (
-                <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-10 text-center shadow-sm">
-                  <p className="text-sm text-slate-400">Fetching detailed organizational profile data...</p>
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm">
+                  <p className="text-sm text-neutral-400">Fetching detailed organizational profile data...</p>
                 </div>
               ) : employeeDetails ? (
                 <div className="space-y-6">
                   {/* Detailed profile card */}
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row gap-5 items-start sm:items-center">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white font-bold text-2xl flex items-center justify-center shadow-md">
                       {employeeDetails.employee.firstName?.[0]}
                       {employeeDetails.employee.lastName?.[0]}
@@ -719,18 +719,18 @@ export default function OrgExplorer() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+                        <h2 className="text-lg font-bold text-neutral-800 dark:text-white">
                           {employeeDetails.employee.firstName} {employeeDetails.employee.lastName}
                         </h2>
                         <span className="badge badge-primary text-xs">
                           {employeeDetails.employee.designation || 'Staff'}
                         </span>
-                        <span className="text-xs bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-bold">
+                        <span className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded-full font-bold">
                           Level {employeeDetails.employee.level ?? employeeDetails.employee.role?.level}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 mt-1">{employeeDetails.employee.email}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-sm text-neutral-400 mt-1">{employeeDetails.employee.email}</p>
+                      <p className="text-xs text-neutral-400 mt-0.5">
                         Code: {employeeDetails.employee.employeeCode || 'N/A'} • Status:{' '}
                         <span
                           className={`font-semibold ${
@@ -753,7 +753,7 @@ export default function OrgExplorer() {
                       ) : (
                         <button
                           onClick={() => handleViewAs(employeeDetails.employee)}
-                          className="w-full sm:w-auto flex items-center gap-1.5 btn-secondary text-xs px-4 py-2 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
+                          className="w-full sm:w-auto flex items-center gap-1.5 btn-secondary text-xs px-4 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                         >
                           <PersonIcon style={{ fontSize: 16 }} />
                           View As (Impersonate)
@@ -765,36 +765,36 @@ export default function OrgExplorer() {
                   {/* Core details mapping: Manager, Reports, Attendance, KPIs, Tasks, Activities */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Reporting & Hierarchy Info */}
-                    <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-white border-b border-slate-100 dark:border-gray-800 pb-2">
+                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
                         Reporting Hierarchy
                       </h3>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400">Reporting Manager</p>
+                        <p className="text-[10px] uppercase font-bold text-neutral-400">Reporting Manager</p>
                         {employeeDetails.manager ? (
                           <button
                             onClick={() => setSelectedEmployeeId(employeeDetails.manager.id)}
-                            className="mt-1.5 flex items-center gap-3 w-full p-2.5 rounded-xl border border-slate-100 dark:border-gray-850 hover:bg-slate-50 dark:hover:bg-gray-800/40 text-left transition-all"
+                            className="mt-1.5 flex items-center gap-3 w-full p-2.5 rounded-xl border border-neutral-100 dark:border-gray-850 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-left transition-all"
                           >
                             <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
                               M
                             </div>
                             <div className="min-w-0">
-                              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                              <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
                                 {employeeDetails.manager.name}
                               </p>
-                              <p className="text-[10px] text-slate-400 truncate">
+                              <p className="text-[10px] text-neutral-400 truncate">
                                 {employeeDetails.manager.designation}
                               </p>
                             </div>
                           </button>
                         ) : (
-                          <p className="text-xs text-slate-400 mt-1 italic">No reporting manager assigned (Top Level).</p>
+                          <p className="text-xs text-neutral-400 mt-1 italic">No reporting manager assigned (Top Level).</p>
                         )}
                       </div>
 
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400">
+                        <p className="text-[10px] uppercase font-bold text-neutral-400">
                           Direct Reports ({employeeDetails.directReports.length})
                         </p>
                         <div className="mt-2 space-y-1 max-h-40 overflow-y-auto pr-1">
@@ -802,55 +802,55 @@ export default function OrgExplorer() {
                             <button
                               key={report.id}
                               onClick={() => setSelectedEmployeeId(report.id)}
-                              className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold hover:bg-slate-50 dark:hover:bg-gray-800/40 text-slate-600 dark:text-slate-400"
+                              className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400"
                             >
                               <ChevronRight style={{ fontSize: 14 }} />
                               <span className="truncate">{report.firstName} {report.lastName}</span>
-                              <span className="ml-auto text-[9px] text-slate-400 truncate">
+                              <span className="ml-auto text-[9px] text-neutral-400 truncate">
                                 {report.designation}
                               </span>
                             </button>
                           ))}
                           {employeeDetails.directReports.length === 0 && (
-                            <p className="text-xs text-slate-400 mt-1 italic">No subordinates report to this user.</p>
+                            <p className="text-xs text-neutral-400 mt-1 italic">No subordinates report to this user.</p>
                           )}
                         </div>
                       </div>
                     </div>
 
                     {/* Performance Metrics */}
-                    <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-white border-b border-slate-100 dark:border-gray-800 pb-2">
+                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
                         Performance & KPI Metrics
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-slate-50 dark:bg-gray-800/40 rounded-xl text-center">
-                          <p className="text-[10px] uppercase font-bold text-slate-400">KPI Target Score</p>
+                        <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl text-center">
+                          <p className="text-[10px] uppercase font-bold text-neutral-400">KPI Target Score</p>
                           <p className="text-xl font-bold text-primary-500 mt-1">{employeeDetails.performanceScore}%</p>
-                          <p className="text-[9px] text-slate-400 mt-0.5">avg monthly achievement</p>
+                          <p className="text-[9px] text-neutral-400 mt-0.5">avg monthly achievement</p>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-gray-800/40 rounded-xl text-center">
-                          <p className="text-[10px] uppercase font-bold text-slate-400">Tasks Completed</p>
+                        <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl text-center">
+                          <p className="text-[10px] uppercase font-bold text-neutral-400">Tasks Completed</p>
                           <p className="text-xl font-bold text-emerald-500 mt-1">
                             {employeeDetails.tasks.filter((t) => t.status === 'completed').length} /{' '}
                             {employeeDetails.tasks.length}
                           </p>
-                          <p className="text-[9px] text-slate-400 mt-0.5">assigned task ratio</p>
+                          <p className="text-[9px] text-neutral-400 mt-0.5">assigned task ratio</p>
                         </div>
                       </div>
 
                       {/* Mock Attendance widget */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <p className="text-[10px] uppercase font-bold text-slate-400">Attendance Checker</p>
+                          <p className="text-[10px] uppercase font-bold text-neutral-400">Attendance Checker</p>
                           <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
                             {employeeDetails.attendanceRate}% Present
                           </span>
                         </div>
                         <div className="flex gap-2.5">
                           {employeeDetails.attendanceGrid.map((day, idx) => (
-                            <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 p-2 bg-slate-50 dark:bg-gray-800/45 rounded-lg border border-slate-100 dark:border-gray-850">
-                              <span className="text-[9px] font-bold text-slate-400">{day.day}</span>
+                            <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 p-2 bg-neutral-50 dark:bg-neutral-800/45 rounded-lg border border-neutral-100 dark:border-gray-850">
+                              <span className="text-[9px] font-bold text-neutral-400">{day.day}</span>
                               <div
                                 className={`w-3.5 h-3.5 rounded-full ${
                                   day.status === 'present' ? 'bg-emerald-500' : 'bg-red-500'
@@ -864,24 +864,24 @@ export default function OrgExplorer() {
                   </div>
 
                   {/* Tasks list */}
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white border-b border-slate-100 dark:border-gray-800 pb-2 flex items-center justify-between">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+                    <h3 className="text-sm font-bold text-neutral-800 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2 flex items-center justify-between">
                       Assigned Tasks ({employeeDetails.tasks.length})
                     </h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-left text-slate-400 border-b border-slate-100 dark:border-gray-800 uppercase tracking-wider font-bold">
+                          <tr className="text-left text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 uppercase tracking-wider font-bold">
                             <th className="pb-2">Task Title</th>
                             <th className="pb-2">Priority</th>
                             <th className="pb-2">Status</th>
                             <th className="pb-2">Due Date</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-gray-800">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                           {employeeDetails.tasks.map((task) => (
-                            <tr key={task.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/40">
-                              <td className="py-2.5 font-semibold text-slate-700 dark:text-slate-200">
+                            <tr key={task.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                              <td className="py-2.5 font-semibold text-neutral-700 dark:text-neutral-200">
                                 {task.title}
                               </td>
                               <td className="py-2.5">
@@ -891,7 +891,7 @@ export default function OrgExplorer() {
                                       ? 'bg-red-100 dark:bg-red-950/20 text-red-600 dark:text-red-400'
                                       : task.priority === 'medium'
                                       ? 'bg-amber-100 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400'
-                                      : 'bg-slate-100 dark:bg-gray-800 text-slate-500 dark:text-slate-400'
+                                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'
                                   }`}
                                 >
                                   {task.priority}
@@ -911,14 +911,14 @@ export default function OrgExplorer() {
                                   {task.status}
                                 </span>
                               </td>
-                              <td className="py-2.5 text-slate-400">
+                              <td className="py-2.5 text-neutral-400">
                                 {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No Due Date'}
                               </td>
                             </tr>
                           ))}
                           {employeeDetails.tasks.length === 0 && (
                             <tr>
-                              <td colSpan={4} className="text-center py-4 text-slate-400 italic">
+                              <td colSpan={4} className="text-center py-4 text-neutral-400 italic">
                                 No assigned tasks.
                               </td>
                             </tr>
@@ -929,34 +929,34 @@ export default function OrgExplorer() {
                   </div>
 
                   {/* Activity Timeline */}
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white border-b border-slate-100 dark:border-gray-800 pb-2">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+                    <h3 className="text-sm font-bold text-neutral-800 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-2">
                       Recent Activity Timeline
                     </h3>
-                    <div className="space-y-4 relative pl-4 border-l border-slate-100 dark:border-gray-800 ml-2 py-2">
+                    <div className="space-y-4 relative pl-4 border-l border-neutral-100 dark:border-neutral-800 ml-2 py-2">
                       {employeeDetails.activities.slice(0, 5).map((act, i) => (
                         <div key={i} className="relative space-y-1">
-                          <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-primary-500 border border-white dark:border-gray-900 shadow-sm" />
+                          <div className="absolute -left-6 top-1.5 w-3 h-3 rounded-full bg-primary-500 border border-white dark:border-neutral-900 shadow-sm" />
                           <div className="flex items-center justify-between">
-                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                               {act.title || `${act.action} action`}
                             </p>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-neutral-400">
                               {new Date(act.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400">{act.description || 'No description provided.'}</p>
+                          <p className="text-[11px] text-neutral-400">{act.description || 'No description provided.'}</p>
                         </div>
                       ))}
                       {employeeDetails.activities.length === 0 && (
-                        <p className="text-xs text-slate-400 italic">No recent system activities recorded.</p>
+                        <p className="text-xs text-neutral-400 italic">No recent system activities recorded.</p>
                       )}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-10 text-center shadow-sm">
-                  <p className="text-sm text-slate-400">Select an employee from the hierarchy list to view detail profiles.</p>
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm">
+                  <p className="text-sm text-neutral-400">Select an employee from the hierarchy list to view detail profiles.</p>
                 </div>
               )}
             </div>
@@ -966,17 +966,17 @@ export default function OrgExplorer() {
         {activeTab === 'analytics' && (
           <div className="space-y-6">
             {analyticsLoading ? (
-              <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-10 text-center shadow-sm">
-                <p className="text-sm text-slate-400">Retrieving system-wide analytics data...</p>
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm">
+                <p className="text-sm text-neutral-400">Retrieving system-wide analytics data...</p>
               </div>
             ) : analytics ? (
               <>
                 {/* Stats cards grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Businesses</p>
-                      <h4 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Businesses</p>
+                      <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
                         {analytics.totalBusinesses}
                       </h4>
                     </div>
@@ -985,10 +985,10 @@ export default function OrgExplorer() {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Verticals / Teams</p>
-                      <h4 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Verticals / Teams</p>
+                      <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
                         {analytics.totalVerticals} / {analytics.totalTeams}
                       </h4>
                     </div>
@@ -997,11 +997,11 @@ export default function OrgExplorer() {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Employees</p>
-                      <h4 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">
-                        {analytics.totalEmployees} <span className="text-xs text-slate-400">({analytics.totalActiveUsers} Active)</span>
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Employees</p>
+                      <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
+                        {analytics.totalEmployees} <span className="text-xs text-neutral-400">({analytics.totalActiveUsers} Active)</span>
                       </h4>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
@@ -1009,10 +1009,10 @@ export default function OrgExplorer() {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estimated Revenue</p>
-                      <h4 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Estimated Revenue</p>
+                      <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
                         ${analytics.totalRevenue.toLocaleString()}
                       </h4>
                     </div>
@@ -1025,14 +1025,14 @@ export default function OrgExplorer() {
                 {/* KPI stats & task charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Left task charts */}
-                  <div className="lg:col-span-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white pb-2 border-b border-slate-100 dark:border-gray-800">
+                  <div className="lg:col-span-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+                    <h3 className="text-sm font-bold text-neutral-800 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800">
                       Department Task Completion & KPIs
                     </h3>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={analytics.departmentPerformance} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-gray-800" />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-neutral-800" />
                           <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
                           <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} domain={[0, 100]} />
                           <ChartTooltip
@@ -1047,41 +1047,41 @@ export default function OrgExplorer() {
                   </div>
 
                   {/* Circular/Breakdown KPI */}
-                  <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-white pb-2 border-b border-slate-100 dark:border-gray-800 mb-4">
+                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 mb-4">
                         KPI Targets & Approvals
                       </h3>
                       <div className="flex justify-center mb-6">
                         <div className="relative w-32 h-32 flex items-center justify-center">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="40" stroke="#f1f5f9" strokeWidth="8" fill="transparent" className="dark:stroke-gray-800" />
+                            <circle cx="50" cy="50" r="40" stroke="#f1f5f9" strokeWidth="8" fill="transparent" className="dark:stroke-neutral-800" />
                             <circle cx="50" cy="50" r="40" stroke="#8b5cf6" strokeWidth="8" fill="transparent" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * analytics.kpiSummary) / 100} strokeLinecap="round" />
                           </svg>
                           <div className="absolute flex flex-col items-center">
-                            <span className="text-2xl font-bold text-slate-800 dark:text-white">
+                            <span className="text-2xl font-bold text-neutral-800 dark:text-white">
                               {analytics.kpiSummary}%
                             </span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Average KPI</span>
+                            <span className="text-[10px] font-bold text-neutral-400 uppercase">Average KPI</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 mt-4 border-t border-slate-100 dark:border-gray-800 pt-4">
+                    <div className="grid grid-cols-2 gap-3 mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
                       <div className="text-center">
-                        <p className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1">
+                        <p className="text-[10px] uppercase font-bold text-neutral-400 flex items-center justify-center gap-1">
                           <PendingIcon className="text-amber-500" style={{ fontSize: 14 }} /> Pending Tasks
                         </p>
-                        <p className="text-lg font-bold text-slate-700 dark:text-slate-350 mt-1">
+                        <p className="text-lg font-bold text-neutral-700 dark:text-slate-350 mt-1">
                           {analytics.pendingTasks}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1">
+                        <p className="text-[10px] uppercase font-bold text-neutral-400 flex items-center justify-center gap-1">
                           <RuleIcon className="text-purple-500" style={{ fontSize: 14 }} /> Pending Approvals
                         </p>
-                        <p className="text-lg font-bold text-slate-700 dark:text-slate-350 mt-1">
+                        <p className="text-lg font-bold text-neutral-700 dark:text-slate-350 mt-1">
                           {analytics.pendingApprovals}
                         </p>
                       </div>
@@ -1090,14 +1090,14 @@ export default function OrgExplorer() {
                 </div>
 
                 {/* Department performance table */}
-                <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white pb-2 border-b border-slate-100 dark:border-gray-800">
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-neutral-800 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800">
                     Business Divisions Overview
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left text-slate-400 border-b border-slate-100 dark:border-gray-800 uppercase tracking-wider font-bold">
+                        <tr className="text-left text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 uppercase tracking-wider font-bold">
                           <th className="pb-2">Business Unit</th>
                           <th className="pb-2">Staff Count</th>
                           <th className="pb-2">Task Completion Rate</th>
@@ -1105,13 +1105,13 @@ export default function OrgExplorer() {
                           <th className="pb-2">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-gray-850">
+                      <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                         {analytics.departmentPerformance.map((dept, i) => (
-                          <tr key={i} className="hover:bg-slate-50 dark:hover:bg-gray-800/40">
-                            <td className="py-3 font-semibold text-slate-750 dark:text-slate-200">
+                          <tr key={i} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                            <td className="py-3 font-semibold text-slate-750 dark:text-neutral-200">
                               {dept.name}
                             </td>
-                            <td className="py-3 font-medium text-slate-600 dark:text-slate-400">
+                            <td className="py-3 font-medium text-neutral-600 dark:text-neutral-400">
                               {dept.employeeCount} Members
                             </td>
                             <td className="py-3 font-semibold text-blue-600 dark:text-blue-400">
@@ -1133,7 +1133,7 @@ export default function OrgExplorer() {
                 </div>
               </>
             ) : (
-              <p className="text-center text-xs text-slate-400 py-6">Failed to load analytics.</p>
+              <p className="text-center text-xs text-neutral-400 py-6">Failed to load analytics.</p>
             )}
           </div>
         )}
@@ -1141,13 +1141,13 @@ export default function OrgExplorer() {
         {activeTab === 'control' && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {/* Control Sidebar Tabs */}
-            <div className="xl:col-span-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm flex flex-row xl:flex-col gap-1 overflow-x-auto">
+            <div className="xl:col-span-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-sm flex flex-row xl:flex-col gap-1 overflow-x-auto">
               <button
                 onClick={() => setActiveConfigTab('users')}
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
                   activeConfigTab === 'users'
                     ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-gray-800/50'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                 }`}
               >
                 <PersonIcon style={{ fontSize: 16 }} /> User Configurations
@@ -1157,7 +1157,7 @@ export default function OrgExplorer() {
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
                   activeConfigTab === 'businesses'
                     ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-gray-800/50'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                 }`}
               >
                 <BusinessIcon style={{ fontSize: 16 }} /> Businesses
@@ -1167,7 +1167,7 @@ export default function OrgExplorer() {
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
                   activeConfigTab === 'verticals'
                     ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-gray-800/50'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                 }`}
               >
                 <VerticalIcon style={{ fontSize: 16 }} /> Verticals
@@ -1177,7 +1177,7 @@ export default function OrgExplorer() {
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
                   activeConfigTab === 'teams'
                     ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-gray-800/50'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                 }`}
               >
                 <TeamIcon style={{ fontSize: 16 }} /> Teams
@@ -1187,7 +1187,7 @@ export default function OrgExplorer() {
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
                   activeConfigTab === 'audit'
                     ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-gray-800/50'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                 }`}
               >
                 <AssessmentIcon style={{ fontSize: 16 }} /> Audit Trail Logs
@@ -1195,20 +1195,20 @@ export default function OrgExplorer() {
             </div>
 
             {/* Control Panel view */}
-            <div className="xl:col-span-9 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
+            <div className="xl:col-span-9 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm">
               {configLoading ? (
-                <p className="text-center text-xs text-slate-400 py-12">Refreshing panel data configurations...</p>
+                <p className="text-center text-xs text-neutral-400 py-12">Refreshing panel data configurations...</p>
               ) : (
                 <>
                   {activeConfigTab === 'users' && (
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-gray-800 pb-3">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">User Administration</h3>
+                      <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">User Administration</h3>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
-                            <tr className="text-left text-slate-400 border-b border-slate-100 dark:border-gray-800 uppercase tracking-wider font-bold">
+                            <tr className="text-left text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 uppercase tracking-wider font-bold">
                               <th className="pb-2">Name / Email</th>
                               <th className="pb-2">Designation / Level</th>
                               <th className="pb-2">Business / Team</th>
@@ -1216,24 +1216,24 @@ export default function OrgExplorer() {
                               <th className="pb-2 text-right">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-gray-850">
+                          <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.users.map((u) => (
-                              <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/40">
+                              <tr key={u.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
                                 <td className="py-2.5">
-                                  <p className="font-semibold text-slate-800 dark:text-slate-200">
+                                  <p className="font-semibold text-neutral-800 dark:text-neutral-200">
                                     {u.firstName} {u.lastName}
                                   </p>
-                                  <p className="text-[10px] text-slate-400">{u.email}</p>
+                                  <p className="text-[10px] text-neutral-400">{u.email}</p>
                                 </td>
                                 <td className="py-2.5">
-                                  <p className="font-semibold text-slate-700 dark:text-slate-350">
+                                  <p className="font-semibold text-neutral-700 dark:text-slate-350">
                                     {u.designation || 'Staff'}
                                   </p>
-                                  <p className="text-[10px] text-slate-400">Level {u.level ?? u.role?.level}</p>
+                                  <p className="text-[10px] text-neutral-400">Level {u.level ?? u.role?.level}</p>
                                 </td>
                                 <td className="py-2.5">
-                                  <p className="font-medium text-slate-600 dark:text-slate-400">{u.business?.name}</p>
-                                  <p className="text-[10px] text-slate-400">{u.team?.name || 'No Team'}</p>
+                                  <p className="font-medium text-neutral-600 dark:text-neutral-400">{u.business?.name}</p>
+                                  <p className="text-[10px] text-neutral-400">{u.team?.name || 'No Team'}</p>
                                 </td>
                                 <td className="py-2.5">
                                   <span
@@ -1249,7 +1249,7 @@ export default function OrgExplorer() {
                                 <td className="py-2.5 text-right">
                                   <button
                                     onClick={() => openEditModal('user', u)}
-                                    className="p-1 text-slate-400 hover:text-primary-500 rounded"
+                                    className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
                                   </button>
@@ -1264,8 +1264,8 @@ export default function OrgExplorer() {
 
                   {activeConfigTab === 'businesses' && (
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-gray-800 pb-3">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Businesses</h3>
+                      <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">Businesses</h3>
                         <button
                           onClick={() => openCreateModal('business')}
                           className="btn-primary flex items-center gap-1 text-xs px-3 py-1.5"
@@ -1276,18 +1276,18 @@ export default function OrgExplorer() {
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
-                            <tr className="text-left text-slate-400 border-b border-slate-100 dark:border-gray-800 uppercase tracking-wider font-bold">
+                            <tr className="text-left text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 uppercase tracking-wider font-bold">
                               <th className="pb-2">Name</th>
                               <th className="pb-2">Code</th>
                               <th className="pb-2">Status</th>
                               <th className="pb-2 text-right">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-gray-850">
+                          <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.businesses.map((b) => (
-                              <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/40">
-                                <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200">{b.name}</td>
-                                <td className="py-2.5 text-slate-400 font-mono">{b.code}</td>
+                              <tr key={b.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">{b.name}</td>
+                                <td className="py-2.5 text-neutral-400 font-mono">{b.code}</td>
                                 <td className="py-2.5">
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -1302,7 +1302,7 @@ export default function OrgExplorer() {
                                 <td className="py-2.5 text-right">
                                   <button
                                     onClick={() => openEditModal('business', b)}
-                                    className="p-1 text-slate-400 hover:text-primary-500 rounded"
+                                    className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
                                   </button>
@@ -1317,8 +1317,8 @@ export default function OrgExplorer() {
 
                   {activeConfigTab === 'verticals' && (
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-gray-800 pb-3">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Verticals</h3>
+                      <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">Verticals</h3>
                         <button
                           onClick={() => openCreateModal('vertical')}
                           className="btn-primary flex items-center gap-1 text-xs px-3 py-1.5"
@@ -1329,7 +1329,7 @@ export default function OrgExplorer() {
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
-                            <tr className="text-left text-slate-400 border-b border-slate-100 dark:border-gray-800 uppercase tracking-wider font-bold">
+                            <tr className="text-left text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 uppercase tracking-wider font-bold">
                               <th className="pb-2">Name</th>
                               <th className="pb-2">Code</th>
                               <th className="pb-2">Business Assignment</th>
@@ -1337,12 +1337,12 @@ export default function OrgExplorer() {
                               <th className="pb-2 text-right">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-gray-850">
+                          <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.verticals.map((v) => (
-                              <tr key={v.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/40">
-                                <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200">{v.name}</td>
-                                <td className="py-2.5 text-slate-400 font-mono">{v.code}</td>
-                                <td className="py-2.5 font-medium text-slate-700 dark:text-slate-300">
+                              <tr key={v.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">{v.name}</td>
+                                <td className="py-2.5 text-neutral-400 font-mono">{v.code}</td>
+                                <td className="py-2.5 font-medium text-neutral-700 dark:text-neutral-300">
                                   {v.business?.name}
                                 </td>
                                 <td className="py-2.5">
@@ -1359,7 +1359,7 @@ export default function OrgExplorer() {
                                 <td className="py-2.5 text-right">
                                   <button
                                     onClick={() => openEditModal('vertical', v)}
-                                    className="p-1 text-slate-400 hover:text-primary-500 rounded"
+                                    className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
                                   </button>
@@ -1374,8 +1374,8 @@ export default function OrgExplorer() {
 
                   {activeConfigTab === 'teams' && (
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-gray-800 pb-3">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Teams</h3>
+                      <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">Teams</h3>
                         <button
                           onClick={() => openCreateModal('team')}
                           className="btn-primary flex items-center gap-1 text-xs px-3 py-1.5"
@@ -1386,7 +1386,7 @@ export default function OrgExplorer() {
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
-                            <tr className="text-left text-slate-400 border-b border-slate-100 dark:border-gray-800 uppercase tracking-wider font-bold">
+                            <tr className="text-left text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 uppercase tracking-wider font-bold">
                               <th className="pb-2">Name</th>
                               <th className="pb-2">Code</th>
                               <th className="pb-2">Business / Vertical</th>
@@ -1394,12 +1394,12 @@ export default function OrgExplorer() {
                               <th className="pb-2 text-right">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-gray-850">
+                          <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.teams.map((t) => (
-                              <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/40">
-                                <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200">{t.name}</td>
-                                <td className="py-2.5 text-slate-400 font-mono">{t.code}</td>
-                                <td className="py-2.5 font-medium text-slate-700 dark:text-slate-300">
+                              <tr key={t.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">{t.name}</td>
+                                <td className="py-2.5 text-neutral-400 font-mono">{t.code}</td>
+                                <td className="py-2.5 font-medium text-neutral-700 dark:text-neutral-300">
                                   {t.business?.name} / {t.vertical?.name || 'No Vertical'}
                                 </td>
                                 <td className="py-2.5">
@@ -1416,7 +1416,7 @@ export default function OrgExplorer() {
                                 <td className="py-2.5 text-right">
                                   <button
                                     onClick={() => openEditModal('team', t)}
-                                    className="p-1 text-slate-400 hover:text-primary-500 rounded"
+                                    className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
                                   </button>
@@ -1431,22 +1431,22 @@ export default function OrgExplorer() {
 
                   {activeConfigTab === 'audit' && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-white border-b border-slate-100 dark:border-gray-800 pb-3">
+                      <h3 className="text-sm font-bold text-neutral-800 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-3">
                         System Audit Trail Logs
                       </h3>
                       <div className="overflow-x-auto max-h-[500px]">
                         <table className="w-full text-xs">
                           <thead>
-                            <tr className="text-left text-slate-400 border-b border-slate-100 dark:border-gray-800 uppercase tracking-wider font-bold">
+                            <tr className="text-left text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 uppercase tracking-wider font-bold">
                               <th className="pb-2">Action</th>
                               <th className="pb-2">Entity Type</th>
                               <th className="pb-2">IP Address</th>
                               <th className="pb-2">Timestamp</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-gray-850 text-slate-700 dark:text-slate-350">
+                          <tbody className="divide-y divide-neutral-100 dark:divide-gray-850 text-neutral-700 dark:text-slate-350">
                             {auditLogs.map((log, i) => (
-                              <tr key={i} className="hover:bg-slate-50 dark:hover:bg-gray-800/40">
+                              <tr key={i} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
                                 <td className="py-2 font-semibold">{log.action}</td>
                                 <td className="py-2">
                                   {log.entityType} ({log.entityId || 'N/A'})
@@ -1454,14 +1454,14 @@ export default function OrgExplorer() {
                                 <td className="py-2 font-mono text-[10px]">
                                   {log.ipAddress || '127.0.0.1'}
                                 </td>
-                                <td className="py-2 text-[10px] text-slate-400">
+                                <td className="py-2 text-[10px] text-neutral-400">
                                   {new Date(log.createdAt).toLocaleString()}
                                 </td>
                               </tr>
                             ))}
                             {auditLogs.length === 0 && (
                               <tr>
-                                <td colSpan={4} className="text-center py-6 text-slate-400 italic">
+                                <td colSpan={4} className="text-center py-6 text-neutral-400 italic">
                                   No audit trail events captured.
                                 </td>
                               </tr>
@@ -1486,15 +1486,15 @@ export default function OrgExplorer() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-850 rounded-2xl p-6 shadow-2xl w-full max-w-md"
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-gray-850 rounded-2xl p-6 shadow-2xl w-full max-w-md"
             >
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-3 mb-4">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white capitalize">
+              <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3 mb-4">
+                <h3 className="text-sm font-bold text-neutral-800 dark:text-white capitalize">
                   {crudMode} {crudType} Configuration
                 </h3>
                 <button
                   onClick={() => setCrudModalOpen(false)}
-                  className="p-1 hover:bg-slate-100 dark:hover:bg-gray-800 text-slate-450 rounded-lg"
+                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-slate-450 rounded-lg"
                 >
                   <CancelIcon />
                 </button>
@@ -1536,9 +1536,9 @@ export default function OrgExplorer() {
                           id="isActive"
                           checked={crudForm.isActive !== false}
                           onChange={(e) => setCrudForm({ ...crudForm, isActive: e.target.checked })}
-                          className="w-4 h-4 rounded text-primary-500 border-slate-300 dark:border-gray-800"
+                          className="w-4 h-4 rounded text-primary-500 border-neutral-300 dark:border-neutral-800"
                         />
-                        <label htmlFor="isActive" className="text-xs font-semibold text-slate-700 dark:text-slate-350">
+                        <label htmlFor="isActive" className="text-xs font-semibold text-neutral-700 dark:text-slate-350">
                           Active Status
                         </label>
                       </div>
@@ -1688,20 +1688,20 @@ export default function OrgExplorer() {
                         id="userIsActive"
                         checked={crudForm.isActive !== false}
                         onChange={(e) => setCrudForm({ ...crudForm, isActive: e.target.checked })}
-                        className="w-4 h-4 rounded text-primary-500 border-slate-300 dark:border-gray-800"
+                        className="w-4 h-4 rounded text-primary-500 border-neutral-300 dark:border-neutral-800"
                       />
-                      <label htmlFor="userIsActive" className="text-xs font-semibold text-slate-700 dark:text-slate-355">
+                      <label htmlFor="userIsActive" className="text-xs font-semibold text-neutral-700 dark:text-slate-355">
                         Active Account
                       </label>
                     </div>
                   </>
                 )}
 
-                <div className="flex items-center gap-2 justify-end border-t border-slate-100 dark:border-gray-800 pt-3 mt-4">
+                <div className="flex items-center gap-2 justify-end border-t border-neutral-100 dark:border-neutral-800 pt-3 mt-4">
                   <button
                     type="button"
                     onClick={() => setCrudModalOpen(false)}
-                    className="btn-secondary text-xs px-4 py-2 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
+                    className="btn-secondary text-xs px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
                   >
                     Cancel
                   </button>

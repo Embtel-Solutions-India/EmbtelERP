@@ -36,7 +36,7 @@ export default function Performance() {
             className="card p-4 text-center">
             <div className={`flex justify-center mb-2 ${k.color}`}><k.Icon size={22} /></div>
             <p className={`text-xl font-bold ${k.color}`}>{k.value}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{k.label}</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{k.label}</p>
             <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">{k.change}</p>
           </motion.div>
         ))}
@@ -97,8 +97,8 @@ export default function Performance() {
               {winRatioData.map((d, i) => (
                 <div key={d.name} className="flex items-center gap-3">
                   <span className="w-3 h-3 rounded-full" style={{ background: COLORS[i] }} />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">{d.name}</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-100 ml-auto">{d.value}</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{d.name}</span>
+                  <span className="font-bold text-neutral-800 dark:text-neutral-100 ml-auto">{d.value}</span>
                 </div>
               ))}
             </div>

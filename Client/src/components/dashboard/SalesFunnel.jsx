@@ -29,14 +29,14 @@ export default function SalesFunnel() {
               className="group"
             >
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">{stage.stage}</span>
-                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                <span className="font-semibold text-neutral-700 dark:text-neutral-300">{stage.stage}</span>
+                <div className="flex items-center gap-3 text-neutral-500 dark:text-neutral-400">
                   <span>{stage.count} leads</span>
                   <span className="font-semibold" style={{ color }}>{stage.convRate}%</span>
                   <span className="hidden sm:block">{formatCurrency(stage.value)}</span>
                 </div>
               </div>
-              <div className="relative h-8 bg-slate-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+              <div className="relative h-8 bg-neutral-100 dark:bg-neutral-700 rounded-lg overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
@@ -54,7 +54,7 @@ export default function SalesFunnel() {
         })}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-gray-700 grid grid-cols-3 gap-3">
+      <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-700 grid grid-cols-3 gap-3">
         {[
           { label: 'Total Leads', val: funnelData[0]?.count, color: '#6366f1' },
           { label: 'Win Rate',    val: `${funnelData[funnelData.length - 1]?.convRate}%`, color: '#10b981' },
@@ -62,7 +62,7 @@ export default function SalesFunnel() {
         ].map((s) => (
           <div key={s.label} className="text-center">
             <p className="text-lg font-bold" style={{ color: s.color }}>{s.val}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.label}</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>

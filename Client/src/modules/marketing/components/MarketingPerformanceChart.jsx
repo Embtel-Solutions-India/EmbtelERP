@@ -14,13 +14,13 @@ const CHART_TABS = ['Campaign ROI', 'Leads Generated', 'Traffic & Clicks']
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-slate-100 dark:border-gray-700 p-3">
-      <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2">{label}</p>
+    <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-xl border border-neutral-100 dark:border-neutral-700 p-3">
+      <p className="text-xs font-bold text-neutral-600 dark:text-neutral-300 mb-2">{label}</p>
       {payload.map((p) => (
         <div key={p.name} className="flex items-center gap-2 text-xs">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-slate-500 dark:text-slate-400 capitalize">{p.name}:</span>
-          <span className="font-bold text-slate-700 dark:text-slate-200">
+          <span className="text-neutral-500 dark:text-neutral-400 capitalize">{p.name}:</span>
+          <span className="font-bold text-neutral-700 dark:text-neutral-200">
             {p.name.includes('Revenue') || p.name.includes('Target') ? formatCurrency(p.value) : p.value}
           </span>
         </div>
@@ -45,15 +45,15 @@ export default function MarketingPerformanceChart() {
       subtitle="Campaign ROI, leads & engagement trends"
       delay={0.2}
       actions={
-        <div className="flex gap-1 bg-slate-100 dark:bg-gray-700 rounded-xl p-1">
+        <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-700 rounded-xl p-1">
           {PERIODS.map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                 period === p
-                  ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
               }`}
             >
               {p}
@@ -70,7 +70,7 @@ export default function MarketingPerformanceChart() {
             className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
               chartTab === t
                 ? 'bg-primary-600 text-white shadow-brand'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-gray-700'
+                : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700'
             }`}
           >
             {t}

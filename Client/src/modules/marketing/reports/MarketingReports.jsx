@@ -49,8 +49,8 @@ export default function MarketingReports() {
               {sourceData.map(d => (
                 <div key={d.name} className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: d.color }} />
-                  <span className="text-sm text-slate-600 dark:text-slate-400 flex-1">{d.name}</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-100">{d.value}%</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400 flex-1">{d.name}</span>
+                  <span className="font-bold text-neutral-800 dark:text-neutral-100">{d.value}%</span>
                 </div>
               ))}
             </div>
@@ -76,7 +76,7 @@ export default function MarketingReports() {
         <div className="relative">
           <SectionCard title="Department Budget Allocations" subtitle="Quarterly expenditure across teams">
             <div style={{ height: 280 }} className="flex flex-col items-center justify-center text-center opacity-30 select-none blur-[3px]">
-              <div className="w-full h-40 bg-slate-100 dark:bg-gray-800 rounded-lg flex items-end justify-between p-4 mb-4">
+              <div className="w-full h-40 bg-neutral-100 dark:bg-neutral-800 rounded-lg flex items-end justify-between p-4 mb-4">
                 {[50, 40, 80, 60].map((h, i) => (
                   <div key={i} className="w-16 bg-blue-300 rounded-t" style={{ height: `${h}%` }} />
                 ))}
@@ -86,12 +86,12 @@ export default function MarketingReports() {
           </SectionCard>
           
           {/* Overlay */}
-          <div className="absolute inset-0 bg-white/75 dark:bg-gray-900/80 backdrop-blur-[3px] rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-dashed border-slate-200 dark:border-gray-700">
+          <div className="absolute inset-0 bg-white/75 dark:bg-neutral-900/80 backdrop-blur-[3px] rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-dashed border-neutral-200 dark:border-neutral-700">
             <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
               <FaLock className="text-amber-500" size={18} />
             </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Department Report Restricted</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+            <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-200">Department Report Restricted</h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mt-1">
               Cross-team department allocations are restricted to Department Owners and Administrators.
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function MarketingReports() {
         <div className="relative">
           <SectionCard title="Business Owner P&L Analysis" subtitle="Annual net return on investment">
             <div style={{ height: 280 }} className="flex flex-col items-center justify-center text-center opacity-30 select-none blur-[3px]">
-              <div className="w-full h-40 bg-slate-100 dark:bg-gray-800 rounded-lg flex items-center justify-center p-4 mb-4">
+              <div className="w-full h-40 bg-neutral-100 dark:bg-neutral-800 rounded-lg flex items-center justify-center p-4 mb-4">
                 <div className="w-32 h-32 rounded-full border-8 border-indigo-200 border-t-indigo-500 animate-spin" />
               </div>
               <p className="text-sm font-semibold">Consolidated Company Return on Spend</p>
@@ -109,12 +109,12 @@ export default function MarketingReports() {
           </SectionCard>
           
           {/* Overlay */}
-          <div className="absolute inset-0 bg-white/75 dark:bg-gray-900/80 backdrop-blur-[3px] rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-dashed border-slate-200 dark:border-gray-700">
+          <div className="absolute inset-0 bg-white/75 dark:bg-neutral-900/80 backdrop-blur-[3px] rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-dashed border-neutral-200 dark:border-neutral-700">
             <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
               <FaLock className="text-amber-500" size={18} />
             </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Business Owner Report Restricted</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+            <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-200">Business Owner Report Restricted</h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mt-1">
               Annual consolidated profit and loss metrics require Business Owner or Administrator credentials.
             </p>
           </div>

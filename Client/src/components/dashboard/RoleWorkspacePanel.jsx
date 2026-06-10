@@ -6,20 +6,20 @@ const toneClasses = {
   success: 'text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20',
   warning: 'text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20',
   danger: 'text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/20',
-  neutral: 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-gray-800',
+  neutral: 'text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800',
 }
 
 export default function RoleWorkspacePanel({ workspace }) {
   if (!workspace) return null
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-700 p-4">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between mb-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">
             Role Workspace
           </p>
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+          <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">
             {workspace.title}
           </h3>
         </div>
@@ -46,12 +46,12 @@ export default function RoleWorkspacePanel({ workspace }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
             Today Focus
           </p>
           <div className="space-y-2">
             {workspace.focus?.map((item) => (
-              <div key={item} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <div key={item} className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                 <FaCheckCircle className="text-emerald-500 flex-shrink-0" size={13} />
                 <span>{item}</span>
               </div>
@@ -60,7 +60,7 @@ export default function RoleWorkspacePanel({ workspace }) {
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
             Role Actions
           </p>
           <div className="flex flex-wrap gap-2">
@@ -68,7 +68,7 @@ export default function RoleWorkspacePanel({ workspace }) {
               <Link
                 key={action.key}
                 to={action.path}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-slate-200 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/20 dark:hover:text-primary-300 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/20 dark:hover:text-primary-300 transition-colors"
               >
                 <FaBolt size={11} />
                 {action.label}

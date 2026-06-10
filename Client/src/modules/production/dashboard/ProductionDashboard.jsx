@@ -37,7 +37,7 @@ export default function ProductionDashboard() {
       <WelcomeSection />
 
       {loading && (
-        <div className="text-center py-2 text-sm text-slate-400">Loading documentation data...</div>
+        <div className="text-center py-2 text-sm text-neutral-400">Loading documentation data...</div>
       )}
 
       {overview?.perspective && (

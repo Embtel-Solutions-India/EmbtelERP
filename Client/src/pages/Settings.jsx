@@ -5,14 +5,14 @@ import { toggleTheme } from '../redux/slices/themeSlice'
 import PageHeader from '../components/common/PageHeader'
 
 const SettingRow = ({ icon, title, description, children }) => (
-  <div className="flex items-center justify-between py-4 border-b border-slate-100 dark:border-gray-700 last:border-0">
+  <div className="flex items-center justify-between py-4 border-b border-neutral-100 dark:border-neutral-700 last:border-0">
     <div className="flex items-center gap-3">
       <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400">
         {icon}
       </div>
       <div>
-        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>
-        {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>}
+        <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">{title}</p>
+        {description && <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{description}</p>}
       </div>
     </div>
     {children}
@@ -23,7 +23,7 @@ function Toggle({ value, onChange }) {
   return (
     <button
       onClick={onChange}
-      className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${value ? 'bg-primary-600' : 'bg-slate-200 dark:bg-gray-600'}`}
+      className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${value ? 'bg-primary-600' : 'bg-neutral-200 dark:bg-neutral-600'}`}
     >
       <motion.span
         animate={{ x: value ? 24 : 2 }}
@@ -94,7 +94,7 @@ export default function Settings() {
             { label: 'Language', value: 'English (US)' },
           ].map(item => (
             <div key={item.label} className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.label}</label>
+              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{item.label}</label>
               <select className="input-field w-auto text-sm">
                 <option>{item.value}</option>
               </select>

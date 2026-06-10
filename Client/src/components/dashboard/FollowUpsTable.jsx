@@ -29,13 +29,13 @@ export default function FollowUpsTable() {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-100 dark:border-gray-700">
+            <tr className="border-b border-neutral-100 dark:border-neutral-700">
               {['Lead', 'Company', 'Last Contact', 'Next Follow Up', 'Priority', 'Status', 'Actions'].map((h) => (
-                <th key={h} className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                <th key={h} className="text-left text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+          <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
             {followUps.map((lead, i) => {
               const due = getDueBadge(lead.nextFollowUp)
               return (
@@ -44,16 +44,16 @@ export default function FollowUpsTable() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors"
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors"
                 >
                   <td className="px-5 py-3">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{lead.name}</p>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{lead.name}</p>
                   </td>
                   <td className="px-5 py-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{lead.company}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{lead.company}</p>
                   </td>
                   <td className="px-5 py-3">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(lead.lastContact)}</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(lead.lastContact)}</p>
                   </td>
                   <td className="px-5 py-3">
                     <span className={`badge ${

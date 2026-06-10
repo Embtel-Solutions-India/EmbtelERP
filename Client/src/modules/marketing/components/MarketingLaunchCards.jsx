@@ -48,7 +48,7 @@ export default function MarketingLaunchCards() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07 }}
-              className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/40 border border-transparent hover:border-slate-100 dark:hover:border-gray-700 transition-all cursor-pointer"
+              className="group flex items-start gap-3 p-3 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-700/40 border border-transparent hover:border-neutral-100 dark:hover:border-neutral-700 transition-all cursor-pointer"
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                 {getInitials(meeting.client)}
@@ -58,19 +58,19 @@ export default function MarketingLaunchCards() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{meeting.company}</span>
+                      <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">{meeting.company}</span>
                       <TypeIcon className={typeEntry.color} size={13} />
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{meeting.client}</span>
-                      <span className="text-xs text-slate-400">·</span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{meeting.type}</span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">{meeting.client}</span>
+                      <span className="text-xs text-neutral-400">·</span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">{meeting.type}</span>
                     </div>
                   </div>
                   <span className={`${STATUS_COLORS[meeting.status] || 'badge-primary'} flex-shrink-0`}>{meeting.status}</span>
                 </div>
 
-                <div className="flex flex-wrap gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex flex-wrap gap-3 mt-2 text-xs text-neutral-500 dark:text-neutral-400">
                   <span className="flex items-center gap-1">
                     <Schedule style={{ fontSize: 13 }} />
                     {formatDate(meeting.date)} · {formatTime(meeting.date)}

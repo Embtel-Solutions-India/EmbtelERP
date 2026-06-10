@@ -551,3 +551,46 @@ export async function getMarketingInternDashboard(ctx) {
     ]);
     return { assignedTasks, completedTasks, dailyActivityLog };
 }
+export async function deleteMarketingCampaign(ctx, id) {
+    const access = await resolveAccess(ctx);
+    assertMarketingManager(access);
+    const existing = await ensureScopedCampaign(id, access);
+    await prisma.marketingCampaign.delete({ where: { id: existing.id } });
+    await recordActivity({
+        actorId: access.employeeId,
+        businessId: existing.businessId,
+        action: "DELETE",
+        targetType: "MarketingCampaign",
+        targetId: existing.id,
+    });
+}
+export async function deleteMarketingTask(ctx, id) {
+    const access = await resolveAccess(ctx);
+    const existing = await ensureScopedTask(id, access);
+    if (!canManage(access) && existing.createdById !== access.employeeId) {
+        throw new ApiError(403, "You can delete only your own created marketing tasks");
+    }
+    await prisma.marketingTask.delete({ where: { id: existing.id } });
+    await recordActivity({
+        actorId: access.employeeId,
+        businessId: existing.businessId,
+        action: "DELETE",
+        targetType: "MarketingTask",
+        targetId: existing.id,
+    });
+}
+export async function deleteMarketingLead(ctx, id) {
+    const access = await resolveAccess(ctx);
+    const existing = await ensureScopedLead(id, access);
+    if (!canManage(access) && existing.createdById !== access.employeeId) {
+        throw new ApiError(403, "You can delete only your own created marketing leads");
+    }
+    await prisma.marketingLead.delete({ where: { id: existing.id } });
+    await recordActivity({
+        actorId: access.employeeId,
+        businessId: existing.businessId,
+        action: "DELETE",
+        targetType: "MarketingLead",
+        targetId: existing.id,
+    });
+}

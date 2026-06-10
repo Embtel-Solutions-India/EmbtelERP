@@ -3,7 +3,7 @@ import { authenticate } from "../middleware/auth.middleware.js";
 import { attachScope } from "../middleware/scope.middleware.js";
 import { validateBody } from "../middleware/validate.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { createActivity, createCampaign, createKPI, createLead, createTask, executiveDashboard, getCampaign, getTask, internDashboard, listActivities, listCampaigns, listKPIs, listLeads, listTasks, managerDashboard, updateActivity, updateCampaign, updateKPI, updateLead, updateTask, } from "../controllers/marketing.controller.js";
+import { createActivity, createCampaign, createKPI, createLead, createTask, executiveDashboard, getCampaign, getTask, internDashboard, listActivities, listCampaigns, listKPIs, listLeads, listTasks, managerDashboard, updateActivity, updateCampaign, updateKPI, updateLead, updateTask, deleteCampaign, deleteTask, deleteLead, } from "../controllers/marketing.controller.js";
 import { createMarketingActivitySchema, createMarketingCampaignSchema, createMarketingKPISchema, createMarketingLeadSchema, createMarketingTaskSchema, updateMarketingActivitySchema, updateMarketingCampaignSchema, updateMarketingKPISchema, updateMarketingLeadSchema, updateMarketingTaskSchema, } from "../validations/marketing.validation.js";
 export const marketingRouter = Router();
 marketingRouter.use(authenticate, attachScope);
@@ -21,6 +21,9 @@ marketingRouter.patch("/tasks/:id", validateBody(updateMarketingTaskSchema), asy
 marketingRouter.get("/leads", asyncHandler(listLeads));
 marketingRouter.post("/leads", validateBody(createMarketingLeadSchema), asyncHandler(createLead));
 marketingRouter.patch("/leads/:id", validateBody(updateMarketingLeadSchema), asyncHandler(updateLead));
+marketingRouter.delete("/leads/:id", asyncHandler(deleteLead));
+marketingRouter.delete("/campaigns/:id", asyncHandler(deleteCampaign));
+marketingRouter.delete("/tasks/:id", asyncHandler(deleteTask));
 marketingRouter.get("/activities", asyncHandler(listActivities));
 marketingRouter.post("/activities", validateBody(createMarketingActivitySchema), asyncHandler(createActivity));
 marketingRouter.patch("/activities/:id", validateBody(updateMarketingActivitySchema), asyncHandler(updateActivity));

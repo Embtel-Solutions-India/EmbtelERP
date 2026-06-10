@@ -45,7 +45,7 @@ export default function CustomerInsights() {
             >
               <div className="flex items-center gap-2">
                 <s.Icon className={s.color} size={13} />
-                <span className="text-xs text-slate-500 dark:text-slate-400">{s.label}</span>
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">{s.label}</span>
               </div>
               <span className={`text-sm font-bold ${s.color}`}>{s.value}</span>
             </motion.div>
@@ -55,7 +55,7 @@ export default function CustomerInsights() {
 
       <div className="mt-4 flex gap-2 flex-wrap">
         {data.map((d) => (
-          <span key={d.name} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+          <span key={d.name} className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="w-2 h-2 rounded-full" style={{ background: d.color }} />
             {d.name} ({d.value})
           </span>

@@ -26,16 +26,16 @@ export default function MarketingCampaignPerformanceTable() {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-100 dark:border-gray-700">
+            <tr className="border-b border-neutral-100 dark:border-neutral-700">
               {[
                 'Campaign Name', 'Type', 'Target Audience', 'Service Promoted',
                 'Leads', 'Conversions', 'Open %', 'Click %', 'ROI', 'Status', 'Actions'
               ].map((h) => (
-                <th key={h} className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                <th key={h} className="text-left text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+          <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
             {campaigns.map((camp, i) => {
               const roi = camp.budget > 0 ? `${(camp.revenue_generated / camp.budget).toFixed(1)}x` : '—'
               return (
@@ -44,18 +44,18 @@ export default function MarketingCampaignPerformanceTable() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors"
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors"
                 >
                   <td className="px-5 py-3">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{camp.campaign_name}</p>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{camp.campaign_name}</p>
                   </td>
-                  <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{camp.campaign_type}</td>
-                  <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{camp.target_audience}</td>
-                  <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{camp.service_promoted}</td>
-                  <td className="px-5 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100">{camp.leads_generated}</td>
-                  <td className="px-5 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100">{camp.conversions}</td>
-                  <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-400">{camp.open_rate > 0 ? `${camp.open_rate}%` : '—'}</td>
-                  <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-400">{camp.click_rate > 0 ? `${camp.click_rate}%` : '—'}</td>
+                  <td className="px-5 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{camp.campaign_type}</td>
+                  <td className="px-5 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{camp.target_audience}</td>
+                  <td className="px-5 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{camp.service_promoted}</td>
+                  <td className="px-5 py-3 text-sm font-semibold text-neutral-800 dark:text-neutral-100">{camp.leads_generated}</td>
+                  <td className="px-5 py-3 text-sm font-semibold text-neutral-800 dark:text-neutral-100">{camp.conversions}</td>
+                  <td className="px-5 py-3 text-sm text-neutral-600 dark:text-neutral-400">{camp.open_rate > 0 ? `${camp.open_rate}%` : '—'}</td>
+                  <td className="px-5 py-3 text-sm text-neutral-600 dark:text-neutral-400">{camp.click_rate > 0 ? `${camp.click_rate}%` : '—'}</td>
                   <td className="px-5 py-3 text-sm font-bold text-primary-600 dark:text-primary-400">{roi}</td>
                   <td className="px-5 py-3">
                     <span className={`badge ${STATUS_MAP[camp.status] || 'badge-primary'} whitespace-nowrap`}>

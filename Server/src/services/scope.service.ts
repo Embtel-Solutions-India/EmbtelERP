@@ -214,7 +214,7 @@ async function buildScope(
     teamId: string | null;
   },
 ): Promise<DataScope> {
-  const viewerLevel = viewer.level ?? viewer.role.level;
+  const viewerLevel = viewer.level ?? viewer.role?.level ?? 1;
 
   if (viewerLevel >= 5) {
     const [businesses, departments, teams, employees] = await Promise.all([

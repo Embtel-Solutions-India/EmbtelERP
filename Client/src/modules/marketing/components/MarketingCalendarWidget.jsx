@@ -50,7 +50,7 @@ export default function MarketingCalendarWidget() {
           <button onClick={() => setCurrent(subMonths(current, 1))} className="btn-ghost p-1">
             <ChevronLeft style={{ fontSize: 18 }} />
           </button>
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 min-w-[100px] text-center">
+          <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 min-w-[100px] text-center">
             {format(current, 'MMMM yyyy')}
           </span>
           <button onClick={() => setCurrent(addMonths(current, 1))} className="btn-ghost p-1">
@@ -61,7 +61,7 @@ export default function MarketingCalendarWidget() {
     >
       <div className="grid grid-cols-7 gap-px mb-1">
         {DAY_LABELS.map((d) => (
-          <div key={d} className="text-center text-xs font-semibold text-slate-400 dark:text-slate-500 py-1">{d}</div>
+          <div key={d} className="text-center text-xs font-semibold text-neutral-400 dark:text-neutral-500 py-1">{d}</div>
         ))}
       </div>
 
@@ -78,9 +78,9 @@ export default function MarketingCalendarWidget() {
               whileHover={{ scale: 1.1 }}
               className={`relative flex flex-col items-center py-1 rounded-lg cursor-pointer transition-colors ${
                 !sameMonth ? 'opacity-30' : ''
-              } ${today ? 'bg-primary-600' : 'hover:bg-slate-100 dark:hover:bg-gray-700/50'}`}
+              } ${today ? 'bg-primary-600' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700/50'}`}
             >
-              <span className={`text-xs font-semibold ${today ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+              <span className={`text-xs font-semibold ${today ? 'text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
                 {format(day, 'd')}
               </span>
 
@@ -100,10 +100,10 @@ export default function MarketingCalendarWidget() {
       </div>
 
       <div className="mt-3 flex gap-3 flex-wrap">
-        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <span className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
           <span className="w-2 h-2 rounded-full bg-primary-500" /> Campaigns
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <span className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
           <span className="w-2 h-2 rounded-full bg-amber-500" /> Tasks
         </span>
       </div>

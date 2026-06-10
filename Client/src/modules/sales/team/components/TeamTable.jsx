@@ -106,7 +106,7 @@ export default function TeamTable({
                 </button>
               </div>
             ) : (
-              <span className="text-xs text-slate-400 italic flex items-center gap-1">
+              <span className="text-xs text-neutral-400 italic flex items-center gap-1">
                 <Lock style={{ fontSize: 12 }} /> Bulk modifications restricted (View Only)
               </span>
             )}
@@ -119,22 +119,22 @@ export default function TeamTable({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
+              <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
                 <th className="px-5 py-3 text-left w-10">
                   <input
                     type="checkbox"
                     checked={members.length > 0 && selectedIds.length === members.length}
                     onChange={handleSelectAll}
                     disabled={!canEdit}
-                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                   />
                 </th>
                 {['Avatar', 'Employee Name', 'Employee ID', 'Email', 'Phone', 'Designation', 'Joining Date', 'Status', 'Actions'].map((h) => (
-                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                  <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
               <AnimatePresence>
                 {members.map((member, i) => (
                   <motion.tr
@@ -143,7 +143,7 @@ export default function TeamTable({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ delay: i * 0.03 }}
-                    className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors group"
+                    className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group"
                   >
                     <td className="px-5 py-4">
                       <input
@@ -151,7 +151,7 @@ export default function TeamTable({
                         checked={selectedIds.includes(member.id)}
                         onChange={() => handleSelectRow(member.id)}
                         disabled={!canEdit}
-                        className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                        className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                       />
                     </td>
                     <td className="px-5 py-4">
@@ -164,27 +164,27 @@ export default function TeamTable({
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{member.full_name}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">{member.department} Team</p>
+                          <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{member.full_name}</p>
+                          <p className="text-xs text-neutral-400 dark:text-neutral-500">{member.department} Team</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">{member.employee_id}</span>
+                      <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{member.employee_id}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-xs text-slate-600 dark:text-slate-400">{member.email}</span>
+                      <span className="text-xs text-neutral-600 dark:text-neutral-400">{member.email}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{member.phone}</span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{member.phone}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-xs bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-md font-semibold whitespace-nowrap">
+                      <span className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 px-2.5 py-1 rounded-md font-semibold whitespace-nowrap">
                         {member.designation}
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(member.joining_date)}</span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(member.joining_date)}</span>
                     </td>
                     <td className="px-5 py-4">
                       <span className={`badge ${STATUS_COLORS[member.status] || 'badge-primary'}`}>{member.status}</span>
@@ -230,7 +230,7 @@ export default function TeamTable({
         </div>
 
         {members.length === 0 && (
-          <div className="text-center py-12 text-slate-400 bg-white dark:bg-gray-800">
+          <div className="text-center py-12 text-neutral-400 bg-white dark:bg-neutral-800">
             No team members matched the active filters.
           </div>
         )}

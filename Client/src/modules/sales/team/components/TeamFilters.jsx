@@ -10,7 +10,7 @@ export default function TeamFilters({ filters, onFilterChange, department = 'Sal
     <div className="card p-4 flex flex-wrap items-center gap-3">
       {/* Search Input */}
       <div className="relative flex-1 min-w-[240px]">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" style={{ fontSize: 18 }} />
         <input
           type="text"
           placeholder="Search team member name or email…"
@@ -46,7 +46,7 @@ export default function TeamFilters({ filters, onFilterChange, department = 'Sal
 
       {/* Joining Date Input */}
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Joined Since</span>
+        <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Joined Since</span>
         <input
           type="date"
           value={filters.joiningDate}

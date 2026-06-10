@@ -21,7 +21,7 @@ function ProbabilityBar({ value }) {
   const color = value >= 70 ? '#10b981' : value >= 40 ? '#f59e0b' : '#ef4444'
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}
@@ -95,12 +95,12 @@ export default function Opportunities() {
         ].map(s => (
           <div key={s.label} className="card p-5">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-gray-700 flex items-center justify-center ${s.color}`}>
+              <div className={`w-12 h-12 rounded-2xl bg-neutral-50 dark:bg-neutral-700 flex items-center justify-center ${s.color}`}>
                 <s.Icon size={22} />
               </div>
               <div>
                 <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{s.label}</p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
               </div>
             </div>
           </div>
@@ -111,25 +111,25 @@ export default function Opportunities() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-gray-700 bg-slate-50 dark:bg-gray-700/50">
+              <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
                 {['Opportunity', 'Company', 'Deal Value', 'Probability', 'Expected Close', 'Stage', 'Actions'].map(h => (
-                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
+                  <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
               {opportunities.map((opp, i) => (
                 <motion.tr key={opp.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}
-                  className="hover:bg-slate-50 dark:hover:bg-gray-700/30 transition-colors group">
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group">
                   <td className="px-5 py-4">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">{opp.name}</p>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 whitespace-nowrap">{opp.name}</p>
                   </td>
-                  <td className="px-5 py-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{opp.company}</td>
+                  <td className="px-5 py-4 text-sm text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{opp.company}</td>
                   <td className="px-5 py-4">
                     <span className="text-sm font-bold text-primary-600 dark:text-primary-400 whitespace-nowrap">{formatCurrency(opp.value)}</span>
                   </td>
                   <td className="px-5 py-4 min-w-[120px]"><ProbabilityBar value={opp.probability} /></td>
-                  <td className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(opp.closingDate)}</td>
+                  <td className="px-5 py-4 text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(opp.closingDate)}</td>
                   <td className="px-5 py-4">
                     <span className={STAGE_COLORS[opp.stage] || 'badge-primary'}>{opp.stage}</span>
                   </td>

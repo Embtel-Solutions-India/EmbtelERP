@@ -95,7 +95,7 @@ export default function MarketingAssets() {
       {/* Filter and Search Bar */}
       <div className="card p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 18 }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" style={{ fontSize: 18 }} />
           <input
             type="text"
             placeholder="Search asset files name…"
@@ -125,7 +125,7 @@ export default function MarketingAssets() {
               className="card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all group flex flex-col justify-between"
             >
               {/* Card visual banner preview placeholder */}
-              <div className="h-32 bg-slate-100 dark:bg-gray-800 flex items-center justify-center relative overflow-hidden">
+              <div className="h-32 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center relative overflow-hidden">
                 {asset.type === 'Image' ? (
                   <img src={asset.link} alt={asset.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : (
@@ -140,18 +140,18 @@ export default function MarketingAssets() {
                 <div>
                   <div className="flex items-center gap-1.5">
                     {TYPE_ICONS[asset.type]}
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">{asset.type}</span>
+                    <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">{asset.type}</span>
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 line-clamp-1">{asset.name}</h3>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Uploaded by <span className="font-semibold">{asset.updatedBy}</span> on {formatDate(asset.date)}</p>
+                  <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 mt-1 line-clamp-1">{asset.name}</h3>
+                  <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">Uploaded by <span className="font-semibold">{asset.updatedBy}</span> on {formatDate(asset.date)}</p>
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-gray-700/80">
+                <div className="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-neutral-700/80">
                   <div className="flex items-center gap-1">
                     <Tooltip title="Copy File Link">
                       <button 
                         onClick={() => handleCopyLink(asset.link)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                       >
                         <ContentCopy style={{ fontSize: 16 }} />
                       </button>
@@ -162,7 +162,7 @@ export default function MarketingAssets() {
                           href={asset.link} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors inline-block"
+                          className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors inline-block"
                         >
                           <Launch style={{ fontSize: 16 }} />
                         </a>
@@ -186,7 +186,7 @@ export default function MarketingAssets() {
       </div>
 
       {filteredAssets.length === 0 && (
-        <div className="text-center py-12 text-slate-400 bg-white dark:bg-gray-800 rounded-2xl border border-slate-100 dark:border-gray-700">
+        <div className="text-center py-12 text-neutral-400 bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-100 dark:border-neutral-700">
           No creative assets match the search queries.
         </div>
       )}
