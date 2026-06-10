@@ -53,6 +53,7 @@
     border-radius: 12px;
     box-shadow: var(--card-shadow);
     border: 1px solid var(--border-color);
+    overflow: hidden;
   }
 
   .card:hover {

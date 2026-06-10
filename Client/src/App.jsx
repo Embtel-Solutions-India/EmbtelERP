@@ -20,6 +20,7 @@ import Performance from './pages/Performance'
 import Reports from './pages/Reports'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
+import CalendarPage from './pages/CalendarPage'
 import SalesTeamPage from './modules/sales/team/pages/SalesTeamPage'
 import EmployeesPage from './pages/Employees'
 import DocumentsPage from './modules/production/pages/DocumentsPage'
@@ -195,9 +196,19 @@ export default function App() {
             <Route path="owner/profile"             element={<Profile />} />
           </Route>
 
+          {/* ── Calendar — shared across all roles ────────────────────────── */}
+          <Route path="calendar" element={<CalendarPage />} />
+
           {/* ── Immigration Head module ───────────────────────────────────── */}
           <Route element={<RoleRouteGuard allowedLevels={[3, 4, 5]} allowedDesignations={['immigration']} />}>
-            <Route path="head/dashboard"            element={<OwnerDashboard />} />
+            <Route path="head/dashboard"   element={<OwnerDashboard />} />
+            <Route path="head/cases"       element={<CasesPage />} />
+            <Route path="head/employees"   element={<EmployeesPage />} />
+            <Route path="head/businesses"  element={<Reports />} />
+            <Route path="head/analytics"   element={<Performance />} />
+            <Route path="head/reports"     element={<Reports />} />
+            <Route path="head/approvals"   element={<Tasks />} />
+            <Route path="head/profile"     element={<Profile />} />
           </Route>
 
           {/* ── Vertical Manager module ───────────────────────────────────── */}

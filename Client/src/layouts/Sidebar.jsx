@@ -96,6 +96,7 @@ const SECTION_BREAKS = {
   leads: "Sales Work",
   team: "Management",
   performance: "Analytics",
+  calendar: "Schedule",
   profile: "Account",
   settings: "Account",
   cases: "Case Work",

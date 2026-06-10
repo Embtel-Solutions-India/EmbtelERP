@@ -19,7 +19,7 @@ const STATS = [
 
 export default function CustomerInsights() {
   return (
-    <SectionCard title="Customer Insights" subtitle="Customer base overview" delay={0.2}>
+    <SectionCard title="Customer Insights" subtitle="Customer base overview" delay={0.2} className="h-[420px] flex flex-col">
       <div className="flex items-center gap-4">
         <div style={{ width: 120, height: 160 }} className="flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">

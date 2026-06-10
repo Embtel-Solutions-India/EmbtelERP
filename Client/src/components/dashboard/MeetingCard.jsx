@@ -38,7 +38,7 @@ export default function MeetingCards() {
       subtitle="Scheduled client meetings"
       delay={0.2}
       actions={<span className="badge badge-info">{upcoming.length} upcoming</span>}
-      className="flex flex-col h-full"
+      className="h-[420px] flex flex-col"
     >
       <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2">
         {upcoming.map((meeting, i) => {

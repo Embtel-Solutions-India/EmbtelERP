@@ -292,46 +292,8 @@ export default function CalendarWidget() {
     else setCurrent(subDays(current, 1))
   }
 
-  // All events filtered by type and aggregated with meetings/tasks from Redux
-  const { list: meetings } = useSelector(s => s.meetings || { list: [] })
-  const { list: tasks }    = useSelector(s => s.tasks    || { list: [] })
-
-  const allEvents = useMemo(() => {
-    const list = [...events]
-
-    // Merge local meeting slice events
-    meetings.forEach(m => {
-      list.push({
-        id: `meet-${m.id}`,
-        title: m.title || `Meeting – ${m.client || 'Client'}`,
-        date: m.date,
-        eventType: 'MEETING',
-        startTime: m.time,
-        status: 'SCHEDULED',
-        priority: 'MEDIUM',
-        description: m.location,
-        _readonly: true,
-      })
-    })
-    // Merge task deadlines
-    tasks.forEach(t => {
-      if (t.dueDate) {
-        const isFollowUp = String(t.title + ' ' + (t.description || '')).toLowerCase().includes('follow')
-        list.push({
-          id: `task-${t.id}`,
-          title: t.title,
-          date: t.dueDate,
-          eventType: isFollowUp ? 'FOLLOWUP' : 'TASK',
-          priority: (t.priority || 'medium').toUpperCase(),
-          status: (t.status || 'SCHEDULED').toUpperCase(),
-          description: t.description,
-          _readonly: true,
-        })
-      }
-    })
-
-    return list
-  }, [events, meetings, tasks])
+  // Only show the current user's own calendar events (fetched from personal API)
+  const allEvents = useMemo(() => [...events], [events])
 
   const filteredEvents = useMemo(() =>
     filterType === 'ALL' ? allEvents : allEvents.filter(e => e.eventType === filterType),

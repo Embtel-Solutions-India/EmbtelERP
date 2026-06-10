@@ -15,7 +15,6 @@ import TaskWidget from "../components/dashboard/TaskWidget";
 import TargetProgress from "../components/dashboard/TargetProgress";
 import OpportunityTable from "../components/dashboard/OpportunityTable";
 import CustomerInsights from "../components/dashboard/CustomerInsights";
-import CalendarWidget from "../components/dashboard/CalendarWidget";
 import {
   fetchDashboardOverview, fetchDashboardPerformance, fetchDashboardInsights,
   fetchDashboardTeam, fetchRoleWorkspace,
@@ -304,9 +303,8 @@ export default function Dashboard() {
 
       <OpportunityTable />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <CustomerInsights />
-        <CalendarWidget />
         <TargetProgress />
       </div>
     </div>

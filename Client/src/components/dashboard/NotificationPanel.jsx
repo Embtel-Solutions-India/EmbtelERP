@@ -22,6 +22,7 @@ export default function NotificationPanel() {
       title="Notifications"
       subtitle="CRM alerts & updates"
       delay={0.3}
+      className="h-[420px] flex flex-col"
       actions={
         unreadCount > 0 ? (
           <button
@@ -33,7 +34,7 @@ export default function NotificationPanel() {
         ) : null
       }
     >
-      <div className="space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
+      <div className="flex-1 min-h-0 space-y-2 overflow-y-auto pr-1 scrollbar-thin">
         {list.slice(0, 10).map((n, i) => {
           const style = TYPE_STYLES[n.type] || TYPE_STYLES.system
           const { Icon } = style

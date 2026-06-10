@@ -19,7 +19,7 @@ export default function TargetProgress() {
   ]
 
   return (
-    <SectionCard title={isMarketing ? "Marketing Target" : "Sales Target"} subtitle="Monthly performance tracker" delay={0.2}>
+    <SectionCard title={isMarketing ? "Marketing Target" : "Sales Target"} subtitle="Monthly performance tracker" delay={0.2} className="h-[420px] flex flex-col">
       <div className="flex items-center gap-6">
         <div className="relative flex-shrink-0" style={{ width: 120, height: 104 }}>
           <ResponsiveContainer width="100%" height="100%">

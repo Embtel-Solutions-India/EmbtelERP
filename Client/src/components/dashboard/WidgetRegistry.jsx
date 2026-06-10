@@ -381,7 +381,7 @@ function LeadPipelineWidget() {
   const { pipeline } = useSelector(s => s.workspace || {})
   const pipelineStages = pipeline?.pipeline || []
   return (
-    <SectionCard title="Lead Pipeline by Stage" subtitle="Funnel metrics" delay={0.2}>
+    <SectionCard title="Lead Pipeline by Stage" subtitle="Funnel metrics" delay={0.2} className="h-[420px] flex flex-col">
       {pipelineStages.length > 0 ? (
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
@@ -405,8 +405,8 @@ function HotLeadsWidget() {
   const { leads } = useSelector(s => s.workspace || {})
   const hotLeads = leads?.leads?.filter(l => l.status === 'QUALIFIED') || []
   return (
-    <SectionCard title="Hot Leads (Qualified)" subtitle="High intent prospects" delay={0.2} className="flex flex-col h-max">
-      <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
+    <SectionCard title="Hot Leads (Qualified)" subtitle="High intent prospects" delay={0.2} className="h-[420px] flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
         {hotLeads.length > 0 ? (
           hotLeads.slice(0, 6).map(lead => (
             <div key={lead.id} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
@@ -429,8 +429,8 @@ function TodayFollowupsWidget() {
   const { followUps } = useSelector(s => s.workspace || {})
   const todayTasks = followUps?.tasks || []
   return (
-    <SectionCard title="Today's Follow Ups" subtitle="Due interactions" delay={0.2} className="flex flex-col h-max">
-      <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
+    <SectionCard title="Today's Follow Ups" subtitle="Due interactions" delay={0.2} className="h-[420px] flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
         {todayTasks.length > 0 ? (
           todayTasks.slice(0, 6).map(task => (
             <div key={task.id} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
@@ -459,7 +459,7 @@ function WinLostWidget() {
     { name: 'Lost', value: summary.lost ?? 0, color: '#ef4444' }
   ]
   return (
-    <SectionCard title="Win / Lost Ratio" subtitle="Deal outcomes ratio" delay={0.2}>
+    <SectionCard title="Win / Lost Ratio" subtitle="Deal outcomes ratio" delay={0.2} className="h-[420px] flex flex-col">
       {summary.converted || summary.lost ? (
         <div className="h-44 flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
@@ -493,7 +493,7 @@ function SourceAnalyticsWidget() {
   }, {}) || {}
   const data = Object.entries(leadSources).map(([name, value]) => ({ name, value }))
   return (
-    <SectionCard title="Lead Source Analytics" subtitle="Marketing attribution" delay={0.2}>
+    <SectionCard title="Lead Source Analytics" subtitle="Marketing attribution" delay={0.2} className="h-[420px] flex flex-col">
       {data.length > 0 ? (
         <div className="h-44">
           <ResponsiveContainer width="100%" height="100%">
@@ -518,8 +518,8 @@ function TeamLeaderboardWidget() {
   const { teamLeaderboard } = useSelector(s => s.workspace || {})
   const leaderboard = Array.isArray(teamLeaderboard) ? teamLeaderboard : []
   return (
-    <SectionCard title="Team Leaderboard" subtitle="Productivity rankings" delay={0.2} className="flex flex-col h-max">
-      <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
+    <SectionCard title="Team Leaderboard" subtitle="Productivity rankings" delay={0.2} className="h-[420px] flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
         {leaderboard.length > 0 ? (
           leaderboard.slice(0, 6).map((member, i) => (
             <div key={member.id || i} className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl">
@@ -546,8 +546,8 @@ function TeamLeaderboardWidget() {
 
 function DepartmentHealthWidget() {
   return (
-    <SectionCard title="Department Health" subtitle="Task completion SLA" delay={0.2}>
-      <div className="space-y-3">
+    <SectionCard title="Department Health" subtitle="Task completion SLA" delay={0.2} className="h-[420px] flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
         {[
           { dept: 'Sales', health: 85, color: '#6366f1' },
           { dept: 'Marketing', health: 91, color: '#10b981' },
@@ -570,8 +570,8 @@ function DepartmentHealthWidget() {
 
 function BusinessHealthDetailsWidget() {
   return (
-    <SectionCard title="Business Health Score" subtitle="Core operations overview" delay={0.2}>
-      <div className="space-y-3">
+    <SectionCard title="Business Health Score" subtitle="Core operations overview" delay={0.2} className="h-[420px] flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
         {[
           { dept: 'Immigration', health: 92, color: '#10b981' },
           { dept: 'Evaluation', health: 88, color: '#6366f1' },

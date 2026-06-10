@@ -27,20 +27,14 @@ calendarRouter.get(
       ? new Date(String(endDate))
       : new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
 
+    // Calendar is strictly personal — each user only sees events they created
+    // or were explicitly assigned to. No manager visibility of team events.
     const events = await prisma.calendarEvent.findMany({
       where: {
-        businessId: { in: scope.visibleBusinesses },
         date: { gte: start, lte: end },
         OR: [
           { createdById: user.employeeId },
           { assignedToId: user.employeeId },
-          // Managers see all events in their visible employees' scope
-          ...(scope.visibleEmployees.length > 0
-            ? [
-                { createdById: { in: scope.visibleEmployees } },
-                { assignedToId: { in: scope.visibleEmployees } },
-              ]
-            : []),
         ],
       },
       orderBy: { date: "asc" },

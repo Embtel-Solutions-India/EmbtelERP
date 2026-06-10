@@ -24,7 +24,7 @@ export default function ActivityTimeline() {
   const activities = (workspaceActivities?.length ? workspaceActivities : dashboardActivities) || []
 
   return (
-    <SectionCard title="Recent Activities" subtitle="Your latest CRM interactions" delay={0.25} className="h-[380px] flex flex-col">
+    <SectionCard title="Recent Activities" subtitle="Your latest CRM interactions" delay={0.25} className="h-[420px] flex flex-col">
       <div className="relative flex-1 min-h-0 flex flex-col">
         <div className="absolute left-5 top-2 bottom-2 w-px bg-gradient-to-b from-primary-200 via-purple-200 to-transparent dark:from-primary-900 dark:via-purple-900" />
 

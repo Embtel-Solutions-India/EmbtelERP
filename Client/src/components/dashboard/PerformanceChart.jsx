@@ -99,7 +99,7 @@ export default function PerformanceChart({ data: apiData }) {
           ))}
         </div>
       }
-      className="h-[380px] flex flex-col"
+      className="h-[420px] flex flex-col"
     >
       <div className="flex gap-2 mb-4">
         {CHART_TABS.map((t) => (

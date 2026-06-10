@@ -61,7 +61,7 @@ export default function TaskWidget({ tasks: overviewData }) {
           {todayCount} due today
         </span>
       }
-      className="h-[380px] flex flex-col"
+      className="h-[420px] flex flex-col"
     >
       <div className="flex gap-1 mb-4 bg-neutral-100 dark:bg-neutral-700 rounded-xl p-1">
         {TABS.map((tab) => (

@@ -12,6 +12,7 @@ export const salesInternMenu = [
   { id: 'follow-ups',  label: 'Follow Ups',  icon: 'PhoneCallback', path: '/sales/follow-ups'       },
   { id: 'tasks',       label: 'Tasks',       icon: 'TaskAlt',       path: '/sales/tasks'            },
   { id: 'activities',  label: 'Activities',  icon: 'CalendarMonth', path: '/sales/activities'       },
+  { id: 'calendar',    label: 'Calendar',    icon: 'CalendarMonth', path: '/calendar'                },
   { id: 'profile',     label: 'Profile',     icon: 'AccountCircle', path: '/sales/profile'          },
 ]
 
@@ -24,6 +25,7 @@ export const salesExecutiveMenu = [
   { id: 'tasks',         label: 'Tasks',         icon: 'TaskAlt',       path: '/sales/tasks'         },
   { id: 'activities',    label: 'Activities',    icon: 'CalendarMonth', path: '/sales/activities'    },
   { id: 'performance',   label: 'Performance',   icon: 'Leaderboard',   path: '/sales/performance'   },
+  { id: 'calendar',      label: 'Calendar',      icon: 'CalendarMonth', path: '/calendar'            },
   { id: 'profile',       label: 'Profile',       icon: 'AccountCircle', path: '/sales/profile'       },
 ]
 
@@ -34,6 +36,7 @@ export const salesHeadMenu = [
   { id: 'performance',    label: 'Performance',     icon: 'Leaderboard',   path: '/sales/performance'       },
   { id: 'reports',        label: 'Reports',         icon: 'Assessment',    path: '/sales/reports'           },
   { id: 'approvals',      label: 'Approvals',       icon: 'TaskAlt',       path: '/sales/approvals'         },
+  { id: 'calendar',       label: 'Calendar',        icon: 'CalendarMonth', path: '/calendar'                },
   { id: 'profile',        label: 'Profile',         icon: 'AccountCircle', path: '/sales/profile'           },
 ]
 
@@ -48,6 +51,7 @@ export const marketingInternMenu = [
   { id: 'campaigns',  label: 'Campaigns',  icon: 'TrendingUp',    path: '/marketing/campaigns'        },
   { id: 'assets',     label: 'Content',    icon: 'RequestQuote',  path: '/marketing/assets'           },
   { id: 'activities', label: 'Activities', icon: 'CalendarMonth', path: '/marketing/activities'       },
+  { id: 'calendar',   label: 'Calendar',   icon: 'CalendarMonth', path: '/calendar'                   },
   { id: 'profile',    label: 'Profile',    icon: 'AccountCircle', path: '/marketing/profile'          },
 ]
 
@@ -61,6 +65,7 @@ export const marketingExecutiveMenu = [
   { id: 'activities',      label: 'Activities',       icon: 'CalendarMonth', path: '/marketing/activities'      },
   { id: 'performance',     label: 'Performance',      icon: 'Leaderboard',   path: '/marketing/performance'     },
   { id: 'reports',         label: 'Reports',          icon: 'Assessment',    path: '/marketing/reports'         },
+  { id: 'calendar',        label: 'Calendar',         icon: 'CalendarMonth', path: '/calendar'                  },
   { id: 'profile',         label: 'Profile',          icon: 'AccountCircle', path: '/marketing/profile'         },
 ]
 
@@ -73,6 +78,7 @@ export const marketingManagerMenu = [
   { id: 'approvals',       label: 'Approvals',        icon: 'TaskAlt',       path: '/marketing/approvals'         },
   { id: 'reports',         label: 'Reports',          icon: 'Assessment',    path: '/marketing/reports'           },
   { id: 'activities',      label: 'Activities',       icon: 'CalendarMonth', path: '/marketing/activities'        },
+  { id: 'calendar',        label: 'Calendar',         icon: 'CalendarMonth', path: '/calendar'                    },
   { id: 'profile',         label: 'Profile',          icon: 'AccountCircle', path: '/marketing/profile'           },
 ]
 
@@ -85,6 +91,7 @@ export const productionInternMenu = [
   { id: 'dashboard',   label: 'Dashboard',  icon: 'Dashboard',     path: '/production/dashboard'  },
   { id: 'documents',   label: 'Documents',  icon: 'Assessment',    path: '/production/documents'  },
   { id: 'tasks',       label: 'Tasks',      icon: 'TaskAlt',       path: '/production/tasks'      },
+  { id: 'calendar',    label: 'Calendar',   icon: 'CalendarMonth', path: '/calendar'              },
   { id: 'profile',     label: 'Profile',    icon: 'AccountCircle', path: '/production/profile'    },
 ]
 
@@ -95,6 +102,7 @@ export const productionExecutiveMenu = [
   { id: 'verification',  label: 'Verification', icon: 'TrendingUp',    path: '/production/verification' },
   { id: 'tasks',         label: 'Tasks',        icon: 'TaskAlt',       path: '/production/tasks'        },
   { id: 'reports',       label: 'Reports',      icon: 'Leaderboard',   path: '/production/reports'      },
+  { id: 'calendar',      label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'                },
   { id: 'profile',       label: 'Profile',      icon: 'AccountCircle', path: '/production/profile'      },
 ]
 
@@ -104,6 +112,7 @@ export const productionManagerMenu = [
   { id: 'approvals',    label: 'Approvals', icon: 'TaskAlt',       path: '/production/approvals'  },
   { id: 'team',         label: 'Team',      icon: 'People',        path: '/production/team'       },
   { id: 'reports',      label: 'Reports',   icon: 'Assessment',    path: '/production/reports'    },
+  { id: 'calendar',     label: 'Calendar',  icon: 'CalendarMonth', path: '/calendar'              },
   { id: 'profile',      label: 'Profile',   icon: 'AccountCircle', path: '/production/profile'    },
 ]
 
@@ -118,7 +127,8 @@ export const productionMenu = productionExecutiveMenu
 // ─── EVALUATION MODULE ────────────────────────────────────────────────────────
 
 export const evaluationMenu = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'Dashboard', path: '/evaluation/dashboard' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'Dashboard',     path: '/evaluation/dashboard' },
+  { id: 'calendar',  label: 'Calendar',  icon: 'CalendarMonth', path: '/calendar'             },
 ]
 
 export const headEvaluationMenu = [
@@ -128,6 +138,7 @@ export const headEvaluationMenu = [
   { id: 'performance',  label: 'Performance',  icon: 'Leaderboard',   path: '/evaluation/performance'    },
   { id: 'approvals',    label: 'Approvals',    icon: 'TaskAlt',       path: '/evaluation/approvals'      },
   { id: 'reports',      label: 'Reports',      icon: 'TrendingUp',    path: '/evaluation/reports'        },
+  { id: 'calendar',     label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'                  },
   { id: 'profile',      label: 'Profile',      icon: 'AccountCircle', path: '/evaluation/profile'        },
 ]
 export const professorMenu      = withDashboardPath(evaluationMenu, '/professor/dashboard')
@@ -141,6 +152,7 @@ export const hrMenu = [
   { id: 'attendance',   label: 'Attendance',   icon: 'CalendarMonth', path: '/hr/attendance'   },
   { id: 'performance',  label: 'Performance',  icon: 'Leaderboard',   path: '/hr/performance'  },
   { id: 'reports',      label: 'Reports',      icon: 'Assessment',    path: '/hr/reports'      },
+  { id: 'calendar',     label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'        },
   { id: 'profile',      label: 'Profile',      icon: 'AccountCircle', path: '/hr/profile'      },
 ]
 
@@ -156,19 +168,21 @@ export const ownerMenu = [
   { id: 'reports',     label: 'Reports',    icon: 'Assessment',    path: '/owner/reports'     },
   { id: 'analytics',   label: 'Analytics',  icon: 'TrendingUp',    path: '/owner/analytics'   },
   { id: 'approvals',   label: 'Approvals',  icon: 'TaskAlt',       path: '/owner/approvals'   },
+  { id: 'calendar',    label: 'Calendar',   icon: 'CalendarMonth', path: '/calendar'          },
   { id: 'profile',     label: 'Profile',    icon: 'AccountCircle', path: '/owner/profile'     },
 ]
 
-// Immigration Head has its own tailored menu; Vertical Manager shares Owner sub-pages.
+// Immigration Head has its own tailored menu with dedicated /head/* routes.
 export const headMenu = [
   { id: 'dashboard',   label: 'Dashboard',    icon: 'Dashboard',     path: '/head/dashboard'    },
-  { id: 'cases',       label: 'Active Cases', icon: 'RequestQuote',  path: '/owner/cases'       },
-  { id: 'team',        label: 'Team',         icon: 'People',        path: '/owner/employees'   },
-  { id: 'leads',       label: 'Lead Funnel',  icon: 'PersonAdd',     path: '/owner/businesses'  },
-  { id: 'performance', label: 'Performance',  icon: 'Leaderboard',   path: '/owner/analytics'   },
-  { id: 'reports',     label: 'Reports',      icon: 'Assessment',    path: '/owner/reports'     },
-  { id: 'approvals',   label: 'Approvals',    icon: 'TaskAlt',       path: '/owner/approvals'   },
-  { id: 'profile',     label: 'Profile',      icon: 'AccountCircle', path: '/owner/profile'     },
+  { id: 'cases',       label: 'Active Cases', icon: 'RequestQuote',  path: '/head/cases'        },
+  { id: 'team',        label: 'Team',         icon: 'People',        path: '/head/employees'    },
+  { id: 'leads',       label: 'Lead Funnel',  icon: 'PersonAdd',     path: '/head/businesses'   },
+  { id: 'performance', label: 'Performance',  icon: 'Leaderboard',   path: '/head/analytics'    },
+  { id: 'reports',     label: 'Reports',      icon: 'Assessment',    path: '/head/reports'      },
+  { id: 'approvals',   label: 'Approvals',    icon: 'TaskAlt',       path: '/head/approvals'    },
+  { id: 'calendar',    label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'          },
+  { id: 'profile',     label: 'Profile',      icon: 'AccountCircle', path: '/head/profile'      },
 ]
 export const verticalMenu = withDashboardPath(ownerMenu, '/vertical/dashboard')
 
@@ -180,6 +194,7 @@ export const adminMenu = [
   { id: 'users',         label: 'Users',                 icon: 'People',        path: '/admin/users'         },
   { id: 'roles',         label: 'Roles & Permissions',   icon: 'RequestQuote',  path: '/admin/roles'         },
   { id: 'audit',         label: 'Audit Logs',            icon: 'Assessment',    path: '/admin/audit'         },
+  { id: 'calendar',      label: 'Calendar',              icon: 'CalendarMonth', path: '/calendar'            },
   { id: 'settings',      label: 'Settings',              icon: 'Settings',      path: '/admin/settings'      },
 ]
 
