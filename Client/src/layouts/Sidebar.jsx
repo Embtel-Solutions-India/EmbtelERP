@@ -66,6 +66,7 @@ import {
   resetPerspective,
   fetchCurrentPerspective,
   fetchHierarchyTree,
+  fetchImmigrationHierarchyTree,
 } from "../redux/slices/perspectiveSlice";
 import {
   fetchDashboardOverview,
@@ -262,12 +263,16 @@ function roleLevelToType(level) {
 
 function mapRoleTree(node) {
   const type =
-    node.nodeType === "business" ? "BUSINESS" : roleLevelToType(node.roleLevel);
+    node.nodeType === "business"   ? "BUSINESS"
+    : node.nodeType === "vertical"   ? "VERTICAL"
+    : node.nodeType === "department" ? "MANAGER"
+    : roleLevelToType(node.roleLevel);
   return {
     id: node.id,
     type,
     label: node.name,
     designation: node.designation,
+    memberCount: node.memberCount,
     children: (node.children || []).map(mapRoleTree),
   };
 }
@@ -432,13 +437,19 @@ export default function Sidebar({ open, mobileOpen }) {
   useEffect(() => {
     dispatch(fetchPerspectives());
     dispatch(fetchCurrentPerspective());
-    dispatch(fetchHierarchyTree());
-  }, [dispatch]);
+    const isImmigrationModule = activeModule === "head" || activeModule === "vertical";
+    isImmigrationModule
+      ? dispatch(fetchImmigrationHierarchyTree())
+      : dispatch(fetchHierarchyTree());
+  }, [dispatch, activeModule]);
 
   const refreshAfterSwitch = () => {
     dispatch(fetchPerspectives());
     dispatch(fetchCurrentPerspective());
-    dispatch(fetchHierarchyTree());
+    const isImmigrationModule = activeModule === "head" || activeModule === "vertical";
+    isImmigrationModule
+      ? dispatch(fetchImmigrationHierarchyTree())
+      : dispatch(fetchHierarchyTree());
     dispatch(fetchDashboardOverview());
     dispatch(fetchDashboardPerformance());
     dispatch(fetchDashboardInsights());

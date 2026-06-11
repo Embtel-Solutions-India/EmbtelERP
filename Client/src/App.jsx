@@ -59,6 +59,15 @@ import HRAttendance          from './modules/hr/attendance/HRAttendance'
 import HRPerformance         from './modules/hr/performance/HRPerformance'
 import HRReports             from './modules/hr/reports/HRReports'
 
+// ── Immigration Module ───────────────────────────────────────────────────────
+import HeadDashboard      from './pages/HeadDashboard'
+import HeadCasesPage      from './pages/HeadCasesPage'
+import HeadTeamPage       from './pages/HeadTeamPage'
+import HeadLeadsPage      from './pages/HeadLeadsPage'
+import HeadAnalyticsPage  from './pages/HeadAnalyticsPage'
+import HeadReportsPage    from './pages/HeadReportsPage'
+import HeadApprovalsPage  from './pages/HeadApprovalsPage'
+
 /**
  * Sends authenticated users to the route that matches their role.
  */
@@ -201,13 +210,13 @@ export default function App() {
 
           {/* ── Immigration Head module ───────────────────────────────────── */}
           <Route element={<RoleRouteGuard allowedLevels={[3, 4, 5]} allowedDesignations={['immigration']} />}>
-            <Route path="head/dashboard"   element={<OwnerDashboard />} />
-            <Route path="head/cases"       element={<CasesPage />} />
-            <Route path="head/employees"   element={<EmployeesPage />} />
-            <Route path="head/businesses"  element={<Reports />} />
-            <Route path="head/analytics"   element={<Performance />} />
-            <Route path="head/reports"     element={<Reports />} />
-            <Route path="head/approvals"   element={<Tasks />} />
+            <Route path="head/dashboard"   element={<HeadDashboard />} />
+            <Route path="head/cases"       element={<HeadCasesPage />} />
+            <Route path="head/employees"   element={<HeadTeamPage />} />
+            <Route path="head/businesses"  element={<HeadLeadsPage />} />
+            <Route path="head/analytics"   element={<HeadAnalyticsPage />} />
+            <Route path="head/reports"     element={<HeadReportsPage />} />
+            <Route path="head/approvals"   element={<HeadApprovalsPage />} />
             <Route path="head/profile"     element={<Profile />} />
           </Route>
 

@@ -10,4 +10,5 @@ export const perspectiveService = {
     getAncestors: (employeeId) => api.get(`/hierarchy/ancestors/${employeeId}`),
     getNodeDescendants: (employeeId) => api.get(`/hierarchy/node-descendants/${employeeId}`),
     getHierarchyTree: () => api.get('/hierarchy/tree'),
+    getImmigrationTree: () => api.get('/immigration/tree'),
 }

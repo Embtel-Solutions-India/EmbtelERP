@@ -85,6 +85,18 @@ export const fetchHierarchyTree = createAsyncThunk(
     }
 )
 
+export const fetchImmigrationHierarchyTree = createAsyncThunk(
+    'perspective/fetchImmigrationHierarchyTree',
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await perspectiveService.getImmigrationTree()
+            return res.data
+        } catch (err) {
+            return rejectWithValue(err.message)
+        }
+    }
+)
+
 const initialState = {
     availablePerspectives: [],
     current: null,
@@ -179,6 +191,18 @@ const perspectiveSlice = createSlice({
                 state.hierarchyTree = action.payload?.data || []
             })
             .addCase(fetchHierarchyTree.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload
+            })
+            // Fetch immigration structural tree (vertical→department→employee)
+            .addCase(fetchImmigrationHierarchyTree.pending, (state) => {
+                state.loading = true
+            })
+            .addCase(fetchImmigrationHierarchyTree.fulfilled, (state, action) => {
+                state.loading = false
+                state.hierarchyTree = action.payload || []
+            })
+            .addCase(fetchImmigrationHierarchyTree.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload
             })

@@ -21,6 +21,9 @@ import marketingEmailReducer     from '../modules/marketing/redux/marketingEmail
 // HR Reducer
 import hrReducer from '../modules/hr/redux/hrSlice'
 
+// Immigration Reducer
+import immigrationReducer from '../modules/immigration/redux/immigrationSlice'
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -44,6 +47,9 @@ export const store = configureStore({
 
     // HR slice
     hr: hrReducer,
+
+    // Immigration slice
+    immigration: immigrationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),
