@@ -201,7 +201,10 @@ export async function updateSalesLead(
     estimatedValue: normalizeMoney(input.estimatedValue),
   };
 
-  if (input.status === SalesLeadStatus.WON && !input.convertedAt) {
+  if (
+    (input.status === SalesLeadStatus.WON || input.status === SalesLeadStatus.CONVERTED) &&
+    !input.convertedAt
+  ) {
     data.convertedAt = new Date();
   }
 

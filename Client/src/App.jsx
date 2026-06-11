@@ -8,6 +8,11 @@ import MainLayout from './layouts/MainLayout'
 import Login from './pages/Login'
 import RoleRouteGuard from './components/common/RoleRouteGuard'
 
+// ── Sales Executive (additive) ───────────────────────────────────────────────
+import AddLeadForm from './modules/sales/forms/AddLeadForm'
+import TaskForm from './modules/sales/forms/TaskForm'
+import SalesExecOverview from './modules/sales/pages/SalesExecOverview'
+
 // ── Shared pages ────────────────────────────────────────────────────────────
 import Dashboard from './pages/Dashboard'
 import Leads from './pages/Leads'
@@ -108,6 +113,9 @@ export default function App() {
 
           {/* Sales Level >= 1 (Executive+) */}
           <Route element={<RoleRouteGuard allowedLevels={[1, 2, 3, 4, 5]} />}>
+            <Route path="sales/add-lead"      element={<AddLeadForm />} />
+            <Route path="sales/overview"      element={<SalesExecOverview />} />
+            <Route path="sales/tasks/new"     element={<TaskForm />} />
             <Route path="sales/follow-ups"    element={<FollowUps />} />
             <Route path="sales/meetings"      element={<Meetings />} />
             <Route path="sales/customers"     element={<Customers />} />
@@ -205,8 +213,20 @@ export default function App() {
             <Route path="owner/profile"             element={<Profile />} />
           </Route>
 
-          {/* ── Calendar — shared across all roles ────────────────────────── */}
-          <Route path="calendar" element={<CalendarPage />} />
+          {/* ── Calendar — module-scoped per role so hierarchy context is kept ── */}
+          {[
+            'sales-intern', 'sales', 'sales-manager',
+            'marketing-intern', 'marketing', 'marketing-manager',
+            'production', 'documentation-intern', 'documentation', 'documentation-manager',
+            'evaluation', 'head-evaluation', 'professor',
+            'hr', 'hr-executive', 'recruitment',
+            'owner', 'head', 'vertical',
+            'admin', 'super-admin',
+          ].map((m) => (
+            <Route key={m} path={`${m}/calendar`} element={<CalendarPage />} />
+          ))}
+          {/* Legacy global calendar → resolve to the user's role home (never a foreign dashboard) */}
+          <Route path="calendar" element={<Navigate to="/" replace />} />
 
           {/* ── Immigration Head module ───────────────────────────────────── */}
           <Route element={<RoleRouteGuard allowedLevels={[3, 4, 5]} allowedDesignations={['immigration']} />}>

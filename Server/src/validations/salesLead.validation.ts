@@ -11,7 +11,31 @@ export const salesLeadStatusSchema = z.enum([
   "NEGOTIATION",
   "WON",
   "LOST",
+  "CONSULTATION_SCHEDULED",
+  "DOCUMENTS_REQUESTED",
+  "CONVERTED",
+  "TRANSFERRED_TO_DOCUMENTATION",
 ]);
+
+// Optional immigration profile sent by the Sales Executive Add Lead form.
+// Every field optional so the core lead create is unaffected when omitted.
+export const leadImmigrationSchema = z.object({
+  whatsapp:                  z.string().nullable().optional(),
+  countryOfResidence:        z.string().nullable().optional(),
+  nationality:               z.string().nullable().optional(),
+  visaCategory:              z.string().nullable().optional(),
+  interestedVisa:            z.string().nullable().optional(),
+  currentStatus:             z.string().nullable().optional(),
+  education:                 z.string().nullable().optional(),
+  workExperience:            z.coerce.number().int().nonnegative().nullable().optional(),
+  familyImmigrationRequired: z.coerce.boolean().nullable().optional(),
+  budgetMin:                 optionalMoney,
+  budgetMax:                 optionalMoney,
+  urgencyLevel:              z.string().nullable().optional(),
+  interestedLevel:           z.string().nullable().optional(),
+  consultationRequired:      z.coerce.boolean().nullable().optional(),
+  consultationDate:          nullableDate,
+});
 
 export const createSalesLeadSchema = z.object({
   businessId:     z.string().min(1),
@@ -28,6 +52,7 @@ export const createSalesLeadSchema = z.object({
   estimatedValue: optionalMoney,
   notes:          z.string().nullable().optional(),
   convertedAt:    nullableDate,
+  immigration:    leadImmigrationSchema.optional(),
 });
 
 export const updateSalesLeadSchema = createSalesLeadSchema

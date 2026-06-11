@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 import type { SalesLeadContext } from "../services/salesLead.service.js";
 import {
-  createSalesLead,
   deleteSalesLead,
   listSalesLeads,
   updateSalesLead,
 } from "../services/salesLead.service.js";
+import { createLeadWithImmigration } from "../services/leadImmigration.service.js";
 
 function salesCtx(req: Request): SalesLeadContext {
   return {
@@ -20,7 +20,7 @@ export async function listLeads(req: Request, res: Response) {
 }
 
 export async function createLead(req: Request, res: Response) {
-  const lead = await createSalesLead(salesCtx(req), req.body);
+  const lead = await createLeadWithImmigration(salesCtx(req), req.body);
   res.status(201).json({ data: lead });
 }
 

@@ -32,7 +32,10 @@ tasksRouter.patch(
   "/:id",
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);
-    const { title, description, status, priority, dueDate, assigneeId } = req.body;
+    const {
+      title, description, status, priority, dueDate, assigneeId,
+      leadId, taskType, dueTime, taskResult, nextFollowUpDate, outcomeNotes,
+    } = req.body;
     const data: any = {};
     if (title !== undefined) data.title = title;
     if (description !== undefined) data.description = description;
@@ -40,6 +43,12 @@ tasksRouter.patch(
     if (priority !== undefined) data.priority = priority;
     if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
     if (assigneeId !== undefined) data.assigneeId = assigneeId;
+    if (leadId !== undefined) data.leadId = leadId || null;
+    if (taskType !== undefined) data.taskType = taskType;
+    if (dueTime !== undefined) data.dueTime = dueTime;
+    if (taskResult !== undefined) data.taskResult = taskResult;
+    if (nextFollowUpDate !== undefined) data.nextFollowUpDate = nextFollowUpDate ? new Date(nextFollowUpDate) : null;
+    if (outcomeNotes !== undefined) data.outcomeNotes = outcomeNotes;
 
     const task = await prisma.task.update({
       where: { id },
@@ -56,8 +65,11 @@ tasksRouter.post(
   "/",
   asyncHandler(async (req, res) => {
     const user = req.user!;
-    const { title, priority, status, dueDate, assigneeId, teamId, verticalId, departmentId, description } = req.body;
-    
+    const {
+      title, priority, status, dueDate, assigneeId, teamId, verticalId, departmentId, description,
+      leadId, taskType, dueTime, taskResult, nextFollowUpDate, outcomeNotes,
+    } = req.body;
+
     const employee = await prisma.employee.findUnique({
       where: { id: user.employeeId },
       select: { businessId: true, teamId: true, verticalId: true, departmentId: true }
@@ -80,6 +92,13 @@ tasksRouter.post(
         verticalId: verticalId ?? employee.verticalId,
         departmentId: departmentId ?? employee.departmentId,
         description,
+        // Sales Executive task fields (all optional)
+        leadId: leadId || null,
+        taskType: taskType ?? null,
+        dueTime: dueTime ?? null,
+        taskResult: taskResult ?? null,
+        nextFollowUpDate: nextFollowUpDate ? new Date(nextFollowUpDate) : null,
+        outcomeNotes: outcomeNotes ?? null,
       },
     });
     res.status(201).json({ data: task });
