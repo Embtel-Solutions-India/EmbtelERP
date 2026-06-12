@@ -86,6 +86,30 @@ export function KpiCardsWidget({ role }) {
   const { overview } = useSelector(s => s.dashboard || {})
   const { list: tasks } = useSelector(s => s.tasks || { list: [] })
   const { kpiStats } = useSelector(s => s.marketingDashboard || { kpiStats: {} })
+  // Sales dashboards source their KPIs from the sales lead slice (real sales
+  // leads), not the marketing-backed workspace summary.
+  const salesLeads = useSelector(s => s.leads || {})
+  const salesSummary = salesLeads?.summary || {}
+  const salesList    = salesLeads?.list || []
+  const salesLoading = salesLeads?.loading
+  const salesError   = salesLeads?.error
+  // Sales follow-up tasks live in their own (sales-only) slice.
+  const salesTasks   = useSelector(s => s.salesTasks || {})
+  const stSummary    = salesTasks?.summary || {}
+
+  // Loading / error / empty states for the sales KPI grid (real data only).
+  const salesKpiState = () => {
+    if (salesError) {
+      return <div className="col-span-full card p-6 text-center text-sm text-red-500">Failed to load KPIs: {String(salesError)}</div>
+    }
+    if (salesLoading && salesList.length === 0) {
+      return <>{Array.from({ length: 8 }).map((_, i) => <WidgetSkeleton key={i} />)}</>
+    }
+    if (!salesLoading && salesList.length === 0) {
+      return <div className="col-span-full card p-6 text-center text-sm text-neutral-500">No sales data yet — add a lead to populate KPIs.</div>
+    }
+    return null
+  }
 
   const summary         = leads?.summary || {}
   const todayFU         = followUps?.todayCount ?? 0
@@ -105,66 +129,52 @@ export function KpiCardsWidget({ role }) {
 
   // ── Sales Intern ─────────────────────────────────────────────
   if (role === 'sales_intern') {
-    const assigned = leads?.leads?.length ?? 0
-    const needUpdate = leads?.leads?.filter(l => ['NEW', 'CONTACTED'].includes(l.status)).length ?? 0
+    const state = salesKpiState()
+    if (state) return <KpiGrid>{state}</KpiGrid>
     return (
       <KpiGrid>
-        <K title="Leads Assigned"    value={assigned}       icon={<FaUserPlus />}          color="#6366f1" change={8}   changeLabel="new this week"   spark={SPARK_UP}     delay={0}    />
-        <K title="Today's Follow Ups" value={todayFU}        icon={<FaPhoneAlt />}          color="#f59e0b" change={overdueFU > 0 ? -overdueFU : 0} changeLabel="overdue" spark={SPARK_VOLATILE} delay={0.05} formatValue={false} />
-        <K title="Leads Need Update"  value={needUpdate}     icon={<FaExclamationTriangle />} color="#ef4444" change={-3}  changeLabel="vs yesterday"   spark={SPARK_DOWN}   delay={0.1}  />
-        <K title="Pending Tasks"      value={pendingFU}      icon={<FaTasks />}             color="#8b5cf6" change={0}   changeLabel="due today"       spark={SPARK_FLAT}   delay={0.15} />
-        <K title="Task Completion"    value={taskRate}       icon={<FaCheckCircle />}       color="#10b981" change={5}   changeLabel="vs last week"    spark={SPARK_UP}     delay={0.2}  suffix="%" formatValue={false} />
+        <K title="Leads Assigned"        value={salesSummary.total ?? 0}                 icon={<FaUserPlus />}   color="#6366f1" spark={null} delay={0}    />
+        <K title="New Leads"             value={salesSummary.new ?? 0}                   icon={<FaStar />}       color="#8b5cf6" spark={null} delay={0.05} />
+        <K title="Today's Follow-Ups"    value={stSummary.todayFollowUps ?? 0}           icon={<FaPhoneAlt />}   color="#f59e0b" spark={null} delay={0.1}  formatValue={false} />
+        <K title="Pending Tasks"         value={stSummary.pending ?? 0}                  icon={<FaTasks />}      color="#06b6d4" spark={null} delay={0.15} formatValue={false} />
+        <K title="Consultations Scheduled" value={salesSummary.consultationScheduled ?? 0} icon={<FaCalendarAlt />} color="#10b981" spark={null} delay={0.2} formatValue={false} />
       </KpiGrid>
     )
   }
 
   // ── Sales Executive ─────────────────────────────────────────
   if (role === 'sales_executive') {
-    const totalLeads    = summary.total ?? 0
-    const newToday      = summary.new ?? 0
-    const qualified     = summary.qualified ?? summary.total ?? 0
-    const hot           = summary.hot ?? 0
-    const won           = summary.converted ?? 0
-    const lost          = summary.lost ?? 0
-    const revenue       = summary.totalValue ?? 0
-    const convRate      = summary.conversionRate ?? 0
+    const state = salesKpiState()
+    if (state) return <KpiGrid>{state}</KpiGrid>
     return (
       <KpiGrid>
-        <K title="Total Leads"        value={totalLeads}  icon={<FaUsers />}           color="#6366f1" change={12}     changeLabel="vs last month"   spark={SPARK_UP}     delay={0}    />
-        <K title="New Leads Today"    value={newToday}    icon={<FaUserPlus />}         color="#8b5cf6" change={newToday > 0 ? 8 : 0} changeLabel="added today" spark={SPARK_GROWTH} delay={0.05} />
-        <K title="Qualified Leads"    value={qualified}   icon={<FaThumbsUp />}         color="#06b6d4" change={6}      changeLabel="vs last week"    spark={SPARK_UP}     delay={0.1}  />
-        <K title="Hot Leads"          value={hot}         icon={<FaFire />}             color="#ef4444" change={hot > 0 ? 15 : 0}  changeLabel="high priority" spark={SPARK_VOLATILE} delay={0.15} />
-        <K title="Follow Ups Pending" value={pendingFU}   icon={<FaPhoneAlt />}         color="#f59e0b" change={overdueFU > 0 ? -overdueFU : 0} changeLabel="overdue" spark={SPARK_FLAT} delay={0.2} />
-        <K title="Meetings Scheduled" value={tasks?.filter(t => String(t.title).toLowerCase().includes('meet')).length ?? 0} icon={<FaCalendarAlt />} color="#10b981" change={3} changeLabel="this week" spark={SPARK_UP} delay={0.25} />
-        <K title="Won Deals"          value={won}         icon={<FaHandshake />}        color="#10b981" change={won > 0 ? 20 : 0}   changeLabel="this month"  spark={SPARK_GROWTH} delay={0.3}  />
-        <K title="Lost Deals"         value={lost}        icon={<FaExclamationTriangle />} color="#ef4444" change={lost > 0 ? -5 : 0} changeLabel="vs last month" spark={SPARK_DOWN} delay={0.35} />
-        <K title="Monthly Revenue"    value={revenue}     icon={<FaDollarSign />}       color="#8b5cf6" prefix="$" change={18} changeLabel="vs last month" spark={SPARK_GROWTH} delay={0.4} />
-        <K title="Target Achievement" value={convRate}    icon={<FaBullseye />}         color="#f59e0b" suffix="%" change={convRate > 0 ? 5 : 0} changeLabel="conversion rate" spark={SPARK_UP} delay={0.45} formatValue={false} />
+        <K title="Total Leads"             value={salesSummary.total ?? 0}                 icon={<FaUsers />}      color="#6366f1" spark={null} delay={0}    />
+        <K title="New Leads"               value={salesSummary.new ?? 0}                   icon={<FaUserPlus />}   color="#8b5cf6" spark={null} delay={0.05} />
+        <K title="Hot Leads"               value={salesSummary.hot ?? 0}                   icon={<FaFire />}       color="#ef4444" spark={null} delay={0.1}  />
+        <K title="Today's Follow-Ups"      value={stSummary.todayFollowUps ?? 0}           icon={<FaPhoneAlt />}   color="#f59e0b" spark={null} delay={0.15} formatValue={false} />
+        <K title="Pending Tasks"           value={stSummary.pending ?? 0}                  icon={<FaTasks />}      color="#06b6d4" spark={null} delay={0.2}  formatValue={false} />
+        <K title="Consultations Scheduled" value={salesSummary.consultationScheduled ?? 0} icon={<FaCalendarAlt />} color="#0ea5e9" spark={null} delay={0.25} formatValue={false} />
+        <K title="Converted Clients"       value={salesSummary.converted ?? 0}             icon={<FaHandshake />}  color="#10b981" spark={null} delay={0.3}  />
+        <K title="Monthly Revenue"         value={salesSummary.monthlyRevenue ?? 0}        icon={<FaDollarSign />} color="#8b5cf6" prefix="$" spark={null} delay={0.35} />
       </KpiGrid>
     )
   }
 
   // ── Sales Head ──────────────────────────────────────────────
   if (role === 'sales_head') {
-    const totalLeads  = summary.total ?? 0
-    const qualified   = summary.qualified ?? 0
-    const hot         = summary.hot ?? 0
-    const won         = summary.converted ?? 0
-    const lost        = summary.lost ?? 0
-    const convRate    = summary.conversionRate ?? 0
-    const teamTarget  = overview?.teamKpis?.targetAchievement ?? targetPct
+    const state = salesKpiState()
+    if (state) return <KpiGrid>{state}</KpiGrid>
+    const headRevenue = teamRevenue || (salesSummary.monthlyRevenue ?? 0)
     return (
       <KpiGrid>
-        <K title="Total Leads"        value={totalLeads}   icon={<FaUsers />}           color="#6366f1" change={10}      changeLabel="vs last month"   spark={SPARK_UP}     delay={0}    />
-        <K title="Team Revenue"       value={teamRevenue}  icon={<FaDollarSign />}      color="#10b981" prefix="$" change={22} changeLabel="vs last month" spark={SPARK_GROWTH} delay={0.05} />
-        <K title="Qualified Leads"    value={qualified}    icon={<FaThumbsUp />}        color="#06b6d4" change={8}       changeLabel="in funnel"       spark={SPARK_UP}     delay={0.1}  />
-        <K title="Hot Leads"          value={hot}          icon={<FaFire />}            color="#ef4444" change={hot > 0 ? 12 : 0} changeLabel="urgent" spark={SPARK_VOLATILE} delay={0.15} />
-        <K title="Follow Ups Pending" value={pendingFU}    icon={<FaPhoneAlt />}        color="#f59e0b" change={overdueFU > 0 ? -overdueFU : 0} changeLabel="overdue" spark={SPARK_FLAT} delay={0.2} />
-        <K title="Won Deals"          value={won}          icon={<FaHandshake />}       color="#10b981" change={won > 0 ? 18 : 0} changeLabel="this month" spark={SPARK_GROWTH} delay={0.25} />
-        <K title="Lost Deals"         value={lost}         icon={<FaExclamationTriangle />} color="#ef4444" change={lost > 0 ? -8 : 0} changeLabel="vs target" spark={SPARK_DOWN} delay={0.3} />
-        <K title="Conversion Rate"    value={convRate}     icon={<FaChartLine />}       color="#8b5cf6" suffix="%" change={4} changeLabel="team average" spark={SPARK_UP} delay={0.35} formatValue={false} />
-        <K title="Team Members"       value={totalEmployees} icon={<FaUserTie />}       color="#06b6d4" change={0}       changeLabel="active reps"     spark={SPARK_FLAT}   delay={0.4}  />
-        <K title="Target Achievement" value={teamTarget}   icon={<FaBullseye />}        color="#f59e0b" suffix="%" change={teamTarget > 0 ? 6 : 0} changeLabel="vs target" spark={SPARK_UP} delay={0.45} formatValue={false} />
+        <K title="Total Leads"             value={salesSummary.total ?? 0}                 icon={<FaUsers />}      color="#6366f1" spark={null} delay={0}    />
+        <K title="Converted Clients"       value={salesSummary.converted ?? 0}             icon={<FaHandshake />}  color="#10b981" spark={null} delay={0.05} />
+        <K title="Hot Leads"               value={salesSummary.hot ?? 0}                   icon={<FaFire />}       color="#ef4444" spark={null} delay={0.1}  />
+        <K title="Today's Follow-Ups"      value={stSummary.todayFollowUps ?? 0}           icon={<FaPhoneAlt />}   color="#f59e0b" spark={null} delay={0.15} formatValue={false} />
+        <K title="Pending Tasks"           value={stSummary.pending ?? 0}                  icon={<FaTasks />}      color="#06b6d4" spark={null} delay={0.2}  formatValue={false} />
+        <K title="Consultations Scheduled" value={salesSummary.consultationScheduled ?? 0} icon={<FaCalendarAlt />} color="#0ea5e9" spark={null} delay={0.25} formatValue={false} />
+        <K title="Conversion Rate"         value={salesSummary.conversionRate ?? 0}        icon={<FaChartLine />}  color="#8b5cf6" suffix="%" spark={null} delay={0.3} formatValue={false} />
+        <K title="Team Revenue"            value={headRevenue}                             icon={<FaDollarSign />} color="#10b981" prefix="$" spark={null} delay={0.35} />
       </KpiGrid>
     )
   }

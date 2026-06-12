@@ -1,5 +1,8 @@
 import { prisma } from "../config/prisma.js";
 import { getDescendants, getDescendantIds } from "./hierarchy.service.js";
+// NOTE: buildScope only needs descendant *ids*, so it uses getDescendantIds
+// (a single recursive query) rather than getDescendants (which additionally
+// fetches full employee rows) — one fewer round-trip on every scoped request.
 import { getActivePerspectiveForUser } from "./perspective.service.js";
 import { isWorkforceManager } from "../utils/workforce.js";
 
@@ -326,11 +329,8 @@ async function buildScope(
     };
   }
 
-  const baseEmployees = await getDescendants(perspectiveTarget.id);
-  const employeeIds = [
-    perspectiveTarget.id,
-    ...baseEmployees.map((employee) => employee.id),
-  ];
+  const descendantIds = await getDescendantIds(perspectiveTarget.id);
+  const employeeIds = [perspectiveTarget.id, ...descendantIds];
   const businessIds = [perspectiveTarget.businessId];
 
   const [departmentIds, teamIds] = await Promise.all([

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { workspaceService } from '../../services/workspaceService'
+import { leadService } from '../../services/leadService'
 
 export const fetchWorkspaceLeads = createAsyncThunk(
   'workspace/fetchLeads',
@@ -65,6 +66,24 @@ export const fetchTeamStats = createAsyncThunk(
   }
 )
 
+// Sales-specific aggregations (sourced from SalesLead) — populate the same
+// teamLeaderboard / teamStats keys so the dashboard widgets stay unchanged.
+export const fetchSalesTeamLeaderboard = createAsyncThunk(
+  'workspace/fetchSalesTeamLeaderboard',
+  async (_, { rejectWithValue }) => {
+    try { return (await leadService.getLeaderboard()).data }
+    catch (err) { return rejectWithValue(err.message) }
+  }
+)
+
+export const fetchSalesTeamStats = createAsyncThunk(
+  'workspace/fetchSalesTeamStats',
+  async (_, { rejectWithValue }) => {
+    try { return (await leadService.getTeamStats()).data }
+    catch (err) { return rejectWithValue(err.message) }
+  }
+)
+
 const workspaceSlice = createSlice({
   name: 'workspace',
   initialState: {
@@ -112,6 +131,8 @@ const workspaceSlice = createSlice({
     handle(fetchWorkspacePipeline, 'pipeline')
     handle(fetchWorkspaceActivities, 'activities')
     handle(fetchTeamStats, 'teamStats')
+    handle(fetchSalesTeamLeaderboard, 'teamLeaderboard')
+    handle(fetchSalesTeamStats, 'teamStats')
   },
 })
 

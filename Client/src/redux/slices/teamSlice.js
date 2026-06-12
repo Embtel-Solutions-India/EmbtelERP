@@ -1,59 +1,41 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { employeeService } from '../../services/employeeService'
 
-const initialSalesTeam = [
-  {
-    id: 1,
-    full_name: 'Aman Sharma',
-    employee_id: 'EMP-S001',
-    email: 'aman@crmpro.com',
-    phone: '+91 98765 00001',
+// Map a live Employee record into the shape the team components expect.
+function mapEmployeeToMember(e) {
+  return {
+    id: e.id,
+    full_name: e.fullName || `${e.firstName ?? ''} ${e.lastName ?? ''}`.trim(),
+    employee_id: e.employeeCode || e.id,
+    email: e.email || '',
+    phone: e.phone || '—',
     department: 'Sales',
-    designation: 'Sales Executive',
-    reporting_manager: 'Vikram Nair',
-    joining_date: '2025-01-15',
-    status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb'
-  },
-  {
-    id: 2,
-    full_name: 'Rahul Verma',
-    employee_id: 'EMP-S002',
-    email: 'rahul@crmpro.com',
-    phone: '+91 98765 00002',
-    department: 'Sales',
-    designation: 'Sales Executive',
-    reporting_manager: 'Vikram Nair',
-    joining_date: '2025-03-10',
-    status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'
-  },
-  {
-    id: 3,
-    full_name: 'Priya Singh',
-    employee_id: 'EMP-S003',
-    email: 'priya@crmpro.com',
-    phone: '+91 98765 00003',
-    department: 'Sales',
-    designation: 'Sales Intern',
-    reporting_manager: 'Aman Sharma',
-    joining_date: '2026-02-01',
-    status: 'On Leave',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330'
-  },
-  {
-    id: 4,
-    full_name: 'Neha Gupta',
-    employee_id: 'EMP-S004',
-    email: 'neha@crmpro.com',
-    phone: '+91 98765 00004',
-    department: 'Sales',
-    designation: 'Sales Intern',
-    reporting_manager: 'Rahul Verma',
-    joining_date: '2026-05-01',
-    status: 'Inactive',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80'
+    designation: e.designation || 'Sales',
+    reporting_manager: e.manager ? `${e.manager.firstName ?? ''} ${e.manager.lastName ?? ''}`.trim() : '—',
+    joining_date: e.joiningDate || e.createdAt || null,
+    status: e.isActive === false ? 'Inactive' : 'Active',
+    avatar: e.avatar || undefined,
   }
-]
+}
+
+// Load Sales department members from the live employees API (no demo data).
+export const fetchSalesTeam = createAsyncThunk(
+  'team/fetchSales',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await employeeService.getAll()
+      const list = res.data || []
+      return list
+        .filter((e) => {
+          const dept = typeof e.department === 'object' ? e.department?.name : e.department
+          return `${e.designation || ''} ${dept || ''}`.toLowerCase().includes('sales')
+        })
+        .map(mapEmployeeToMember)
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
+  }
+)
 
 const initialMarketingTeam = [
   {
@@ -113,7 +95,7 @@ const initialMarketingTeam = [
 const teamSlice = createSlice({
   name: 'team',
   initialState: {
-    sales: initialSalesTeam,
+    sales: [],
     marketing: initialMarketingTeam,
     loading: false
   },
@@ -145,6 +127,15 @@ const teamSlice = createSlice({
         }
       })
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchSalesTeam.pending, (state) => { state.loading = true })
+      .addCase(fetchSalesTeam.fulfilled, (state, action) => {
+        state.loading = false
+        state.sales = action.payload
+      })
+      .addCase(fetchSalesTeam.rejected, (state) => { state.loading = false })
   }
 })
 

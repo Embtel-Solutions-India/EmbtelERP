@@ -5,6 +5,8 @@ import {
   deleteSalesLead,
   listSalesLeads,
   updateSalesLead,
+  convertSalesLead,
+  transferSalesLead,
 } from "../services/salesLead.service.js";
 
 function salesCtx(req: Request): SalesLeadContext {
@@ -32,4 +34,14 @@ export async function updateLead(req: Request, res: Response) {
 export async function deleteLead(req: Request, res: Response) {
   await deleteSalesLead(salesCtx(req), String(req.params.id));
   res.status(204).end();
+}
+
+export async function convertLead(req: Request, res: Response) {
+  const lead = await convertSalesLead(salesCtx(req), String(req.params.id));
+  res.json({ data: lead });
+}
+
+export async function transferLead(req: Request, res: Response) {
+  const lead = await transferSalesLead(salesCtx(req), String(req.params.id));
+  res.json({ data: lead });
 }

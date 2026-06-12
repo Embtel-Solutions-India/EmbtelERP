@@ -4,6 +4,7 @@ import dashboardReducer from './slices/dashboardSlice'
 import leadReducer from './slices/leadSlice'
 import meetingReducer from './slices/meetingSlice'
 import taskReducer from './slices/taskSlice'
+import salesTaskReducer from './slices/salesTaskSlice'
 import notificationReducer from './slices/notificationSlice'
 import themeReducer        from './slices/themeSlice'
 import teamReducer         from './slices/teamSlice'
@@ -12,6 +13,7 @@ import workspaceReducer    from './slices/workspaceSlice'
 import employeeReducer     from './slices/employeeSlice'
 import documentReducer     from './slices/documentSlice'
 import calendarReducer     from './slices/calendarSlice'
+import auditReducer        from './slices/auditSlice'
 
 // Marketing Reducers
 import marketingDashboardReducer from '../modules/marketing/redux/marketingDashboardSlice'
@@ -31,6 +33,7 @@ export const store = configureStore({
     leads: leadReducer,
     meetings: meetingReducer,
     tasks: taskReducer,
+    salesTasks: salesTaskReducer,
     notifications: notificationReducer,
     theme:         themeReducer,
     team:          teamReducer,
@@ -39,6 +42,7 @@ export const store = configureStore({
     employees:     employeeReducer,
     documents:     documentReducer,
     calendar:      calendarReducer,
+    audit:         auditReducer,
 
     // Marketing slices
     marketingDashboard: marketingDashboardReducer,

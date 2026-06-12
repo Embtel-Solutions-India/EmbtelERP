@@ -11,7 +11,7 @@ export const salesInternMenu = [
   { id: 'leads',       label: 'My Leads',    icon: 'PersonAdd',     path: '/sales/leads'            },
   { id: 'follow-ups',  label: 'Follow Ups',  icon: 'PhoneCallback', path: '/sales/follow-ups'       },
   { id: 'tasks',       label: 'Tasks',       icon: 'TaskAlt',       path: '/sales/tasks'            },
-  { id: 'activities',  label: 'Activities',  icon: 'CalendarMonth', path: '/sales/activities'       },
+  { id: 'audit',       label: 'Audit Logs',  icon: 'Assessment',    path: '/audit'                  },
   { id: 'calendar',    label: 'Calendar',    icon: 'CalendarMonth', path: '/calendar'                },
   { id: 'profile',     label: 'Profile',     icon: 'AccountCircle', path: '/sales/profile'          },
 ]
@@ -23,8 +23,8 @@ export const salesExecutiveMenu = [
   { id: 'meetings',      label: 'Meetings',      icon: 'VideoCall',     path: '/sales/meetings'      },
   { id: 'customers',     label: 'Customers',     icon: 'People',        path: '/sales/customers'     },
   { id: 'tasks',         label: 'Tasks',         icon: 'TaskAlt',       path: '/sales/tasks'         },
-  { id: 'activities',    label: 'Activities',    icon: 'CalendarMonth', path: '/sales/activities'    },
   { id: 'performance',   label: 'Performance',   icon: 'Leaderboard',   path: '/sales/performance'   },
+  { id: 'audit',         label: 'Audit Logs',    icon: 'Assessment',    path: '/audit'               },
   { id: 'calendar',      label: 'Calendar',      icon: 'CalendarMonth', path: '/calendar'            },
   { id: 'profile',       label: 'Profile',       icon: 'AccountCircle', path: '/sales/profile'       },
 ]
@@ -36,6 +36,7 @@ export const salesHeadMenu = [
   { id: 'performance',    label: 'Performance',     icon: 'Leaderboard',   path: '/sales/performance'       },
   { id: 'reports',        label: 'Reports',         icon: 'Assessment',    path: '/sales/reports'           },
   { id: 'approvals',      label: 'Approvals',       icon: 'TaskAlt',       path: '/sales/approvals'         },
+  { id: 'audit',          label: 'Audit Logs',      icon: 'Assessment',    path: '/audit'                   },
   { id: 'calendar',       label: 'Calendar',        icon: 'CalendarMonth', path: '/calendar'                },
   { id: 'profile',        label: 'Profile',         icon: 'AccountCircle', path: '/sales/profile'           },
 ]
@@ -50,7 +51,7 @@ export const marketingInternMenu = [
   { id: 'tasks',      label: 'Tasks',      icon: 'TaskAlt',       path: '/marketing/tasks'            },
   { id: 'campaigns',  label: 'Campaigns',  icon: 'TrendingUp',    path: '/marketing/campaigns'        },
   { id: 'assets',     label: 'Content',    icon: 'RequestQuote',  path: '/marketing/assets'           },
-  { id: 'activities', label: 'Activities', icon: 'CalendarMonth', path: '/marketing/activities'       },
+  { id: 'audit',      label: 'Audit Logs', icon: 'Assessment',    path: '/audit'                      },
   { id: 'calendar',   label: 'Calendar',   icon: 'CalendarMonth', path: '/calendar'                   },
   { id: 'profile',    label: 'Profile',    icon: 'AccountCircle', path: '/marketing/profile'          },
 ]
@@ -62,7 +63,7 @@ export const marketingExecutiveMenu = [
   { id: 'email-marketing', label: 'Email Marketing',  icon: 'Assessment',    path: '/marketing/email-marketing' },
   { id: 'assets',          label: 'Assets & Content', icon: 'RequestQuote',  path: '/marketing/assets'          },
   { id: 'tasks',           label: 'Tasks',            icon: 'TaskAlt',       path: '/marketing/tasks'           },
-  { id: 'activities',      label: 'Activities',       icon: 'CalendarMonth', path: '/marketing/activities'      },
+  { id: 'audit',           label: 'Audit Logs',       icon: 'Assessment',    path: '/audit'                     },
   { id: 'performance',     label: 'Performance',      icon: 'Leaderboard',   path: '/marketing/performance'     },
   { id: 'reports',         label: 'Reports',          icon: 'Assessment',    path: '/marketing/reports'         },
   { id: 'calendar',        label: 'Calendar',         icon: 'CalendarMonth', path: '/calendar'                  },
@@ -77,7 +78,7 @@ export const marketingManagerMenu = [
   { id: 'performance',     label: 'Performance',      icon: 'Leaderboard',   path: '/marketing/performance'       },
   { id: 'approvals',       label: 'Approvals',        icon: 'TaskAlt',       path: '/marketing/approvals'         },
   { id: 'reports',         label: 'Reports',          icon: 'Assessment',    path: '/marketing/reports'           },
-  { id: 'activities',      label: 'Activities',       icon: 'CalendarMonth', path: '/marketing/activities'        },
+  { id: 'audit',           label: 'Audit Logs',       icon: 'Assessment',    path: '/audit'                       },
   { id: 'calendar',        label: 'Calendar',         icon: 'CalendarMonth', path: '/calendar'                    },
   { id: 'profile',         label: 'Profile',          icon: 'AccountCircle', path: '/marketing/profile'           },
 ]
@@ -91,6 +92,7 @@ export const productionInternMenu = [
   { id: 'dashboard',   label: 'Dashboard',  icon: 'Dashboard',     path: '/production/dashboard'  },
   { id: 'documents',   label: 'Documents',  icon: 'Assessment',    path: '/production/documents'  },
   { id: 'tasks',       label: 'Tasks',      icon: 'TaskAlt',       path: '/production/tasks'      },
+  { id: 'audit',       label: 'Audit Logs', icon: 'Assessment',    path: '/audit'                 },
   { id: 'calendar',    label: 'Calendar',   icon: 'CalendarMonth', path: '/calendar'              },
   { id: 'profile',     label: 'Profile',    icon: 'AccountCircle', path: '/production/profile'    },
 ]
@@ -102,6 +104,7 @@ export const productionExecutiveMenu = [
   { id: 'verification',  label: 'Verification', icon: 'TrendingUp',    path: '/production/verification' },
   { id: 'tasks',         label: 'Tasks',        icon: 'TaskAlt',       path: '/production/tasks'        },
   { id: 'reports',       label: 'Reports',      icon: 'Leaderboard',   path: '/production/reports'      },
+  { id: 'audit',         label: 'Audit Logs',   icon: 'Assessment',    path: '/audit'                   },
   { id: 'calendar',      label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'                },
   { id: 'profile',       label: 'Profile',      icon: 'AccountCircle', path: '/production/profile'      },
 ]
@@ -112,6 +115,7 @@ export const productionManagerMenu = [
   { id: 'approvals',    label: 'Approvals', icon: 'TaskAlt',       path: '/production/approvals'  },
   { id: 'team',         label: 'Team',      icon: 'People',        path: '/production/team'       },
   { id: 'reports',      label: 'Reports',   icon: 'Assessment',    path: '/production/reports'    },
+  { id: 'audit',        label: 'Audit Logs', icon: 'Assessment',   path: '/audit'                 },
   { id: 'calendar',     label: 'Calendar',  icon: 'CalendarMonth', path: '/calendar'              },
   { id: 'profile',      label: 'Profile',   icon: 'AccountCircle', path: '/production/profile'    },
 ]
@@ -127,8 +131,9 @@ export const productionMenu = productionExecutiveMenu
 // ─── EVALUATION MODULE ────────────────────────────────────────────────────────
 
 export const evaluationMenu = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'Dashboard',     path: '/evaluation/dashboard' },
-  { id: 'calendar',  label: 'Calendar',  icon: 'CalendarMonth', path: '/calendar'             },
+  { id: 'dashboard', label: 'Dashboard',  icon: 'Dashboard',     path: '/evaluation/dashboard' },
+  { id: 'audit',     label: 'Audit Logs', icon: 'Assessment',    path: '/audit'                },
+  { id: 'calendar',  label: 'Calendar',   icon: 'CalendarMonth', path: '/calendar'             },
 ]
 
 export const headEvaluationMenu = [
@@ -138,6 +143,7 @@ export const headEvaluationMenu = [
   { id: 'performance',  label: 'Performance',  icon: 'Leaderboard',   path: '/evaluation/performance'    },
   { id: 'approvals',    label: 'Approvals',    icon: 'TaskAlt',       path: '/evaluation/approvals'      },
   { id: 'reports',      label: 'Reports',      icon: 'TrendingUp',    path: '/evaluation/reports'        },
+  { id: 'audit',        label: 'Audit Logs',   icon: 'Assessment',    path: '/audit'                     },
   { id: 'calendar',     label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'                  },
   { id: 'profile',      label: 'Profile',      icon: 'AccountCircle', path: '/evaluation/profile'        },
 ]
@@ -152,6 +158,7 @@ export const hrMenu = [
   { id: 'attendance',   label: 'Attendance',   icon: 'CalendarMonth', path: '/hr/attendance'   },
   { id: 'performance',  label: 'Performance',  icon: 'Leaderboard',   path: '/hr/performance'  },
   { id: 'reports',      label: 'Reports',      icon: 'Assessment',    path: '/hr/reports'      },
+  { id: 'audit',        label: 'Audit Logs',   icon: 'Assessment',    path: '/audit'           },
   { id: 'calendar',     label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'        },
   { id: 'profile',      label: 'Profile',      icon: 'AccountCircle', path: '/hr/profile'      },
 ]
@@ -168,6 +175,7 @@ export const ownerMenu = [
   { id: 'reports',     label: 'Reports',    icon: 'Assessment',    path: '/owner/reports'     },
   { id: 'analytics',   label: 'Analytics',  icon: 'TrendingUp',    path: '/owner/analytics'   },
   { id: 'approvals',   label: 'Approvals',  icon: 'TaskAlt',       path: '/owner/approvals'   },
+  { id: 'audit',       label: 'Audit Logs', icon: 'Assessment',    path: '/audit'             },
   { id: 'calendar',    label: 'Calendar',   icon: 'CalendarMonth', path: '/calendar'          },
   { id: 'profile',     label: 'Profile',    icon: 'AccountCircle', path: '/owner/profile'     },
 ]
@@ -181,6 +189,7 @@ export const headMenu = [
   { id: 'performance', label: 'Performance',  icon: 'Leaderboard',   path: '/head/analytics'    },
   { id: 'reports',     label: 'Reports',      icon: 'Assessment',    path: '/head/reports'      },
   { id: 'approvals',   label: 'Approvals',    icon: 'TaskAlt',       path: '/head/approvals'    },
+  { id: 'audit',       label: 'Audit Logs',   icon: 'Assessment',    path: '/audit'             },
   { id: 'calendar',    label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'          },
   { id: 'profile',     label: 'Profile',      icon: 'AccountCircle', path: '/head/profile'      },
 ]
@@ -193,7 +202,7 @@ export const adminMenu = [
   { id: 'org-explorer',  label: 'Organization Explorer', icon: 'AccountTree',   path: '/admin/org-explorer'  },
   { id: 'users',         label: 'Users',                 icon: 'People',        path: '/admin/users'         },
   { id: 'roles',         label: 'Roles & Permissions',   icon: 'RequestQuote',  path: '/admin/roles'         },
-  { id: 'audit',         label: 'Audit Logs',            icon: 'Assessment',    path: '/admin/audit'         },
+  { id: 'audit',         label: 'Audit Logs',            icon: 'Assessment',    path: '/audit'               },
   { id: 'calendar',      label: 'Calendar',              icon: 'CalendarMonth', path: '/calendar'            },
   { id: 'settings',      label: 'Settings',              icon: 'Settings',      path: '/admin/settings'      },
 ]

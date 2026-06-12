@@ -11,7 +11,19 @@ auditRouter.use(authenticate, attachScope);
 auditRouter.get(
   "/",
   asyncHandler(async (req, res) => {
-    const auditLogs = await listAuditLogs(req.scope!);
-    res.json({ data: auditLogs });
+    const q = req.query;
+    const result = await listAuditLogs(req.scope!, {
+      page:       q.page ? Number(q.page) : undefined,
+      pageSize:   q.pageSize ? Number(q.pageSize) : undefined,
+      sort:       q.sort ? String(q.sort) : undefined,
+      order:      q.order === "asc" ? "asc" : "desc",
+      search:     q.search ? String(q.search) : undefined,
+      action:     q.action ? String(q.action) : undefined,
+      entityType: q.entityType ? String(q.entityType) : undefined,
+      department: q.department ? String(q.department) : undefined,
+      dateFrom:   q.dateFrom ? String(q.dateFrom) : undefined,
+      dateTo:     q.dateTo ? String(q.dateTo) : undefined,
+    });
+    res.json(result);
   }),
 );

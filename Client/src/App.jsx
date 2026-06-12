@@ -21,6 +21,7 @@ import Reports from './pages/Reports'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import CalendarPage from './pages/CalendarPage'
+import AuditLogs from './pages/AuditLogs'
 import SalesTeamPage from './modules/sales/team/pages/SalesTeamPage'
 import EmployeesPage from './pages/Employees'
 import DocumentsPage from './modules/production/pages/DocumentsPage'
@@ -207,6 +208,9 @@ export default function App() {
 
           {/* ── Calendar — shared across all roles ────────────────────────── */}
           <Route path="calendar" element={<CalendarPage />} />
+
+          {/* Audit Logs — available to all authenticated roles (RBAC enforced server-side) */}
+          <Route path="audit" element={<AuditLogs />} />
 
           {/* ── Immigration Head module ───────────────────────────────────── */}
           <Route element={<RoleRouteGuard allowedLevels={[3, 4, 5]} allowedDesignations={['immigration']} />}>

@@ -238,14 +238,14 @@ async function leadStatsFor(where: object): Promise<{
     where: where as any,
     select: { status: true, estimatedValue: true },
   });
-  const won   = leads.filter(l => l.status === "WON").length;
+  const won   = leads.filter(l => l.status === "CONVERTED").length;
   const lost  = leads.filter(l => l.status === "LOST").length;
   return {
     total:    leads.length,
     won,
     lost,
-    active:   leads.filter(l => !["WON", "LOST"].includes(l.status)).length,
-    wonValue: leads.filter(l => l.status === "WON").reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0),
+    active:   leads.filter(l => !["CONVERTED", "LOST"].includes(l.status)).length,
+    wonValue: leads.filter(l => l.status === "CONVERTED").reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0),
   };
 }
 
@@ -298,11 +298,11 @@ export async function getImmigrationKpis(scope: DataScope): Promise<ImmigrationK
     leadStatsFor({ businessId }),
     prisma.salesLead.count({ where: { businessId, createdAt: thisMonth } }),
     prisma.salesLead.aggregate({
-      where: { businessId, status: "WON", updatedAt: thisMonth },
+      where: { businessId, status: "CONVERTED", updatedAt: thisMonth },
       _sum: { estimatedValue: true },
     }),
     prisma.salesLead.aggregate({
-      where: { businessId, status: "WON", updatedAt: lastMonth },
+      where: { businessId, status: "CONVERTED", updatedAt: lastMonth },
       _sum: { estimatedValue: true },
     }),
   ]);
@@ -480,7 +480,7 @@ export async function getVerticalDetail(
 
 // ─── Leads ────────────────────────────────────────────────────────────────────
 
-const LEAD_STAGES = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
+const LEAD_STAGES = ["NEW", "CONTACTED", "CONSULTATION_SCHEDULED", "DOCUMENTS_REQUESTED", "QUALIFIED", "CONVERTED", "TRANSFERRED", "LOST"];
 
 export async function getLeads(
   scope: DataScope,
@@ -566,7 +566,7 @@ export async function getRevenue(
   if (!businessId) return { byPeriod: [], byVertical: [], total: 0, deals: 0 };
 
   const now = new Date();
-  const where: any = { businessId, status: "WON" };
+  const where: any = { businessId, status: "CONVERTED" };
   if (filters.verticalId) where.verticalId = filters.verticalId;
 
   if (filters.startDate || filters.endDate) {
@@ -946,9 +946,9 @@ export async function getReports(
     }),
   ]);
 
-  const wonLeads = leads.filter(l => l.status === "WON");
+  const wonLeads = leads.filter(l => l.status === "CONVERTED");
   const revenue  = wonLeads.reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0);
-  const closed   = leads.filter(l => ["WON", "LOST"].includes(l.status)).length;
+  const closed   = leads.filter(l => ["CONVERTED", "LOST"].includes(l.status)).length;
 
   return {
     summary: {
@@ -974,7 +974,7 @@ export async function getReports(
       name:    v.name,
       leads:   leads.filter(l => l.verticalId === v.id).length,
       revenue: leads
-        .filter(l => l.verticalId === v.id && l.status === "WON")
+        .filter(l => l.verticalId === v.id && l.status === "CONVERTED")
         .reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0),
     })),
   };

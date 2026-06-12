@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma.js";
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/ApiError.js";
+import { recordAudit } from "./activity-writer.service.js";
 
 export async function login(email: string, password: string) {
   const employee = await prisma.employee.findUnique({
@@ -38,6 +39,15 @@ export async function login(email: string, password: string) {
   });
   const refreshToken = jwt.sign(payload, env.JWT_REFRESH_SECRET, {
     expiresIn: "7d",
+  });
+
+  await recordAudit({
+    actorId:    employee.id,
+    businessId: employee.businessId,
+    action:     "LOGIN",
+    entityType: "Employee",
+    entityName: `${employee.firstName} ${employee.lastName}`,
+    entityId:   employee.id,
   });
 
   return {

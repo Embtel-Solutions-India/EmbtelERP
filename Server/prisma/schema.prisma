@@ -13,6 +13,7 @@ enum ActivityAction {
   UPDATE
   DELETE
   STATUS_CHANGE
+  PAYMENT_STATUS_CHANGE
   ASSIGNMENT_CHANGE
   PERSPECTIVE_SWITCH
   LOGIN
@@ -73,11 +74,80 @@ enum MarketingLeadStatus {
 enum SalesLeadStatus {
   NEW
   CONTACTED
+  CONSULTATION_SCHEDULED
+  DOCUMENTS_REQUESTED
   QUALIFIED
-  PROPOSAL
-  NEGOTIATION
-  WON
+  CONVERTED
+  TRANSFERRED
   LOST
+}
+
+enum SalesLeadPaymentStatus {
+  INITIATED
+  IN_PROGRESS
+  DONE
+  PARTIALLY_DONE
+}
+
+enum VisaCategory {
+  H1B
+  L1A
+  L1B
+  O1
+  TN
+  E3
+  EB1
+  EB2_NIW
+  FAMILY_GREEN_CARD
+  MARRIAGE_BASED
+  BUSINESS_VISA
+  VISITOR_VISA
+  PERMANENT_RESIDENCY
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum LeadCurrentStatus {
+  STUDENT
+  WORKER
+  BUSINESS_OWNER
+}
+
+enum SalesTaskType {
+  CALL
+  WHATSAPP_FOLLOWUP
+  EMAIL_FOLLOWUP
+  CONSULTATION_MEETING
+  DOCUMENT_COLLECTION
+  PAYMENT_FOLLOWUP
+  VISA_ELIGIBILITY_DISCUSSION
+  LEAD_NURTURING
+  CLIENT_MEETING
+  INTERNAL_DISCUSSION
+}
+
+enum SalesTaskResult {
+  CONNECTED
+  NO_RESPONSE
+  INTERESTED
+  NOT_INTERESTED
+  CALL_BACK_LATER
+  CONSULTATION_BOOKED
+  DOCUMENTS_RECEIVED
+  PAYMENT_RECEIVED
+  CONVERTED
+  LOST_LEAD
+}
+
+enum SalesTaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 enum MarketingActivityType {
@@ -110,6 +180,7 @@ model Organization {
   marketingActivities MarketingActivity[]
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
+  salesTasks         SalesTask[]
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 }
@@ -136,6 +207,7 @@ model Business {
   marketingActivities MarketingActivity[]
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
+  salesTasks         SalesTask[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -175,6 +247,7 @@ model Vertical {
   marketingActivities MarketingActivity[]
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
+  salesTasks         SalesTask[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -200,6 +273,7 @@ model Team {
   marketingActivities MarketingActivity[]
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
+  salesTasks         SalesTask[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -281,6 +355,8 @@ model Employee {
   marketingLeadsAssigned MarketingLead[] @relation("MarketingLeadAssignee")
   salesLeadsCreated  SalesLead[]     @relation("SalesLeadCreator")
   salesLeadsAssigned SalesLead[]     @relation("SalesLeadAssignee")
+  salesTasksCreated  SalesTask[]     @relation("SalesTaskCreator")
+  salesTasksAssigned SalesTask[]     @relation("SalesTaskAssignee")
   marketingActivities MarketingActivity[] @relation("MarketingActivityActor")
   marketingKPIs MarketingKPI[] @relation("MarketingKPIEmployee")
   createdAt          DateTime         @default(now())
@@ -414,6 +490,7 @@ model AuditLog {
   actorId        String?
   action         ActivityAction
   entityType     String
+  entityName     String?
   entityId       String?
   before         Json?
   after          Json?
@@ -611,28 +688,54 @@ model MarketingKPI {
 
 model SalesLead {
   id             String          @id @default(cuid())
+  leadCode       String          @unique
   organizationId String
   businessId     String
   teamId         String?
   verticalId     String?
   createdById    String?
   assignedToId   String?
+  // Section 1: Lead Information
   name           String
   company        String?
   email          String?
   phone          String?
+  whatsappNumber String?
+  countryOfResidence String?
+  nationality    String?
+  visaCategory   VisaCategory?
   source         String
+  priorityLevel  PriorityLevel   @default(MEDIUM)
+  // Section 2: Immigration Requirement
+  interestedVisa VisaCategory?
+  currentStatus  LeadCurrentStatus?
+  education      String?
+  workExperienceYears Int?
+  familyImmigrationRequired Boolean @default(false)
+  budgetAvailable Decimal?       @db.Decimal(14, 2)
+  urgencyLevel   PriorityLevel   @default(MEDIUM)
+  // Section 3: Lead Qualification
+  leadScore      Int             @default(0)
+  priority       String          @default("warm")   // Interested Level: hot / warm / cold
+  expectedInvestment Decimal?    @db.Decimal(14, 2)
+  consultationRequired Boolean   @default(false)
+  consultationDate DateTime?
+  notes          String?                            // Remarks
+  // Section 4: Payment
+  paymentStatus  SalesLeadPaymentStatus @default(INITIATED)
+  paymentAmount  Decimal?        @db.Decimal(14, 2)
+  // Section 5: Status / lifecycle
   status         SalesLeadStatus @default(NEW)
-  priority       String          @default("warm")
   estimatedValue Decimal?        @db.Decimal(14, 2)
-  notes          String?
   convertedAt    DateTime?
+  transferredAt  DateTime?
   organization   Organization    @relation(fields: [organizationId], references: [id])
   business       Business        @relation(fields: [businessId], references: [id])
   team           Team?           @relation(fields: [teamId], references: [id])
   vertical       Vertical?       @relation(fields: [verticalId], references: [id])
   createdBy      Employee?       @relation("SalesLeadCreator",  fields: [createdById],  references: [id])
   assignedTo     Employee?       @relation("SalesLeadAssignee", fields: [assignedToId], references: [id])
+  salesTasks     SalesTask[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -642,6 +745,51 @@ model SalesLead {
   @@index([verticalId])
   @@index([assignedToId])
   @@index([status])
+  @@index([paymentStatus])
+  @@index([priorityLevel])
+  @@index([leadScore])
+  @@index([createdAt])
+}
+
+model SalesTask {
+  id               String          @id @default(cuid())
+  taskCode         String          @unique
+  organizationId   String
+  businessId       String
+  teamId           String?
+  verticalId       String?
+  leadId           String?
+  assigneeId       String?
+  createdById      String?
+  title            String
+  taskType         SalesTaskType
+  description      String?
+  status           SalesTaskStatus @default(TODO)
+  priority         PriorityLevel   @default(MEDIUM)
+  dueDate          DateTime?
+  result           SalesTaskResult?
+  nextFollowUpDate DateTime?
+  notes            String?
+  completedAt      DateTime?
+  organization     Organization    @relation(fields: [organizationId], references: [id])
+  business         Business        @relation(fields: [businessId], references: [id])
+  team             Team?           @relation(fields: [teamId], references: [id])
+  vertical         Vertical?       @relation(fields: [verticalId], references: [id])
+  lead             SalesLead?      @relation(fields: [leadId], references: [id])
+  assignee         Employee?       @relation("SalesTaskAssignee", fields: [assigneeId], references: [id])
+  createdBy        Employee?       @relation("SalesTaskCreator",  fields: [createdById],  references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([organizationId])
+  @@index([businessId])
+  @@index([teamId])
+  @@index([verticalId])
+  @@index([leadId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([nextFollowUpDate])
 }
 
 model DashboardConfig {

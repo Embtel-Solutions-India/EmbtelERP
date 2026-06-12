@@ -3,6 +3,9 @@ import { authenticate } from "../middleware/auth.middleware.js";
 import { attachScope } from "../middleware/scope.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { prisma } from "../config/prisma.js";
+import { recordAudit } from "../services/activity-writer.service.js";
+
+const DONE_STATUSES = ["completed", "done", "COMPLETED"];
 
 export const tasksRouter = Router();
 
@@ -41,6 +44,8 @@ tasksRouter.patch(
     if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
     if (assigneeId !== undefined) data.assigneeId = assigneeId;
 
+    const existing = await prisma.task.findUnique({ where: { id } });
+
     const task = await prisma.task.update({
       where: { id },
       data,
@@ -48,6 +53,23 @@ tasksRouter.patch(
         assignee: { select: { id: true, firstName: true, lastName: true, email: true } }
       }
     });
+
+    const becameDone =
+      status !== undefined &&
+      DONE_STATUSES.includes(status) &&
+      !DONE_STATUSES.includes(existing?.status ?? "");
+
+    await recordAudit({
+      actorId:    req.user!.employeeId,
+      businessId: task.businessId,
+      action:     becameDone ? "STATUS_CHANGE" : "UPDATE",
+      entityType: "Task",
+      entityName: task.title,
+      entityId:   task.id,
+      before:     existing,
+      after:      task,
+    });
+
     res.json({ data: task });
   })
 );
@@ -82,6 +104,18 @@ tasksRouter.post(
         description,
       },
     });
+
+    await recordAudit({
+      actorId:    user.employeeId,
+      businessId: task.businessId,
+      action:     "CREATE",
+      entityType: "Task",
+      entityName: task.title,
+      entityId:   task.id,
+      before:     null,
+      after:      task,
+    });
+
     res.status(201).json({ data: task });
   })
 );
@@ -90,9 +124,24 @@ tasksRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);
+    const existing = await prisma.task.findUnique({ where: { id } });
     await prisma.task.delete({
       where: { id },
     });
+
+    if (existing) {
+      await recordAudit({
+        actorId:    req.user!.employeeId,
+        businessId: existing.businessId,
+        action:     "DELETE",
+        entityType: "Task",
+        entityName: existing.title,
+        entityId:   id,
+        before:     existing,
+        after:      null,
+      });
+    }
+
     res.status(204).end();
   })
 );
