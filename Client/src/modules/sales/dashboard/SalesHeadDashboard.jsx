@@ -7,7 +7,7 @@ import { fetchRoleWorkspace, fetchDashboardTeam, fetchDashboardOverview, fetchDa
 import { fetchLeads } from '../../../redux/slices/leadSlice'
 import { fetchTasks } from '../../../redux/slices/taskSlice'
 import { fetchSalesTasks } from '../../../redux/slices/salesTaskSlice'
-import { fetchSalesTargets, fetchTargetSummary } from '../../../redux/slices/salesTargetSlice'
+import { fetchTargetSummary } from '../../../redux/slices/salesTargetSlice'
 import { fetchCalendarEvents } from '../../../redux/slices/calendarSlice'
 import DashboardLayoutEngine from '../../../components/dashboard/DashboardLayoutEngine'
 import WelcomeSection from '../../../components/dashboard/WelcomeSection'
@@ -25,7 +25,6 @@ export default function SalesHeadDashboard() {
     dispatch(fetchDashboardTeam())
     dispatch(fetchTasks())
     dispatch(fetchSalesTasks())
-    dispatch(fetchSalesTargets())
     dispatch(fetchTargetSummary())
     dispatch(fetchDashboardOverview())
     dispatch(fetchDashboardPerformance())

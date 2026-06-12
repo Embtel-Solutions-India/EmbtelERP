@@ -4,6 +4,8 @@ import { authenticate } from "../middleware/auth.middleware.js";
 import { requireRole, requirePermission, ROLE_LEVEL } from "../middleware/rbac.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { invalidateScopeCache } from "../services/scope.service.js";
+import { invalidateDescendantsCache } from "../services/hierarchy.service.js";
 
 export const adminRouter = Router();
 
@@ -287,6 +289,9 @@ adminRouter.patch(
         isActive: isActive !== undefined ? Boolean(isActive) : undefined,
       },
     });
+    // Level/team/role changes alter visibility — drop the short-TTL caches now.
+    invalidateScopeCache();
+    invalidateDescendantsCache();
     res.json({ data: updated });
   })
 );

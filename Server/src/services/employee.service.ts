@@ -3,6 +3,15 @@ import { prisma } from "../config/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 import { roleLabel } from "../utils/scope-utils.js";
 import { recordActivity } from "./activity-writer.service.js";
+import { invalidateScopeCache } from "./scope.service.js";
+import { invalidateDescendantsCache } from "./hierarchy.service.js";
+
+// Employee mutations can change the reporting hierarchy (managerId/team/role),
+// so drop the short-TTL visibility caches immediately rather than waiting them out.
+function invalidateHierarchyCaches() {
+  invalidateScopeCache();
+  invalidateDescendantsCache();
+}
 
 export type CreateEmployeeInput = {
   organizationId: string;
@@ -104,6 +113,7 @@ export async function createEmployee(
     targetId: employee.id,
     metadata: { role: roleLabel(0) },
   });
+  invalidateHierarchyCaches();
 
   // return freshest copy
   return prisma.employee.findUnique({
@@ -146,6 +156,7 @@ export async function updateEmployee(
     targetType: "Employee",
     targetId: employee.id,
   });
+  invalidateHierarchyCaches();
 
   return employee;
 }
@@ -170,6 +181,7 @@ export async function deactivateEmployee(id: string, actorId?: string) {
     targetId: employee.id,
     metadata: { status: "Inactive" },
   });
+  invalidateHierarchyCaches();
 
   return employee;
 }

@@ -36,16 +36,6 @@ export default function Dashboard() {
   );
   const { current: activePerspective } = useSelector((s) => s.perspective);
 
-  useEffect(() => {
-    dispatch(fetchDashboardOverview());
-    dispatch(fetchDashboardPerformance());
-    dispatch(fetchDashboardInsights());
-    dispatch(fetchDashboardTeam());
-    dispatch(fetchRoleWorkspace());
-    dispatch(fetchTasks());
-    dispatch(fetchLeads());
-  }, [dispatch, activePerspective]);
-
   // Role-aware routing: render dedicated sales role dashboards
   const level = Number(user?.employeeLevel ?? user?.roleLevel ?? 1);
   const designation = (user?.designation || '').toLowerCase();
@@ -61,6 +51,19 @@ export default function Dashboard() {
     !designation.includes('it head') &&
     level <= 2
   );
+
+  useEffect(() => {
+    // Sales roles delegate to their own dashboards (below), which dispatch
+    // their own fetch set — firing these too would double every request.
+    if (isSalesRole) return;
+    dispatch(fetchDashboardOverview());
+    dispatch(fetchDashboardPerformance());
+    dispatch(fetchDashboardInsights());
+    dispatch(fetchDashboardTeam());
+    dispatch(fetchRoleWorkspace());
+    dispatch(fetchTasks());
+    dispatch(fetchLeads());
+  }, [dispatch, activePerspective, isSalesRole]);
 
   if (isSalesRole) {
     if (level <= 0) return <SalesInternDashboard />

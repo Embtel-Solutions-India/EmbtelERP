@@ -19,7 +19,39 @@ export type PerspectiveSession = {
   perspectiveType: string;
 };
 
+// ── Scope cache ───────────────────────────────────────────────────────────────
+// Every authenticated request runs getDataScope via attachScope; a dashboard
+// mount fires ~15 concurrent requests, each previously recomputing the same
+// scope (2–3 sequential DB round-trips). Cache the *promise* keyed by
+// user+perspective so concurrent requests collapse into one computation, with a
+// short TTL bounding staleness after org-structure changes.
+const SCOPE_TTL_MS = 60_000;
+const scopeCache = new Map<string, { expires: number; value: Promise<DataScope> }>();
+
+/** Drop cached scopes (all users, or one) after hierarchy/role mutations. */
+export function invalidateScopeCache(userId?: string) {
+  if (!userId) { scopeCache.clear(); return; }
+  for (const key of scopeCache.keys()) {
+    if (key.startsWith(`${userId}:`)) scopeCache.delete(key);
+  }
+}
+
 export async function getDataScope(
+  userId: string,
+  perspectiveTargetId: string | null,
+): Promise<DataScope> {
+  const key = `${userId}:${perspectiveTargetId ?? "self"}`;
+  const hit = scopeCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.value;
+
+  const value = computeDataScope(userId, perspectiveTargetId);
+  scopeCache.set(key, { expires: Date.now() + SCOPE_TTL_MS, value });
+  // Never cache a rejection (e.g. transient DB error).
+  value.catch(() => scopeCache.delete(key));
+  return value;
+}
+
+async function computeDataScope(
   userId: string,
   perspectiveTargetId: string | null,
 ): Promise<DataScope> {

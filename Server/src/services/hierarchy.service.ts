@@ -119,7 +119,28 @@ export async function getDescendants(
   });
 }
 
+// Short-TTL, promise-collapsing cache: descendant sets are read on almost every
+// scoped request (scope building, target visibility, progress aggregation) but
+// the reporting hierarchy changes rarely. Concurrent callers share one query.
+const DESCENDANTS_TTL_MS = 60_000;
+const descendantsCache = new Map<string, { expires: number; value: Promise<string[]> }>();
+
+/** Drop cached descendant sets after managerId / hierarchy mutations. */
+export function invalidateDescendantsCache() {
+  descendantsCache.clear();
+}
+
 export async function getDescendantIds(employeeId: string): Promise<string[]> {
+  const hit = descendantsCache.get(employeeId);
+  if (hit && hit.expires > Date.now()) return hit.value;
+
+  const value = queryDescendantIds(employeeId);
+  descendantsCache.set(employeeId, { expires: Date.now() + DESCENDANTS_TTL_MS, value });
+  value.catch(() => descendantsCache.delete(employeeId));
+  return value;
+}
+
+async function queryDescendantIds(employeeId: string): Promise<string[]> {
   let rows: IdRow[];
 
   try {
