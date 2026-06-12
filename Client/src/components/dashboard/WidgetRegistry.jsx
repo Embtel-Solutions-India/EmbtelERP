@@ -620,6 +620,76 @@ function SystemStatusWidget() {
   )
 }
 
+// Role-aware Sales Target summary — reads the live target summary from the
+// salesTargets slice and renders the cards specified for each role.
+function TargetSummaryWidget({ role }) {
+  const { summary, loading, error } = useSelector((s) => s.salesTargets || {})
+  const heading = 'Target Performance'
+
+  if (error) {
+    return <SectionCard title={heading} subtitle="Sales targets" className="col-span-full">
+      <p className="text-sm text-red-500">Failed to load targets: {String(error)}</p>
+    </SectionCard>
+  }
+  if (loading && !summary) {
+    return <div className="col-span-full"><WidgetSkeleton /></div>
+  }
+  if (!summary || summary.totals?.count === 0) {
+    return <SectionCard title={heading} subtitle="Sales targets" className="col-span-full">
+      <p className="text-sm text-neutral-400">No targets assigned yet.</p>
+    </SectionCard>
+  }
+
+  const t = summary.totals || {}
+  const personal = summary.personal || {}
+  const conv = summary.conversion || {}
+  const rev = summary.revenue || {}
+  const remaining = Math.max(0, (t.count ?? 0) - (t.completed ?? 0))
+  const topPerformer = summary.ranking?.[0]
+
+  let cards
+  if (role === 'sales_executive' || role === 'sales_intern') {
+    cards = [
+      { title: 'Personal Targets', value: personal.count ?? 0, icon: <FaBullseye />, color: '#6366f1' },
+      { title: 'Current Achievement', value: personal.progressPct ?? 0, suffix: '%', icon: <FaCheckCircle />, color: '#10b981', formatValue: false },
+      { title: 'Remaining Targets', value: Math.max(0, (personal.count ?? 0) - 0), icon: <FaFlag />, color: '#f59e0b' },
+      { title: 'Monthly Progress', value: personal.progressPct ?? 0, suffix: '%', icon: <FaChartLine />, color: '#8b5cf6', formatValue: false },
+      { title: 'Conversion Progress', value: conv.progressPct ?? 0, suffix: '%', icon: <FaHandshake />, color: '#06b6d4', formatValue: false },
+    ]
+  } else if (role === 'sales_head') {
+    cards = [
+      { title: 'Assigned Targets', value: personal.count ?? 0, icon: <FaBullseye />, color: '#6366f1' },
+      { title: 'Achievement', value: personal.progressPct ?? 0, suffix: '%', icon: <FaCheckCircle />, color: '#10b981', formatValue: false },
+      { title: 'Remaining', value: remaining, icon: <FaFlag />, color: '#f59e0b' },
+      { title: 'Team Performance', value: t.avgProgressPct ?? 0, suffix: '%', icon: <FaUsers />, color: '#8b5cf6', formatValue: false },
+      { title: 'Conversion Achievement', value: conv.progressPct ?? 0, suffix: '%', icon: <FaHandshake />, color: '#06b6d4', formatValue: false },
+      { title: 'Revenue Achievement', value: rev.progressPct ?? 0, suffix: '%', icon: <FaDollarSign />, color: '#ef4444', formatValue: false },
+    ]
+  } else {
+    // vertical_manager (and higher)
+    cards = [
+      { title: 'Total Targets Assigned', value: t.count ?? 0, icon: <FaBullseye />, color: '#6366f1' },
+      { title: 'Sales Head Performance', value: t.avgProgressPct ?? 0, suffix: '%', icon: <FaUsers />, color: '#8b5cf6', formatValue: false },
+      { title: 'Department Achievement', value: t.avgProgressPct ?? 0, suffix: '%', icon: <FaChartLine />, color: '#10b981', formatValue: false },
+      { title: 'Revenue Achievement', value: rev.progressPct ?? 0, suffix: '%', icon: <FaDollarSign />, color: '#ef4444', formatValue: false },
+      { title: 'Conversion Achievement', value: conv.progressPct ?? 0, suffix: '%', icon: <FaHandshake />, color: '#06b6d4', formatValue: false },
+      { title: 'Team Ranking', value: topPerformer?.progressPct ?? 0, suffix: '%', changeLabel: topPerformer?.name, icon: <FaTrophy />, color: '#f59e0b', formatValue: false },
+    ]
+  }
+
+  return (
+    <div className="col-span-full">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">{heading}</h3>
+        <Link to="/sales/targets" className="text-xs font-semibold text-primary-600 hover:underline">View all →</Link>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {cards.map((c, i) => <StatCard key={c.title} {...c} spark={null} delay={i * 0.05} />)}
+      </div>
+    </div>
+  )
+}
+
 // Registry map associating widget keys to React components
 export const WIDGET_REGISTRY = {
   kpi_cards: { title: 'KPI Metrics', component: KpiCardsWidget },
@@ -666,4 +736,5 @@ export const WIDGET_REGISTRY = {
   opportunity_table: { title: 'Top Opportunities',    component: OpportunityTable },
   customer_insights: { title: 'Customer Insights',   component: CustomerInsights },
   sales_target:      { title: 'Sales Target',         component: TargetProgress   },
+  target_summary:    { title: 'Target Performance',   component: TargetSummaryWidget },
 }

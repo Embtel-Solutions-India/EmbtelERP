@@ -73,6 +73,7 @@ export default function SchemaForm({
   loading = false,
   submitLabel = 'Save',
   leadOptions = [],
+  searchOptionsByField = {},
   onClose,
   onSubmit,
 }) {
@@ -113,10 +114,13 @@ export default function SchemaForm({
             </label>
           )
         case 'lead-select':
+        case 'search-select':
           return (
             <Controller name={field.name} control={control}
               render={({ field: f }) => (
-                <LeadSelect value={f.value} onChange={f.onChange} options={leadOptions} />
+                <LeadSelect value={f.value} onChange={f.onChange}
+                  options={searchOptionsByField[field.name] ?? leadOptions}
+                  placeholder={field.placeholder || 'Search…'} />
               )} />
           )
         case 'number':

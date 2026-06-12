@@ -28,6 +28,8 @@ import Settings from './pages/Settings'
 import CalendarPage from './pages/CalendarPage'
 import AuditLogs from './pages/AuditLogs'
 import SalesTeamPage from './modules/sales/team/pages/SalesTeamPage'
+import SalesTasks from './modules/sales/tasks/pages/SalesTasks'
+import TargetPerformance from './modules/sales/targets/pages/TargetPerformance'
 import EmployeesPage from './pages/Employees'
 import DocumentsPage from './modules/production/pages/DocumentsPage'
 import CasesPage from './modules/production/pages/CasesPage'
@@ -106,7 +108,8 @@ export default function App() {
           {/* Sales Executive dashboard (Level 1) */}
           <Route path="sales/dashboard"     element={<Dashboard />} />
           <Route path="sales/leads"         element={<Leads />} />
-          <Route path="sales/tasks"         element={<Tasks />} />
+          <Route path="sales/tasks"         element={<SalesTasks />} />
+          <Route path="sales/targets"       element={<TargetPerformance />} />
           <Route path="sales/activities"    element={<Tasks />} />
           <Route path="sales/profile"       element={<Profile />} />
           <Route path="sales/settings"      element={<Settings />} />

@@ -27,6 +27,22 @@ import {
   updateTask  as updateSalesTask,
   deleteTask  as deleteSalesTask,
 } from "../controllers/salesTask.controller.js";
+import {
+  createSalesTargetSchema,
+  updateSalesTargetSchema,
+  reassignSalesTargetSchema,
+} from "../validations/salesTarget.validation.js";
+import {
+  listTargetsHandler,
+  targetSummaryHandler,
+  assignableUsersHandler,
+  getTargetHandler,
+  targetHistoryHandler,
+  createTargetHandler,
+  updateTargetHandler,
+  reassignTargetHandler,
+  cancelTargetHandler,
+} from "../controllers/salesTarget.controller.js";
 
 export const salesRouter = Router();
 
@@ -44,6 +60,18 @@ salesRouter.get(   "/tasks",     asyncHandler(listSalesTasks));
 salesRouter.post(  "/tasks",     validateBody(createSalesTaskSchema), asyncHandler(createSalesTask));
 salesRouter.patch( "/tasks/:id", validateBody(updateSalesTaskSchema), asyncHandler(updateSalesTask));
 salesRouter.delete("/tasks/:id", asyncHandler(deleteSalesTask));
+
+// ── Sales targets (target management system) ─────────────────────────────────
+// Specific routes registered before "/targets/:id" so they aren't captured by it.
+salesRouter.get(   "/targets/summary",     asyncHandler(targetSummaryHandler));
+salesRouter.get(   "/targets/assignable",  asyncHandler(assignableUsersHandler));
+salesRouter.get(   "/targets",             asyncHandler(listTargetsHandler));
+salesRouter.post(  "/targets",             validateBody(createSalesTargetSchema), asyncHandler(createTargetHandler));
+salesRouter.get(   "/targets/:id",         asyncHandler(getTargetHandler));
+salesRouter.get(   "/targets/:id/history", asyncHandler(targetHistoryHandler));
+salesRouter.patch( "/targets/:id",         validateBody(updateSalesTargetSchema), asyncHandler(updateTargetHandler));
+salesRouter.post(  "/targets/:id/reassign", validateBody(reassignSalesTargetSchema), asyncHandler(reassignTargetHandler));
+salesRouter.post(  "/targets/:id/cancel",  asyncHandler(cancelTargetHandler));
 
 // ── GET /sales/leaderboard ───────────────────────────────────────────────────
 // Sales-specific team performance ranking (mirrors /workspace/team-leaderboard

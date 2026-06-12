@@ -9,6 +9,7 @@ import {
 import { fetchTeamStats, fetchWorkspaceLeads, fetchTeamLeaderboard, fetchWorkspaceApprovals, fetchWorkspaceActivities } from '../../../redux/slices/workspaceSlice'
 import { fetchTasks } from '../../../redux/slices/taskSlice'
 import { fetchCalendarEvents } from '../../../redux/slices/calendarSlice'
+import { fetchSalesTargets, fetchTargetSummary } from '../../../redux/slices/salesTargetSlice'
 
 export default function OwnerDashboard() {
   const dispatch = useDispatch()
@@ -29,6 +30,8 @@ export default function OwnerDashboard() {
     dispatch(fetchWorkspaceActivities())
     dispatch(fetchTasks())
     dispatch(fetchCalendarEvents({}))
+    dispatch(fetchSalesTargets())
+    dispatch(fetchTargetSummary())
   }, [dispatch, activePerspective])
 
   const designation = (user?.designation || '').toLowerCase()
