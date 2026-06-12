@@ -25,9 +25,7 @@ export const salesInternMenu = [
 
 export const salesExecutiveMenu = [
   { id: 'dashboard',     label: 'Dashboard',     icon: 'Dashboard',     path: '/sales/dashboard'     },
-  { id: 'overview',      label: 'My Overview',   icon: 'Leaderboard',   path: '/sales/overview'      },
   { id: 'leads',         label: 'Leads',         icon: 'PersonAdd',     path: '/sales/leads'         },
-  { id: 'add-lead',      label: 'Add Lead',      icon: 'PersonAdd',     path: '/sales/add-lead'      },
   { id: 'follow-ups',    label: 'Follow Ups',    icon: 'PhoneCallback', path: '/sales/follow-ups'    },
   { id: 'meetings',      label: 'Meetings',      icon: 'VideoCall',     path: '/sales/meetings'      },
   { id: 'customers',     label: 'Customers',     icon: 'People',        path: '/sales/customers'     },

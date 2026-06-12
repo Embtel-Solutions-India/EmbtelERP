@@ -9,9 +9,7 @@ import Login from './pages/Login'
 import RoleRouteGuard from './components/common/RoleRouteGuard'
 
 // ── Sales Executive (additive) ───────────────────────────────────────────────
-import AddLeadForm from './modules/sales/forms/AddLeadForm'
 import TaskForm from './modules/sales/forms/TaskForm'
-import SalesExecOverview from './modules/sales/pages/SalesExecOverview'
 
 // ── Shared pages ────────────────────────────────────────────────────────────
 import Dashboard from './pages/Dashboard'
@@ -117,8 +115,6 @@ export default function App() {
 
           {/* Sales Level >= 1 (Executive+) */}
           <Route element={<RoleRouteGuard allowedLevels={[1, 2, 3, 4, 5]} />}>
-            <Route path="sales/add-lead"      element={<AddLeadForm />} />
-            <Route path="sales/overview"      element={<SalesExecOverview />} />
             <Route path="sales/tasks/new"     element={<TaskForm />} />
             <Route path="sales/follow-ups"    element={<FollowUps />} />
             <Route path="sales/meetings"      element={<Meetings />} />
