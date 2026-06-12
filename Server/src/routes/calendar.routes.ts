@@ -119,14 +119,14 @@ calendarRouter.patch(
       return res.status(404).json({ error: "Event not found" });
     }
 
-    // Only creator, assignee, or managers (roleLevel >= 2) can edit
+    // Calendars are strictly personal: only the event's own member (creator or
+    // assignee) may edit it. Managers/Head cannot touch another member's events.
     const isOwner =
       existing.createdById === user.employeeId ||
       existing.assignedToId === user.employeeId;
-    const isManager = (user.roleLevel ?? 0) >= 2;
 
-    if (!isOwner && !isManager) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+    if (!isOwner) {
+      return res.status(403).json({ error: "You can only modify your own calendar events" });
     }
 
     const {
@@ -179,11 +179,11 @@ calendarRouter.delete(
       return res.status(404).json({ error: "Event not found" });
     }
 
+    // Strictly personal: only the event's creator may delete it.
     const isOwner = existing.createdById === user.employeeId;
-    const isManager = (user.roleLevel ?? 0) >= 2;
 
-    if (!isOwner && !isManager) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+    if (!isOwner) {
+      return res.status(403).json({ error: "You can only delete your own calendar events" });
     }
 
     await prisma.calendarEvent.delete({ where: { id } });

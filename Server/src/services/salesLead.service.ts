@@ -220,6 +220,9 @@ export async function createSalesLead(ctx: SalesLeadContext, input: Partial<Crea
     assignedToId,
     leadScore:      computeLeadScore({ ...input, status: input.status as SalesLeadStatus }),
   } as CreateInput;
+  // `immigration` is an optional nested object from a parallel branch's form;
+  // it is not a SalesLead column, so drop it before the Prisma write.
+  delete (baseData as Record<string, unknown>).immigration;
 
   // Retry on the (rare) chance of a leadCode collision under concurrency.
   let lead;
@@ -283,6 +286,7 @@ export async function updateSalesLead(
   }
 
   const data: Partial<UpdateInput> = normalizeMoneyFields(input);
+  delete (data as Record<string, unknown>).immigration;
 
   // Recompute the derived lead score from the merged (existing + incoming) record.
   const merged = { ...existing, ...input } as Parameters<typeof computeLeadScore>[0];

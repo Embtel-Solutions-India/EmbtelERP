@@ -1,7 +1,13 @@
-// ─── HELPER ──────────────────────────────────────────────────────────────────
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+// First path segment of a route, e.g. '/documentation/dashboard' -> 'documentation'
+function moduleFromPath(routePath) {
+  return routePath.split('/').filter(Boolean)[0]
+}
+
 // Creates a copy of a menu with the Dashboard item pointing to a different path.
+// Calendar/Audit stay on their shared routes (the only ones mounted in App.jsx).
 function withDashboardPath(menu, dashPath) {
-  return menu.map(item => item.id === 'dashboard' ? { ...item, path: dashPath } : item)
+  return menu.map(item => (item.id === 'dashboard' ? { ...item, path: dashPath } : item))
 }
 
 // ─── SALES MODULE MENUS ──────────────────────────────────────────────────────
@@ -11,6 +17,7 @@ export const salesInternMenu = [
   { id: 'leads',       label: 'My Leads',    icon: 'PersonAdd',     path: '/sales/leads'            },
   { id: 'follow-ups',  label: 'Follow Ups',  icon: 'PhoneCallback', path: '/sales/follow-ups'       },
   { id: 'tasks',       label: 'Tasks',       icon: 'TaskAlt',       path: '/sales/tasks'            },
+  { id: 'targets',     label: 'My Targets',  icon: 'Leaderboard',   path: '/sales/targets'          },
   { id: 'audit',       label: 'Audit Logs',  icon: 'Assessment',    path: '/audit'                  },
   { id: 'calendar',    label: 'Calendar',    icon: 'CalendarMonth', path: '/calendar'                },
   { id: 'profile',     label: 'Profile',     icon: 'AccountCircle', path: '/sales/profile'          },
@@ -18,11 +25,14 @@ export const salesInternMenu = [
 
 export const salesExecutiveMenu = [
   { id: 'dashboard',     label: 'Dashboard',     icon: 'Dashboard',     path: '/sales/dashboard'     },
+  { id: 'overview',      label: 'My Overview',   icon: 'Leaderboard',   path: '/sales/overview'      },
   { id: 'leads',         label: 'Leads',         icon: 'PersonAdd',     path: '/sales/leads'         },
+  { id: 'add-lead',      label: 'Add Lead',      icon: 'PersonAdd',     path: '/sales/add-lead'      },
   { id: 'follow-ups',    label: 'Follow Ups',    icon: 'PhoneCallback', path: '/sales/follow-ups'    },
   { id: 'meetings',      label: 'Meetings',      icon: 'VideoCall',     path: '/sales/meetings'      },
   { id: 'customers',     label: 'Customers',     icon: 'People',        path: '/sales/customers'     },
   { id: 'tasks',         label: 'Tasks',         icon: 'TaskAlt',       path: '/sales/tasks'         },
+  { id: 'targets',       label: 'My Targets',    icon: 'Leaderboard',   path: '/sales/targets'       },
   { id: 'performance',   label: 'Performance',   icon: 'Leaderboard',   path: '/sales/performance'   },
   { id: 'audit',         label: 'Audit Logs',    icon: 'Assessment',    path: '/audit'               },
   { id: 'calendar',      label: 'Calendar',      icon: 'CalendarMonth', path: '/calendar'            },
@@ -33,6 +43,7 @@ export const salesHeadMenu = [
   { id: 'dashboard',      label: 'Dashboard',       icon: 'Dashboard',     path: '/sales-manager/dashboard' },
   { id: 'team',           label: 'Team',            icon: 'People',        path: '/sales/team'              },
   { id: 'leads',          label: 'Lead Assignment', icon: 'PersonAdd',     path: '/sales/leads'             },
+  { id: 'targets',        label: 'Targets',         icon: 'Leaderboard',   path: '/sales/targets'           },
   { id: 'performance',    label: 'Performance',     icon: 'Leaderboard',   path: '/sales/performance'       },
   { id: 'reports',        label: 'Reports',         icon: 'Assessment',    path: '/sales/reports'           },
   { id: 'approvals',      label: 'Approvals',       icon: 'TaskAlt',       path: '/sales/approvals'         },
@@ -66,7 +77,7 @@ export const marketingExecutiveMenu = [
   { id: 'audit',           label: 'Audit Logs',       icon: 'Assessment',    path: '/audit'                     },
   { id: 'performance',     label: 'Performance',      icon: 'Leaderboard',   path: '/marketing/performance'     },
   { id: 'reports',         label: 'Reports',          icon: 'Assessment',    path: '/marketing/reports'         },
-  { id: 'calendar',        label: 'Calendar',         icon: 'CalendarMonth', path: '/calendar'                  },
+  { id: 'calendar',        label: 'Calendar',         icon: 'CalendarMonth', path: '/marketing/calendar'        },
   { id: 'profile',         label: 'Profile',          icon: 'AccountCircle', path: '/marketing/profile'         },
 ]
 
@@ -193,7 +204,13 @@ export const headMenu = [
   { id: 'calendar',    label: 'Calendar',     icon: 'CalendarMonth', path: '/calendar'          },
   { id: 'profile',     label: 'Profile',      icon: 'AccountCircle', path: '/head/profile'      },
 ]
-export const verticalMenu = withDashboardPath(ownerMenu, '/vertical/dashboard')
+// Vertical Manager: owner-style menu + a Targets entry for the target system.
+const verticalBase = withDashboardPath(ownerMenu, '/vertical/dashboard')
+export const verticalMenu = [
+  verticalBase[0],
+  { id: 'targets', label: 'Targets', icon: 'Leaderboard', path: '/sales/targets' },
+  ...verticalBase.slice(1),
+]
 
 // ─── ADMIN MODULE ─────────────────────────────────────────────────────────────
 

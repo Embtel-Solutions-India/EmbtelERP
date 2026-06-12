@@ -150,6 +150,44 @@ enum SalesTaskStatus {
   CANCELLED
 }
 
+enum SalesTargetCategory {
+  LEAD
+  ACTIVITY
+  CONVERSION
+  REVENUE
+}
+
+enum SalesTargetMetric {
+  LEADS_CREATED
+  LEADS_CONTACTED
+  QUALIFIED_LEADS
+  CALLS_COMPLETED
+  WHATSAPP_FOLLOWUPS
+  EMAIL_FOLLOWUPS
+  CONSULTATIONS_SCHEDULED
+  CONVERTED_CLIENTS
+  CLOSED_LEADS
+  REVENUE_GENERATED
+  PAYMENTS_COLLECTED
+}
+
+enum SalesTargetStatus {
+  ACTIVE
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+enum SalesTargetHistoryAction {
+  CREATED
+  ASSIGNED
+  REASSIGNED
+  UPDATED
+  VALUE_CHANGED
+  STATUS_CHANGED
+  CANCELLED
+}
+
 enum MarketingActivityType {
   SOCIAL_MEDIA
   LEAD_GENERATION
@@ -181,6 +219,7 @@ model Organization {
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
   salesTasks         SalesTask[]
+  salesTargets       SalesTarget[]
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 }
@@ -208,6 +247,7 @@ model Business {
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
   salesTasks         SalesTask[]
+  salesTargets       SalesTarget[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -248,6 +288,7 @@ model Vertical {
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
   salesTasks         SalesTask[]
+  salesTargets       SalesTarget[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -274,6 +315,7 @@ model Team {
   marketingKPIs      MarketingKPI[]
   salesLeads         SalesLead[]
   salesTasks         SalesTask[]
+  salesTargets       SalesTarget[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -357,6 +399,10 @@ model Employee {
   salesLeadsAssigned SalesLead[]     @relation("SalesLeadAssignee")
   salesTasksCreated  SalesTask[]     @relation("SalesTaskCreator")
   salesTasksAssigned SalesTask[]     @relation("SalesTaskAssignee")
+  salesTargetsAssigned   SalesTarget[]        @relation("SalesTargetAssignee")
+  salesTargetsAssignedBy SalesTarget[]        @relation("SalesTargetAssignedBy")
+  salesTargetsCreated    SalesTarget[]        @relation("SalesTargetCreator")
+  salesTargetHistory     SalesTargetHistory[] @relation("SalesTargetHistoryActor")
   marketingActivities MarketingActivity[] @relation("MarketingActivityActor")
   marketingKPIs MarketingKPI[] @relation("MarketingKPIEmployee")
   createdAt          DateTime         @default(now())
@@ -436,23 +482,31 @@ model Task {
   verticalId    String?
   assigneeId    String?
   createdById   String?
+  leadId        String?
   title         String
   description   String?
   status        String
   priority      String
+  taskType         String?
   dueDate       DateTime?
+  dueTime          String?
+  taskResult       String?
+  nextFollowUpDate DateTime?
+  outcomeNotes     String?
   business      Business  @relation(fields: [businessId], references: [id])
   department    Department? @relation(fields: [departmentId], references: [id])
   team          Team?     @relation(fields: [teamId], references: [id])
   vertical      Vertical? @relation(fields: [verticalId], references: [id])
   assignee      Employee? @relation("TaskAssignee", fields: [assigneeId], references: [id])
   createdBy     Employee? @relation("TaskCreator", fields: [createdById], references: [id])
+  lead          SalesLead? @relation("SalesLeadTasks", fields: [leadId], references: [id])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([businessId])
   @@index([assigneeId])
   @@index([verticalId])
+  @@index([leadId])
 }
 
 model Document {
@@ -736,6 +790,8 @@ model SalesLead {
   createdBy      Employee?       @relation("SalesLeadCreator",  fields: [createdById],  references: [id])
   assignedTo     Employee?       @relation("SalesLeadAssignee", fields: [assignedToId], references: [id])
   salesTasks     SalesTask[]
+  immigrationProfile LeadImmigrationProfile?
+  tasks          Task[]          @relation("SalesLeadTasks")
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -790,6 +846,90 @@ model SalesTask {
   @@index([status])
   @@index([dueDate])
   @@index([nextFollowUpDate])
+}
+
+model SalesTarget {
+  id              String              @id @default(cuid())
+  targetCode      String              @unique
+  organizationId  String
+  businessId      String
+  verticalId      String?
+  teamId          String?
+  parentTargetId  String?
+  name            String
+  category        SalesTargetCategory
+  metric          SalesTargetMetric
+  targetValue     Decimal             @db.Decimal(14, 2)
+  startDate       DateTime
+  endDate         DateTime
+  description     String?
+  status          SalesTargetStatus   @default(ACTIVE)
+  assignedById    String?
+  assignedToId    String
+  createdById     String?
+  organization    Organization        @relation(fields: [organizationId], references: [id])
+  business        Business            @relation(fields: [businessId], references: [id])
+  vertical        Vertical?           @relation(fields: [verticalId], references: [id])
+  team            Team?               @relation(fields: [teamId], references: [id])
+  parentTarget    SalesTarget?        @relation("SalesTargetBreakdown", fields: [parentTargetId], references: [id])
+  children        SalesTarget[]       @relation("SalesTargetBreakdown")
+  assignedBy      Employee?           @relation("SalesTargetAssignedBy", fields: [assignedById], references: [id])
+  assignedTo      Employee            @relation("SalesTargetAssignee",   fields: [assignedToId], references: [id])
+  createdBy       Employee?           @relation("SalesTargetCreator",    fields: [createdById],  references: [id])
+  history         SalesTargetHistory[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([businessId])
+  @@index([assignedToId])
+  @@index([assignedById])
+  @@index([parentTargetId])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model SalesTargetHistory {
+  id            String                   @id @default(cuid())
+  targetId      String
+  action        SalesTargetHistoryAction
+  actorId       String?
+  assignedToId  String?
+  previousValue Decimal?                 @db.Decimal(14, 2)
+  newValue      Decimal?                 @db.Decimal(14, 2)
+  note          String?
+  target        SalesTarget              @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  actor         Employee?                @relation("SalesTargetHistoryActor", fields: [actorId], references: [id])
+  createdAt     DateTime                 @default(now())
+
+  @@index([targetId])
+  @@index([createdAt])
+}
+
+// Immigration-specific lead detail (Sales Executive Add Lead form).
+// 1:1 with SalesLead; all fields optional so existing leads are unaffected.
+model LeadImmigrationProfile {
+  id                        String    @id @default(cuid())
+  leadId                    String    @unique
+  whatsapp                  String?
+  countryOfResidence        String?
+  nationality               String?
+  visaCategory              String?
+  interestedVisa            String?
+  currentStatus             String?
+  education                 String?
+  workExperience            Int?
+  familyImmigrationRequired Boolean?
+  budgetMin                 Decimal?  @db.Decimal(14, 2)
+  budgetMax                 Decimal?  @db.Decimal(14, 2)
+  urgencyLevel              String?
+  interestedLevel           String?
+  consultationRequired      Boolean?
+  consultationDate          DateTime?
+  leadScore                 Int?
+  lead                      SalesLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 }
 
 model DashboardConfig {
