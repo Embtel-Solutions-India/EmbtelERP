@@ -2,15 +2,15 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { employeeService } from '../../services/employeeService'
 
 // Map a live Employee record into the shape the team components expect.
-function mapEmployeeToMember(e) {
+function mapEmployeeToMember(e, department = 'Sales') {
   return {
     id: e.id,
     full_name: e.fullName || `${e.firstName ?? ''} ${e.lastName ?? ''}`.trim(),
     employee_id: e.employeeCode || e.id,
     email: e.email || '',
     phone: e.phone || '—',
-    department: 'Sales',
-    designation: e.designation || 'Sales',
+    department,
+    designation: e.designation || department,
     reporting_manager: e.manager ? `${e.manager.firstName ?? ''} ${e.manager.lastName ?? ''}`.trim() : '—',
     joining_date: e.joiningDate || e.createdAt || null,
     status: e.isActive === false ? 'Inactive' : 'Active',
@@ -37,66 +37,30 @@ export const fetchSalesTeam = createAsyncThunk(
   }
 )
 
-const initialMarketingTeam = [
-  {
-    id: 5,
-    full_name: 'Riya Kapoor',
-    employee_id: 'EMP-M001',
-    email: 'riya@crmpro.com',
-    phone: '+91 98765 00011',
-    department: 'Marketing',
-    designation: 'Marketing Executive',
-    reporting_manager: 'Ananya Roy',
-    joining_date: '2025-02-20',
-    status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'
-  },
-  {
-    id: 6,
-    full_name: 'Arjun Mehta',
-    employee_id: 'EMP-M002',
-    email: 'arjun@crmpro.com',
-    phone: '+91 98765 00012',
-    department: 'Marketing',
-    designation: 'Marketing Executive',
-    reporting_manager: 'Ananya Roy',
-    joining_date: '2025-05-12',
-    status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e'
-  },
-  {
-    id: 7,
-    full_name: 'Karan Malhotra',
-    employee_id: 'EMP-M003',
-    email: 'karan@crmpro.com',
-    phone: '+91 98765 00013',
-    department: 'Marketing',
-    designation: 'Marketing Intern',
-    reporting_manager: 'Riya Kapoor',
-    joining_date: '2026-01-10',
-    status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e'
-  },
-  {
-    id: 8,
-    full_name: 'Sneha Jain',
-    employee_id: 'EMP-M004',
-    email: 'sneha@crmpro.com',
-    phone: '+91 98765 00014',
-    department: 'Marketing',
-    designation: 'Marketing Intern',
-    reporting_manager: 'Arjun Mehta',
-    joining_date: '2026-04-15',
-    status: 'On Leave',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9'
+// Load Marketing department members from the live employees API (no demo data).
+export const fetchMarketingTeam = createAsyncThunk(
+  'team/fetchMarketing',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await employeeService.getAll()
+      const list = res.data || []
+      return list
+        .filter((e) => {
+          const dept = typeof e.department === 'object' ? e.department?.name : e.department
+          return (dept || '').toLowerCase() === 'marketing'
+        })
+        .map((e) => mapEmployeeToMember(e, 'Marketing'))
+    } catch (err) {
+      return rejectWithValue(err.message)
+    }
   }
-]
+)
 
 const teamSlice = createSlice({
   name: 'team',
   initialState: {
     sales: [],
-    marketing: initialMarketingTeam,
+    marketing: [],
     loading: false
   },
   reducers: {
@@ -136,6 +100,12 @@ const teamSlice = createSlice({
         state.sales = action.payload
       })
       .addCase(fetchSalesTeam.rejected, (state) => { state.loading = false })
+      .addCase(fetchMarketingTeam.pending, (state) => { state.loading = true })
+      .addCase(fetchMarketingTeam.fulfilled, (state, action) => {
+        state.loading = false
+        state.marketing = action.payload
+      })
+      .addCase(fetchMarketingTeam.rejected, (state) => { state.loading = false })
   }
 })
 

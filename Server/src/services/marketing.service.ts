@@ -3,12 +3,15 @@ import {
   MarketingCampaignStatus,
   MarketingLeadStatus,
   MarketingTaskStatus,
+  SalesLeadStatus,
   Prisma,
 } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import type { DataScope } from "./scope.service.js";
 import { ApiError } from "../utils/ApiError.js";
-import { recordActivity } from "./activity-writer.service.js";
+import { recordActivity, recordAudit } from "./activity-writer.service.js";
+import { computeLeadScore, nextLeadCode, recordAssignmentHistory, recordStatusHistory } from "./salesLead.service.js";
+import { canAssignTaskTo, getAssignableSubordinates } from "./hierarchy.service.js";
 
 export type MarketingRequestContext = {
   viewer: AuthUser;
@@ -226,6 +229,22 @@ function assertMarketingManager(access: MarketingAccess) {
   }
 }
 
+/**
+ * Hierarchical task-assignment guard (mirrors the Sales rule). Self-assignment
+ * is always allowed; otherwise the assignee must be in the caller's reporting
+ * subtree at the tier directly below them (Vertical Manager → Heads,
+ * Marketing Head → Executives/Interns). Executives/interns cannot assign.
+ */
+async function assertAssignable(access: MarketingAccess, assigneeId: string) {
+  if (assigneeId === access.employeeId) return;
+  if (access.roleLevel < 2) {
+    throw new ApiError(403, "You are not allowed to assign tasks to others");
+  }
+  if (!(await canAssignTaskTo(access.employeeId, assigneeId))) {
+    throw new ApiError(403, "You can only assign tasks to your team members");
+  }
+}
+
 function normalizeMoney(value: unknown) {
   return value === null || value === undefined ? value : new Prisma.Decimal(value as Prisma.Decimal.Value);
 }
@@ -241,8 +260,31 @@ function normalizeCreateCampaign(input: Partial<CreateCampaignInput>) {
 function normalizeCreateLead(input: Partial<CreateLeadInput>) {
   return {
     ...input,
-    estimatedValue: normalizeMoney(input.estimatedValue),
+    estimatedValue:     normalizeMoney(input.estimatedValue),
+    budgetAvailable:    normalizeMoney(input.budgetAvailable),
+    expectedInvestment: normalizeMoney(input.expectedInvestment),
   } as CreateLeadInput;
+}
+
+// Synced capture fields feed the shared sales lead-score (no second scorer).
+function marketingLeadScore(input: {
+  priority?: string | null;
+  urgencyLevel?: unknown;
+  budgetAvailable?: unknown;
+  expectedInvestment?: unknown;
+  workExperienceYears?: number | null;
+  consultationRequired?: boolean | null;
+  familyImmigrationRequired?: boolean | null;
+}): number {
+  return computeLeadScore({
+    priority:                  input.priority ?? undefined,
+    urgencyLevel:              (input.urgencyLevel as string | null | undefined) ?? undefined,
+    budgetAvailable:           input.budgetAvailable,
+    expectedInvestment:        input.expectedInvestment,
+    workExperienceYears:       input.workExperienceYears ?? undefined,
+    consultationRequired:      input.consultationRequired ?? undefined,
+    familyImmigrationRequired: input.familyImmigrationRequired ?? undefined,
+  });
 }
 
 function normalizeCreateKPI(input: Partial<CreateKPIInput>) {
@@ -374,6 +416,12 @@ export async function listMarketingTasks(ctx: MarketingRequestContext) {
   });
 }
 
+/** Team members the caller may assign a marketing task to ([] for execs/interns). */
+export async function listMarketingAssignableUsers(ctx: MarketingRequestContext) {
+  const access = await resolveAccess(ctx);
+  return getAssignableSubordinates(access.employeeId);
+}
+
 export async function getMarketingTask(ctx: MarketingRequestContext, id: string) {
   const access = await resolveAccess(ctx);
   const task = await prisma.marketingTask.findFirst({
@@ -386,16 +434,20 @@ export async function getMarketingTask(ctx: MarketingRequestContext, id: string)
 
 export async function createMarketingTask(ctx: MarketingRequestContext, input: Partial<CreateTaskInput>) {
   const access = await resolveAccess(ctx);
-  assertMarketingManager(access);
   assertBusinessInScope(access, String(input.businessId));
   assertTeamInScope(access, input.teamId as string | null | undefined);
-  assertEmployeeInScope(access, input.assignedToId as string | null | undefined);
+
+  // Tasks may only be assigned to the caller's team members (tier below them);
+  // everyone — including executives/interns — can create self-assigned tasks.
+  const requestedAssignee = input.assignedToId ? String(input.assignedToId) : access.employeeId;
+  await assertAssignable(access, requestedAssignee);
 
   const task = await prisma.marketingTask.create({
     data: {
       ...input,
       organizationId: access.organizationId,
       createdById: access.employeeId,
+      assignedToId: requestedAssignee,
       status: input.status ?? MarketingTaskStatus.TODO,
     } as CreateTaskInput,
     include: taskInclude,
@@ -421,7 +473,10 @@ export async function updateMarketingTask(ctx: MarketingRequestContext, id: stri
     throw new ApiError(403, "Only managers can reassign or move marketing tasks");
   }
   assertTeamInScope(access, input.teamId as string | null | undefined);
-  assertEmployeeInScope(access, input.assignedToId as string | null | undefined);
+  // Reassignment is restricted to the caller's team members (tier below them).
+  if ("assignedToId" in input && input.assignedToId != null && input.assignedToId !== existing.assignedToId) {
+    await assertAssignable(access, String(input.assignedToId));
+  }
 
   const status = input.status as MarketingTaskStatus | undefined;
   const data = {
@@ -461,6 +516,7 @@ export async function createMarketingLead(ctx: MarketingRequestContext, input: P
       organizationId: access.organizationId,
       createdById: access.employeeId,
       assignedToId: canManage(access) ? input.assignedToId ?? access.employeeId : access.employeeId,
+      leadScore: marketingLeadScore(input),
     }),
     include: leadInclude,
   });
@@ -491,6 +547,8 @@ export async function updateMarketingLead(ctx: MarketingRequestContext, id: stri
   if (input.status === MarketingLeadStatus.CONVERTED && !input.convertedAt) {
     data.convertedAt = new Date();
   }
+  // Re-derive the score from the merged (existing + incoming) capture fields.
+  data.leadScore = marketingLeadScore({ ...existing, ...input } as Parameters<typeof marketingLeadScore>[0]);
   const lead = await prisma.marketingLead.update({ where: { id }, data, include: leadInclude });
   await recordActivity({
     actorId: access.employeeId,
@@ -500,6 +558,185 @@ export async function updateMarketingLead(ctx: MarketingRequestContext, id: stri
     targetId: lead.id,
   });
   return lead;
+}
+
+/**
+ * Phase 1 Marketing→Sales handoff. Promotes a MarketingLead into the sales
+ * pipeline: creates a linked SalesLead (assigned to a Sales Executive that is
+ * within the promoter's scope) and marks the marketing lead CONVERTED — both in
+ * a single transaction so the chain can never be left half-formed. Records
+ * ASSIGNMENT_CHANGE / STATUS_CHANGE on both entities for the ownership history.
+ */
+export async function promoteMarketingLeadToSales(
+  ctx: MarketingRequestContext,
+  marketingLeadId: string,
+  input: { assignedToId: string; teamId?: string | null; verticalId?: string | null },
+) {
+  const access = await resolveAccess(ctx);
+  if (!canExecute(access)) {
+    throw new ApiError(403, "Marketing executive access is required to promote leads");
+  }
+
+  const mLead = await ensureScopedLead(marketingLeadId, access);
+
+  // Idempotency: a marketing lead can be promoted at most once.
+  if (mLead.status === MarketingLeadStatus.CONVERTED) {
+    throw new ApiError(409, "Marketing lead is already converted");
+  }
+  const alreadyPromoted = await prisma.salesLead.findUnique({
+    where: { marketingLeadId },
+    select: { id: true },
+  });
+  if (alreadyPromoted) {
+    throw new ApiError(409, "Marketing lead has already been promoted to sales");
+  }
+
+  // Receiving sales executive must be within the promoter's scope (per policy)
+  // and an active employee in the lead's own business.
+  assertEmployeeInScope(access, input.assignedToId);
+  const assignee = await prisma.employee.findFirst({
+    where: { id: input.assignedToId, isActive: true, businessId: mLead.businessId },
+    select: { id: true },
+  });
+  if (!assignee) {
+    throw new ApiError(400, "Assigned sales executive must be an active employee in the lead's business");
+  }
+  assertTeamInScope(access, input.teamId ?? mLead.teamId ?? undefined);
+
+  const salesLead = await prisma.$transaction(async (tx) => {
+    let created;
+    // Retry only on leadCode collisions (mirrors createSalesLead); a
+    // marketingLeadId collision means a concurrent promote already won.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        created = await tx.salesLead.create({
+          data: {
+            leadCode:       await nextLeadCode(tx),
+            organizationId: access.organizationId,
+            businessId:     mLead.businessId,
+            teamId:         input.teamId ?? mLead.teamId ?? null,
+            verticalId:     input.verticalId ?? mLead.verticalId ?? null,
+            name:           mLead.name,
+            email:          mLead.email,
+            phone:          mLead.phone,
+            source:         mLead.source,
+            estimatedValue: mLead.estimatedValue,
+            status:         SalesLeadStatus.NEW,
+            createdById:    access.employeeId,
+            assignedToId:   input.assignedToId,
+            marketingLeadId: mLead.id,
+            // Carry the synced capture fields through to Sales (Phase 6).
+            company:                   mLead.company,
+            whatsappNumber:            mLead.whatsappNumber,
+            countryOfResidence:        mLead.countryOfResidence,
+            nationality:               mLead.nationality,
+            visaCategory:              mLead.visaCategory,
+            interestedVisa:            mLead.interestedVisa,
+            currentStatus:             mLead.currentStatus,
+            education:                 mLead.education,
+            workExperienceYears:       mLead.workExperienceYears,
+            budgetAvailable:           mLead.budgetAvailable,
+            expectedInvestment:        mLead.expectedInvestment,
+            consultationRequired:      mLead.consultationRequired ?? false,
+            consultationDate:          mLead.consultationDate,
+            ...(mLead.priorityLevel ? { priorityLevel: mLead.priorityLevel } : {}),
+            ...(mLead.urgencyLevel  ? { urgencyLevel:  mLead.urgencyLevel  } : {}),
+            ...(mLead.priority      ? { priority:      mLead.priority      } : {}),
+            familyImmigrationRequired: mLead.familyImmigrationRequired ?? false,
+            leadScore:      computeLeadScore({
+              priority:                  mLead.priority ?? undefined,
+              urgencyLevel:              mLead.urgencyLevel ?? undefined,
+              budgetAvailable:           mLead.budgetAvailable,
+              expectedInvestment:        mLead.expectedInvestment,
+              workExperienceYears:       mLead.workExperienceYears ?? undefined,
+              consultationRequired:      mLead.consultationRequired ?? undefined,
+              familyImmigrationRequired: mLead.familyImmigrationRequired ?? undefined,
+              status:                    SalesLeadStatus.NEW,
+            }),
+          },
+          include: { assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } } },
+        });
+        break;
+      } catch (err) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2002"
+        ) {
+          const target = err.meta?.target as string[] | string | undefined;
+          const hitLeadCode = Array.isArray(target)
+            ? target.includes("leadCode")
+            : target === "leadCode" || (typeof target === "string" && target.includes("leadCode"));
+          if (hitLeadCode && attempt < 5) continue;
+          throw new ApiError(409, "Marketing lead has already been promoted to sales");
+        }
+        throw err;
+      }
+    }
+
+    await tx.marketingLead.update({
+      where: { id: mLead.id },
+      data: { status: MarketingLeadStatus.CONVERTED, convertedAt: new Date() },
+    });
+
+    // First link of the ownership chain: Marketing owner → Sales executive.
+    await recordAssignmentHistory(
+      {
+        leadId:         created.id,
+        reason:         "PROMOTED_FROM_MARKETING",
+        fromEmployeeId: mLead.assignedToId ?? mLead.createdById,
+        toEmployeeId:   input.assignedToId,
+        changedById:    access.employeeId,
+        note:           `Promoted from marketing lead ${mLead.id}`,
+      },
+      tx,
+    );
+    // Open the lifecycle trail at NEW.
+    await recordStatusHistory(
+      {
+        leadId:      created.id,
+        toStatus:    created.status,
+        changedById: access.employeeId,
+        note:        `Promoted from marketing lead ${mLead.id}`,
+      },
+      tx,
+    );
+
+    return created;
+  });
+
+  // Ownership-chain events (best-effort; outside the transaction).
+  await recordActivity({
+    actorId: access.employeeId,
+    businessId: salesLead.businessId,
+    action: "ASSIGNMENT_CHANGE",
+    targetType: "SalesLead",
+    targetId: salesLead.id,
+    metadata: {
+      promotedFromMarketingLeadId: mLead.id,
+      assignedToId: input.assignedToId,
+      source: mLead.source,
+    },
+  });
+  await recordActivity({
+    actorId: access.employeeId,
+    businessId: mLead.businessId,
+    action: "STATUS_CHANGE",
+    targetType: "MarketingLead",
+    targetId: mLead.id,
+    metadata: { status: MarketingLeadStatus.CONVERTED, promotedToSalesLeadId: salesLead.id },
+  });
+  await recordAudit({
+    actorId: access.employeeId,
+    businessId: salesLead.businessId,
+    action: "ASSIGNMENT_CHANGE",
+    entityType: "SalesLead",
+    entityName: salesLead.name,
+    entityId: salesLead.id,
+    before: null,
+    after: salesLead,
+  });
+
+  return salesLead;
 }
 
 export async function listMarketingActivities(ctx: MarketingRequestContext) {

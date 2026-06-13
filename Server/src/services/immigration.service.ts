@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import type { DataScope } from "./scope.service.js";
+import { REVENUE_WHERE, isRevenueLead, leadRevenue, revenueMonthKey } from "./revenue.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -236,7 +237,7 @@ async function leadStatsFor(where: object): Promise<{
 }> {
   const leads = await prisma.salesLead.findMany({
     where: where as any,
-    select: { status: true, estimatedValue: true },
+    select: { status: true, paymentAmount: true, convertedAt: true },
   });
   const won   = leads.filter(l => l.status === "CONVERTED").length;
   const lost  = leads.filter(l => l.status === "LOST").length;
@@ -245,7 +246,9 @@ async function leadStatsFor(where: object): Promise<{
     won,
     lost,
     active:   leads.filter(l => !["CONVERTED", "LOST"].includes(l.status)).length,
-    wonValue: leads.filter(l => l.status === "CONVERTED").reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0),
+    // Revenue = collected payment of leads that were converted (incl. later
+    // transferred), per the single revenue definition (services/revenue.ts).
+    wonValue: leads.filter(isRevenueLead).reduce((s, l) => s + leadRevenue(l), 0),
   };
 }
 
@@ -297,18 +300,19 @@ export async function getImmigrationKpis(scope: DataScope): Promise<ImmigrationK
     taskStatsFor({ businessId }),
     leadStatsFor({ businessId }),
     prisma.salesLead.count({ where: { businessId, createdAt: thisMonth } }),
+    // Revenue = collected payment, dated by conversion (services/revenue.ts).
     prisma.salesLead.aggregate({
-      where: { businessId, status: "CONVERTED", updatedAt: thisMonth },
-      _sum: { estimatedValue: true },
+      where: { businessId, convertedAt: thisMonth },
+      _sum: { paymentAmount: true },
     }),
     prisma.salesLead.aggregate({
-      where: { businessId, status: "CONVERTED", updatedAt: lastMonth },
-      _sum: { estimatedValue: true },
+      where: { businessId, convertedAt: lastMonth },
+      _sum: { paymentAmount: true },
     }),
   ]);
 
-  const revenueThisMonth = Number(revThis._sum.estimatedValue ?? 0);
-  const revenueLastMonth = Number(revLast._sum.estimatedValue ?? 0);
+  const revenueThisMonth = Number(revThis._sum.paymentAmount ?? 0);
+  const revenueLastMonth = Number(revLast._sum.paymentAmount ?? 0);
   const revenueGrowthPct = growthPct(revenueThisMonth, revenueLastMonth);
 
   const components: HealthScoreComponents = {
@@ -566,16 +570,18 @@ export async function getRevenue(
   if (!businessId) return { byPeriod: [], byVertical: [], total: 0, deals: 0 };
 
   const now = new Date();
-  const where: any = { businessId, status: "CONVERTED" };
+  // Revenue counts converted leads (incl. later transferred), dated and summed
+  // by collected payment — see services/revenue.ts.
+  const where: any = { businessId, ...REVENUE_WHERE };
   if (filters.verticalId) where.verticalId = filters.verticalId;
 
   if (filters.startDate || filters.endDate) {
-    where.updatedAt = {};
-    if (filters.startDate) where.updatedAt.gte = new Date(filters.startDate);
-    if (filters.endDate)   where.updatedAt.lte = new Date(filters.endDate);
+    where.convertedAt = {};
+    if (filters.startDate) where.convertedAt.gte = new Date(filters.startDate);
+    if (filters.endDate)   where.convertedAt.lte = new Date(filters.endDate);
   } else {
     const period = filters.period ?? "month";
-    where.updatedAt =
+    where.convertedAt =
       period === "year"    ? { gte: new Date(now.getFullYear(), 0, 1) } :
       period === "quarter" ? { gte: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1) } :
       { gte: new Date(now.getFullYear(), now.getMonth(), 1) };
@@ -584,7 +590,7 @@ export async function getRevenue(
   const [wonLeads, allVerticals] = await Promise.all([
     prisma.salesLead.findMany({
       where,
-      select: { estimatedValue: true, updatedAt: true, verticalId: true },
+      select: { paymentAmount: true, convertedAt: true, verticalId: true },
     }),
     prisma.vertical.findMany({
       where: { businessId },
@@ -592,12 +598,13 @@ export async function getRevenue(
     }),
   ]);
 
-  // Group by month
+  // Group by month (by conversion date)
   const monthMap = new Map<string, { revenue: number; deals: number }>();
   for (const lead of wonLeads) {
-    const key = lead.updatedAt.toISOString().slice(0, 7);
+    const key = revenueMonthKey(lead);
+    if (!key) continue;
     const e   = monthMap.get(key) ?? { revenue: 0, deals: 0 };
-    e.revenue += Number(lead.estimatedValue ?? 0);
+    e.revenue += leadRevenue(lead);
     e.deals   += 1;
     monthMap.set(key, e);
   }
@@ -614,7 +621,7 @@ export async function getRevenue(
   for (const lead of wonLeads) {
     if (lead.verticalId && verticalMap.has(lead.verticalId)) {
       const e = verticalMap.get(lead.verticalId)!;
-      e.revenue += Number(lead.estimatedValue ?? 0);
+      e.revenue += leadRevenue(lead);
       e.deals   += 1;
     }
   }
@@ -622,7 +629,7 @@ export async function getRevenue(
     .map(v => ({ verticalId: v.id, verticalName: v.name, revenue: v.revenue, deals: v.deals }))
     .sort((a, b) => b.revenue - a.revenue);
 
-  const total = wonLeads.reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0);
+  const total = wonLeads.reduce((s, l) => s + leadRevenue(l), 0);
   return { byPeriod, byVertical, total, deals: wonLeads.length };
 }
 
@@ -937,7 +944,7 @@ export async function getReports(
   const [leads, tasks, verticals] = await Promise.all([
     prisma.salesLead.findMany({
       where: leadWhere,
-      select: { status: true, estimatedValue: true, createdAt: true, verticalId: true },
+      select: { status: true, estimatedValue: true, paymentAmount: true, convertedAt: true, createdAt: true, verticalId: true },
     }),
     taskStatsFor(taskWhere),
     prisma.vertical.findMany({
@@ -947,7 +954,9 @@ export async function getReports(
   ]);
 
   const wonLeads = leads.filter(l => l.status === "CONVERTED");
-  const revenue  = wonLeads.reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0);
+  // Revenue = collected payment of leads that were converted (services/revenue.ts).
+  const revenueLeads = leads.filter(isRevenueLead);
+  const revenue  = revenueLeads.reduce((s, l) => s + leadRevenue(l), 0);
   const closed   = leads.filter(l => ["CONVERTED", "LOST"].includes(l.status)).length;
 
   return {
@@ -957,12 +966,14 @@ export async function getReports(
       lostLeads:           leads.filter(l => l.status === "LOST").length,
       leadConversionRate:  pct(wonLeads.length, closed),
       totalRevenue:        revenue,
-      avgDealSize:         wonLeads.length > 0 ? Math.round(revenue / wonLeads.length) : 0,
+      avgDealSize:         revenueLeads.length > 0 ? Math.round(revenue / revenueLeads.length) : 0,
       totalTasks:          tasks.total,
       completedTasks:      tasks.completed,
       overdueTasks:        tasks.overdue,
       taskCompletionRate:  pct(tasks.completed, tasks.total),
     },
+    // Funnel `value` is pipeline potential per stage (estimatedValue) — NOT
+    // collected revenue. Deliberately distinct from the revenue metric above.
     funnel: LEAD_STAGES.map(stage => ({
       stage,
       count: leads.filter(l => l.status === stage).length,
@@ -974,8 +985,8 @@ export async function getReports(
       name:    v.name,
       leads:   leads.filter(l => l.verticalId === v.id).length,
       revenue: leads
-        .filter(l => l.verticalId === v.id && l.status === "CONVERTED")
-        .reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0),
+        .filter(l => l.verticalId === v.id && isRevenueLead(l))
+        .reduce((s, l) => s + leadRevenue(l), 0),
     })),
   };
 }

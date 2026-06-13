@@ -24,7 +24,7 @@
 |---|---|---|
 | `MarketingCampaign` | `name`, budget, dates, `status` | `MarketingCampaignStatus` (DRAFT…CANCELLED) |
 | `MarketingTask` | `title`, `status`, assignee | `MarketingTaskStatus` |
-| `MarketingLead` | `name`, `source`, `status`, `estimatedValue`, `convertedAt` | `MarketingLeadStatus` (NEW→CONTACTED→QUALIFIED→CONVERTED→LOST) |
+| `MarketingLead` | `name`, `source`, `status`, `estimatedValue`, `convertedAt`, `leadScore` (auto, derived via the shared sales `computeLeadScore`), + capture fields synced with `SalesLead` (`company`, `whatsappNumber`, `countryOfResidence`, `nationality`, `visaCategory`, `interestedVisa`, `priorityLevel`, `currentStatus`, `education`, `workExperienceYears`, `familyImmigrationRequired`, `budgetAvailable`, `urgencyLevel`, `priority`/Lead-Temperature, `expectedInvestment`, `consultationRequired`, `consultationDate`) — all nullable; carried into the SalesLead on promotion | `MarketingLeadStatus`, `VisaCategory`, `PriorityLevel`, `LeadCurrentStatus` |
 | `MarketingActivity` | `type`, `title`, links to lead/task/campaign | `MarketingActivityType` |
 | `MarketingKPI` | `metricType`, `value`, `target`, period | `MarketingKPIType` |
 
@@ -32,16 +32,18 @@
 
 | Model | Key fields | Enums |
 |---|---|---|
-| `SalesLead` | `leadCode` (unique), contact + immigration + qualification + payment + lifecycle fields, `leadScore` (derived), `estimatedValue`, `convertedAt`, `transferredAt` | `SalesLeadStatus`, `SalesLeadPaymentStatus`, `VisaCategory`, `PriorityLevel`, `LeadCurrentStatus` |
+| `SalesLead` | `leadCode` (unique), contact + immigration + qualification + payment + lifecycle fields, `leadScore` (derived), `estimatedValue`, `convertedAt`, `transferredAt`, `marketingLeadId` (nullable, unique — link back to the originating `MarketingLead` when promoted) | `SalesLeadStatus`, `SalesLeadPaymentStatus`, `VisaCategory`, `PriorityLevel`, `LeadCurrentStatus` |
 | `SalesTask` | `taskCode` (unique), `taskType`, `status`, `result`, `dueDate`, `nextFollowUpDate` | `SalesTaskType`, `SalesTaskStatus`, `SalesTaskResult` |
 | `SalesTarget` (+`SalesTargetHistory`) | `targetCode`, `category`, `metric`, `targetValue`, parent/child breakdown, assignment | `SalesTargetCategory/Metric/Status`, `SalesTargetHistoryAction` |
-| `LeadImmigrationProfile` | 1:1 with `SalesLead`; duplicates immigration fields | — **(see Remediation: redundant, effectively unwritten by the live UI)** |
+| `LeadAssignmentHistory` | never-overwritten ownership chain per `SalesLead`: `leadId`, `fromEmployeeId`/`toEmployeeId` (soft refs), `changedById`, `reason`, `note`, `createdAt` | `LeadAssignmentReason` |
+| `LeadStatusHistory` | never-overwritten lifecycle trail per `SalesLead`: `leadId`, `fromStatus`/`toStatus`, `changedById`, `note`, `createdAt`. Writes gated by the transition state-machine in `salesLead.service` | `SalesLeadStatus` |
 
 ### Enum reference (selected)
 - **`SalesLeadStatus`:** NEW · CONTACTED · CONSULTATION_SCHEDULED · DOCUMENTS_REQUESTED · QUALIFIED · CONVERTED · TRANSFERRED · LOST
 - **`SalesLeadPaymentStatus`:** INITIATED · IN_PROGRESS · DONE · PARTIALLY_DONE
 - **`VisaCategory`:** H1B · L1A · L1B · O1 · TN · E3 · EB1 · EB2_NIW · FAMILY_GREEN_CARD · MARRIAGE_BASED · BUSINESS_VISA · VISITOR_VISA · PERMANENT_RESIDENCY
 - **`SalesTaskResult`:** CONNECTED · NO_RESPONSE · INTERESTED · NOT_INTERESTED · CALL_BACK_LATER · CONSULTATION_BOOKED · DOCUMENTS_RECEIVED · PAYMENT_RECEIVED · CONVERTED · LOST_LEAD
+- **`LeadAssignmentReason`:** CREATED · PROMOTED_FROM_MARKETING · REASSIGNED · TRANSFERRED
 
 > **Field-naming caution:** `SalesLead.priorityLevel` (PriorityLevel enum) and `SalesLead.priority` (string `hot`/`warm`/`cold`, labeled "Interested Level" in the UI) are two distinct fields. Don't conflate them.
 

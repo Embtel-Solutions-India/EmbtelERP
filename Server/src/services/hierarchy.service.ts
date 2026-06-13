@@ -170,6 +170,69 @@ async function queryDescendantIds(employeeId: string): Promise<string[]> {
   return rows.map((r) => r.id);
 }
 
+export type AssignableEmployee = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  designation: string | null;
+};
+
+/**
+ * Employees the given user may assign a task to — i.e. the people in their
+ * reporting subtree at the tier directly below them. Mirrors the proven Sales
+ * Targets rule so task & target assignment stay consistent:
+ *   • level < 2 (Exec/Intern)      → nobody
+ *   • level 2 + no team (Vertical Manager) → department Heads (level 2 w/ a team)
+ *   • level 2 + a team (Sales/Marketing Head) → Executives & Interns (level ≤ 1)
+ *   • level ≥ 3 (Business Head+)   → anyone in their subtree
+ * Used by both the assignee picker and the server-side assignment guard.
+ */
+export async function getAssignableSubordinates(
+  assignerId: string,
+): Promise<AssignableEmployee[]> {
+  const assigner = await prisma.employee.findUnique({
+    where: { id: assignerId },
+    select: { level: true, teamId: true, role: { select: { level: true } } },
+  });
+  if (!assigner) return [];
+  const level = assigner.level ?? assigner.role.level;
+  if (level < 2) return [];
+
+  const descendantIds = await getDescendantIds(assignerId);
+  if (descendantIds.length === 0) return [];
+
+  const candidates = await prisma.employee.findMany({
+    where: { id: { in: descendantIds }, isActive: true },
+    select: {
+      id: true, firstName: true, lastName: true, designation: true,
+      level: true, teamId: true, role: { select: { level: true } },
+    },
+    orderBy: { firstName: "asc" },
+  });
+
+  const isVerticalManager = level === 2 && !assigner.teamId;
+  const filtered = candidates.filter((e) => {
+    const lvl = e.level ?? e.role.level;
+    if (level >= 3) return true;                       // business head+: whole subtree
+    if (isVerticalManager) return lvl === 2 && !!e.teamId; // VM → department heads
+    return lvl <= 1;                                   // head → execs & interns
+  });
+
+  return filtered.map((e) => ({
+    id: e.id, firstName: e.firstName, lastName: e.lastName, designation: e.designation,
+  }));
+}
+
+/** Whether `assignerId` may assign a task to `assigneeId` (self is always allowed). */
+export async function canAssignTaskTo(
+  assignerId: string,
+  assigneeId: string,
+): Promise<boolean> {
+  if (assignerId === assigneeId) return true;
+  const subs = await getAssignableSubordinates(assignerId);
+  return subs.some((s) => s.id === assigneeId);
+}
+
 export async function isDescendantOf(
   candidateId: string,
   ancestorId: string,

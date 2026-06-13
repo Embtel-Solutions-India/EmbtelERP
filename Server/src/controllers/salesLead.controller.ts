@@ -1,13 +1,16 @@
 import type { Request, Response } from "express";
 import type { SalesLeadContext } from "../services/salesLead.service.js";
 import {
+  createSalesLead,
   deleteSalesLead,
   listSalesLeads,
   updateSalesLead,
   convertSalesLead,
   transferSalesLead,
+  getLeadAssignmentHistory,
+  getLeadStatusHistory,
+  getLeadTimeline,
 } from "../services/salesLead.service.js";
-import { createLeadWithImmigration } from "../services/leadImmigration.service.js";
 
 function salesCtx(req: Request): SalesLeadContext {
   return {
@@ -22,7 +25,7 @@ export async function listLeads(req: Request, res: Response) {
 }
 
 export async function createLead(req: Request, res: Response) {
-  const lead = await createLeadWithImmigration(salesCtx(req), req.body);
+  const lead = await createSalesLead(salesCtx(req), req.body);
   res.status(201).json({ data: lead });
 }
 
@@ -44,4 +47,16 @@ export async function convertLead(req: Request, res: Response) {
 export async function transferLead(req: Request, res: Response) {
   const lead = await transferSalesLead(salesCtx(req), String(req.params.id));
   res.json({ data: lead });
+}
+
+export async function leadHistory(req: Request, res: Response) {
+  res.json({ data: await getLeadAssignmentHistory(salesCtx(req), String(req.params.id)) });
+}
+
+export async function leadStatusHistory(req: Request, res: Response) {
+  res.json({ data: await getLeadStatusHistory(salesCtx(req), String(req.params.id)) });
+}
+
+export async function leadTimeline(req: Request, res: Response) {
+  res.json({ data: await getLeadTimeline(salesCtx(req), String(req.params.id)) });
 }

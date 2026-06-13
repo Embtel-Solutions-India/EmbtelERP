@@ -110,7 +110,7 @@ async function computeDataScope(
 
       // Defense-in-depth: re-assert business and sub-tree authorization
       if (team.businessId !== viewer.businessId) return getSelfScope(viewer as any);
-      const viewerRoleLevel = viewer.role?.level ?? viewer.level ?? 0;
+      const viewerRoleLevel = viewer.level ?? viewer.role?.level ?? 0;
       if (viewerRoleLevel < 2 && viewer.teamId !== team.id) {
         const descendantIds = await getDescendantIds(viewer.id);
         const subordinates = await prisma.employee.findMany({
@@ -143,7 +143,7 @@ async function computeDataScope(
 
       // Defense-in-depth: re-assert business and sub-tree authorization
       if (vertical.businessId !== viewer.businessId) return getSelfScope(viewer as any);
-      const viewerRoleLevelV = viewer.role?.level ?? viewer.level ?? 0;
+      const viewerRoleLevelV = viewer.level ?? viewer.role?.level ?? 0;
       if (viewerRoleLevelV < 2 && (viewer as any).verticalId !== vertical.id) {
         const descendantIds = await getDescendantIds(viewer.id);
         const subordinates = await prisma.employee.findMany({
@@ -181,7 +181,7 @@ async function computeDataScope(
       if (!business) return getSelfScope(viewer as any);
 
       // Defense-in-depth: re-assert authorization
-      const viewerRoleLevelB = viewer.role?.level ?? viewer.level ?? 0;
+      const viewerRoleLevelB = viewer.level ?? viewer.role?.level ?? 0;
       if (viewerRoleLevelB < 4 && business.id !== viewer.businessId) {
         return getSelfScope(viewer as any);
       }
@@ -338,7 +338,7 @@ async function buildScope(
   // operational scope (business/dept/team) pinned to their own business so they
   // cannot read sales/marketing/leads from other businesses.
   // Only applies when the viewer is acting as themselves (no perspective switch).
-  if (viewer.id === perspectiveTarget.id && await isWorkforceManager({ businessId: viewer.businessId, roleLevel: viewer.role?.level ?? viewer.level ?? 0 })) {
+  if (viewer.id === perspectiveTarget.id && await isWorkforceManager({ businessId: viewer.businessId, roleLevel: viewer.level ?? viewer.role?.level ?? 0 })) {
     const [orgEmployees, departments, teams] = await Promise.all([
       prisma.employee.findMany({
         where: { organizationId: viewer.organizationId },

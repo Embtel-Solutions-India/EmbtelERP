@@ -118,7 +118,8 @@ function resolveMenu(activeModule, level, designation) {
   switch (activeModule) {
     case "sales":
       if (level <= 0) return salesInternMenu;
-      if (level >= 2 || desg.includes("head") || desg.includes("manager")) return salesHeadMenu;
+      if (level >= 2 || desg.includes("head") || desg.includes("manager"))
+        return salesHeadMenu;
       return salesExecutiveMenu;
 
     case "sales-intern":
@@ -191,27 +192,27 @@ function resolveMenu(activeModule, level, designation) {
 }
 
 const moduleLabelMap = {
-  "sales":                 "Sales Platform",
-  "sales-intern":          "Sales Platform",
-  "sales-manager":         "Sales Platform",
-  "marketing":             "Marketing Platform",
-  "marketing-intern":      "Marketing Platform",
-  "marketing-manager":     "Marketing Platform",
-  "production":            "Documentation Platform",
-  "documentation":         "Documentation Platform",
-  "documentation-intern":  "Documentation Platform",
+  sales: "Sales Platform",
+  "sales-intern": "Sales Platform",
+  "sales-manager": "Sales Platform",
+  marketing: "Marketing Platform",
+  "marketing-intern": "Marketing Platform",
+  "marketing-manager": "Marketing Platform",
+  production: "Documentation Platform",
+  documentation: "Documentation Platform",
+  "documentation-intern": "Documentation Platform",
   "documentation-manager": "Documentation Platform",
-  "evaluation":            "Evaluation Platform",
-  "head-evaluation":       "Evaluation Platform",
-  "professor":             "Evaluation Platform",
-  "hr":                    "HR Platform",
-  "hr-executive":          "HR Platform",
-  "recruitment":           "HR Platform",
-  "owner":                 "Management Platform",
-  "head":                  "Management Platform",
-  "vertical":              "Management Platform",
-  "admin":                 "Admin Platform",
-  "super-admin":           "Admin Platform",
+  evaluation: "Evaluation Platform",
+  "head-evaluation": "Evaluation Platform",
+  professor: "Evaluation Platform",
+  hr: "HR Platform",
+  "hr-executive": "HR Platform",
+  recruitment: "HR Platform",
+  owner: "Management Platform",
+  head: "Management Platform",
+  vertical: "Management Platform",
+  admin: "Admin Platform",
+  "super-admin": "Admin Platform",
 };
 
 const IconComponent = ({ name, size = 18 }) => {
@@ -263,10 +264,13 @@ function roleLevelToType(level) {
 
 function mapRoleTree(node) {
   const type =
-    node.nodeType === "business"   ? "BUSINESS"
-    : node.nodeType === "vertical"   ? "VERTICAL"
-    : node.nodeType === "department" ? "MANAGER"
-    : roleLevelToType(node.roleLevel);
+    node.nodeType === "business"
+      ? "BUSINESS"
+      : node.nodeType === "vertical"
+        ? "VERTICAL"
+        : node.nodeType === "department"
+          ? "MANAGER"
+          : roleLevelToType(node.roleLevel);
   return {
     id: node.id,
     type,
@@ -285,19 +289,33 @@ function TreeNode({ node, depth = 0, collapsed, onSelect, activeId }) {
   const getIcon = () => {
     switch (node.type) {
       case "BUSINESS":
-        return <BusinessIcon style={{ fontSize: 14 }} className="text-blue-500" />;
+        return (
+          <BusinessIcon style={{ fontSize: 14 }} className="text-blue-500" />
+        );
       case "VERTICAL":
-        return <VerticalIcon style={{ fontSize: 14 }} className="text-amber-500" />;
+        return (
+          <VerticalIcon style={{ fontSize: 14 }} className="text-amber-500" />
+        );
       case "HEAD":
-        return <HeadIcon style={{ fontSize: 14 }} className="text-indigo-500" />;
+        return (
+          <HeadIcon style={{ fontSize: 14 }} className="text-indigo-500" />
+        );
       case "TEAM":
-        return <TeamIcon style={{ fontSize: 14 }} className="text-emerald-500" />;
+        return (
+          <TeamIcon style={{ fontSize: 14 }} className="text-emerald-500" />
+        );
       case "EMPLOYEE":
-        return <PersonIcon style={{ fontSize: 14 }} className="text-purple-500" />;
+        return (
+          <PersonIcon style={{ fontSize: 14 }} className="text-purple-500" />
+        );
       case "MANAGER":
-        return <ManagerIcon style={{ fontSize: 14 }} className="text-green-500" />;
+        return (
+          <ManagerIcon style={{ fontSize: 14 }} className="text-green-500" />
+        );
       case "INTERN":
-        return <InternIcon style={{ fontSize: 14 }} className="text-pink-400" />;
+        return (
+          <InternIcon style={{ fontSize: 14 }} className="text-pink-400" />
+        );
       default:
         return null;
     }
@@ -398,7 +416,10 @@ function PerspectiveBreadcrumb({ breadcrumb, onReset }) {
         </button>
         {breadcrumb.map((crumb, index) => (
           <span key={crumb.id} className="flex items-center gap-1">
-            <ChevronRight style={{ fontSize: 12 }} className="text-neutral-400" />
+            <ChevronRight
+              style={{ fontSize: 12 }}
+              className="text-neutral-400"
+            />
             <span
               className={
                 index === breadcrumb.length - 1
@@ -426,7 +447,25 @@ export default function Sidebar({ open, mobileOpen }) {
   } = useSelector((s) => s.perspective);
   const location = useLocation();
   const pathSegments = location.pathname.split("/").filter(Boolean);
-  const activeModule = pathSegments[0] || "sales";
+  const rawSegment = pathSegments[0] || "sales";
+
+  // Audit Logs / Calendar are shared routes ("/audit", "/calendar") that aren't
+  // module-scoped. When the user lands on one, keep showing the module they came
+  // from instead of falling back to the Sales default — otherwise the Dashboard
+  // link would point at /sales/dashboard regardless of the originating module.
+  const SHARED_SEGMENTS = new Set(["audit", "calendar"]);
+  const [stickyModule, setStickyModule] = useState(
+    () => sessionStorage.getItem("activeModule") || "sales",
+  );
+  useEffect(() => {
+    if (!SHARED_SEGMENTS.has(rawSegment)) {
+      setStickyModule(rawSegment);
+      sessionStorage.setItem("activeModule", rawSegment);
+    }
+  }, [rawSegment]);
+  const activeModule = SHARED_SEGMENTS.has(rawSegment)
+    ? stickyModule
+    : rawSegment;
 
   const level = Number(user?.employeeLevel ?? user?.roleLevel ?? 0);
   const designation = user?.designation || "";
@@ -437,7 +476,8 @@ export default function Sidebar({ open, mobileOpen }) {
   useEffect(() => {
     dispatch(fetchPerspectives());
     dispatch(fetchCurrentPerspective());
-    const isImmigrationModule = activeModule === "head" || activeModule === "vertical";
+    const isImmigrationModule =
+      activeModule === "head" || activeModule === "vertical";
     isImmigrationModule
       ? dispatch(fetchImmigrationHierarchyTree())
       : dispatch(fetchHierarchyTree());
@@ -446,7 +486,8 @@ export default function Sidebar({ open, mobileOpen }) {
   const refreshAfterSwitch = () => {
     dispatch(fetchPerspectives());
     dispatch(fetchCurrentPerspective());
-    const isImmigrationModule = activeModule === "head" || activeModule === "vertical";
+    const isImmigrationModule =
+      activeModule === "head" || activeModule === "vertical";
     isImmigrationModule
       ? dispatch(fetchImmigrationHierarchyTree())
       : dispatch(fetchHierarchyTree());
@@ -457,7 +498,9 @@ export default function Sidebar({ open, mobileOpen }) {
   };
 
   const handlePerspectiveSelect = (targetType, targetId) => {
-    dispatch(switchPerspective({ targetType, targetId })).then(refreshAfterSwitch);
+    dispatch(switchPerspective({ targetType, targetId })).then(
+      refreshAfterSwitch,
+    );
   };
 
   const handleResetPerspective = () => {
@@ -469,7 +512,8 @@ export default function Sidebar({ open, mobileOpen }) {
     let lastSection = null;
     return itemList.map((item) => {
       const sectionLabel = SECTION_BREAKS[item.id];
-      const showHeader = !collapsed && sectionLabel && sectionLabel !== lastSection;
+      const showHeader =
+        !collapsed && sectionLabel && sectionLabel !== lastSection;
       if (sectionLabel) lastSection = sectionLabel;
 
       return (
@@ -526,7 +570,9 @@ export default function Sidebar({ open, mobileOpen }) {
       {/* Perspective: viewing-other banner (no breadcrumb) */}
       {isViewingOther && !currentInfo?.breadcrumb && (
         <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-900/20">
-          <div className={`flex items-center gap-2 ${isCollapsed ? "justify-center" : ""}`}>
+          <div
+            className={`flex items-center gap-2 ${isCollapsed ? "justify-center" : ""}`}
+          >
             <VisibilityIcon
               style={{ fontSize: 15 }}
               className="text-amber-600 dark:text-amber-400 flex-shrink-0"
@@ -553,7 +599,7 @@ export default function Sidebar({ open, mobileOpen }) {
       )}
 
       {/* Hierarchy Tree section */}
-      {!isCollapsed && (
+      {/* {!isCollapsed && (
         <div className="border-b border-neutral-200 dark:border-neutral-800">
           <div className="px-3.5 py-2 flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-600">
@@ -592,10 +638,10 @@ export default function Sidebar({ open, mobileOpen }) {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Collapsed hierarchy: just top-level icons */}
-      {isCollapsed && hierarchyTree.length > 0 && (
+      {/* {isCollapsed && hierarchyTree.length > 0 && (
         <div className="border-b border-neutral-200 dark:border-neutral-800 py-1 px-1.5">
           {hierarchyTree.map(mapRoleTree).map((business) => (
             <TreeNode
@@ -608,7 +654,7 @@ export default function Sidebar({ open, mobileOpen }) {
             />
           ))}
         </div>
-      )}
+      )} */}
 
       {/* Navigation */}
       <nav className="flex-1 px-2.5 py-3 overflow-y-auto">

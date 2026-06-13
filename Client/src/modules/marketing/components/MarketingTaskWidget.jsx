@@ -90,7 +90,7 @@ export default function MarketingTaskWidget() {
               }`}
             >
               <button
-                onClick={() => dispatch(toggleMarketingTask(task.id))}
+                onClick={() => dispatch(toggleMarketingTask(task))}
                 className={`flex-shrink-0 mt-0.5 transition-colors ${
                   task.status === 'done' ? 'text-emerald-500' : 'text-neutral-300 dark:text-neutral-600 hover:text-primary-500'
                 }`}

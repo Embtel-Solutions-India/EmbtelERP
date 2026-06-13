@@ -1,38 +1,108 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { marketingTaskService } from '../../../services/marketingTaskService'
 
-const tasks = [
-  { id: 1,  title: 'Design Q3 Product Hunt launch assets', priority: 'urgent', status: 'todo',        dueDate: new Date().toISOString(),                        category: 'campaign',   lead: 'AI CRM Co-pilot' },
-  { id: 2,  title: 'Write copy for Summer Sale PPC landing page',  priority: 'high',   status: 'todo',        dueDate: new Date().toISOString(),                        category: 'content',    lead: 'Summer Sale PPC' },
-  { id: 3,  title: 'Schedule weekly social media update posts',   priority: 'high',   status: 'in_progress', dueDate: new Date(Date.now() + 86400000).toISOString(),   category: 'social',     lead: 'Instagram Influencer'  },
-  { id: 4,  title: 'Review email copy for Q2 newsletter',        priority: 'medium', status: 'in_progress', dueDate: new Date(Date.now() + 86400000).toISOString(),   category: 'email',      lead: 'Q2 Newsletter'  },
-  { id: 5,  title: 'Optimize metadata for homepage landing page',  priority: 'medium', status: 'todo',        dueDate: new Date(Date.now() + 172800000).toISOString(),  category: 'landing_page', lead: null           },
-  { id: 6,  title: 'Run Google Analytics 4 performance audit',   priority: 'high',   status: 'done',        dueDate: new Date(Date.now() - 86400000).toISOString(),   category: 'admin',      lead: null           },
-  { id: 7,  title: 'Publish tech blog post on DBaaS integration',  priority: 'urgent', status: 'overdue',     dueDate: new Date(Date.now() - 172800000).toISOString(),  category: 'content',    lead: 'SEO Blog' },
-  { id: 8,  title: 'A/B test signup forms on website',           priority: 'medium', status: 'todo',        dueDate: new Date(Date.now() + 259200000).toISOString(),  category: 'landing_page', lead: null           },
-]
+// Normalize an API MarketingTask into the shape the marketing task UI/widgets
+// expect (lowercase, derived status, campaign name as `lead`). Keeps the
+// existing grouped layout and dashboard widget working unchanged.
+function mapTask(t) {
+  const now = Date.now()
+  const due = t.dueDate ? new Date(t.dueDate).getTime() : null
+  let status
+  if (t.status === 'COMPLETED' || t.status === 'CANCELLED') status = 'done'
+  else if (due != null && due < now) status = 'overdue'
+  else if (t.status === 'IN_PROGRESS') status = 'in_progress'
+  else status = 'todo'
+  return {
+    id: t.id,
+    title: t.title,
+    priority: (t.priority || 'medium').toLowerCase(),
+    status,
+    rawStatus: t.status,
+    dueDate: t.dueDate,
+    lead: t.campaign?.name ?? null,
+    category: t.campaign ? 'campaign' : null,
+    assignee: t.assignedTo ? `${t.assignedTo.firstName} ${t.assignedTo.lastName}`.trim() : 'Unassigned',
+    assigneeId: t.assignedToId ?? null,
+    createdById: t.createdById ?? null,
+  }
+}
+
+const errMsg = (e) => e?.response?.data?.message || e?.message || 'Request failed'
+
+export const fetchMarketingTasks = createAsyncThunk(
+  'marketingTasks/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await marketingTaskService.getAll()
+      return (res.data || []).map(mapTask)
+    } catch (e) { return rejectWithValue(errMsg(e)) }
+  },
+)
+
+export const createMarketingTask = createAsyncThunk(
+  'marketingTasks/create',
+  async (data, { rejectWithValue }) => {
+    try { return mapTask((await marketingTaskService.create(data)).data) }
+    catch (e) { return rejectWithValue(errMsg(e)) }
+  },
+)
+
+export const updateMarketingTask = createAsyncThunk(
+  'marketingTasks/update',
+  async ({ id, ...data }, { rejectWithValue }) => {
+    try { return mapTask((await marketingTaskService.update(id, data)).data) }
+    catch (e) { return rejectWithValue(errMsg(e)) }
+  },
+)
+
+// Flip completion using the backend enum status.
+export const toggleMarketingTask = createAsyncThunk(
+  'marketingTasks/toggle',
+  async (task, { rejectWithValue }) => {
+    const next = task.status === 'done' ? 'TODO' : 'COMPLETED'
+    try { return mapTask((await marketingTaskService.update(task.id, { status: next })).data) }
+    catch (e) { return rejectWithValue(errMsg(e)) }
+  },
+)
+
+export const deleteMarketingTask = createAsyncThunk(
+  'marketingTasks/delete',
+  async (id, { rejectWithValue }) => {
+    try { await marketingTaskService.delete(id); return id }
+    catch (e) { return rejectWithValue(errMsg(e)) }
+  },
+)
+
+const upsert = (state, task) => {
+  const idx = state.list.findIndex((t) => t.id === task.id)
+  if (idx !== -1) state.list[idx] = task
+  else state.list.unshift(task)
+}
 
 const marketingTaskSlice = createSlice({
   name: 'marketingTasks',
   initialState: {
-    list: tasks,
+    list: [],
     loading: false,
+    error: null,
     filter: 'all',
   },
   reducers: {
-    addMarketingTask(state, { payload }) { state.list.unshift(payload) },
-    toggleMarketingTask(state, { payload }) {
-      const t = state.list.find(t => t.id === payload)
-      if (t) t.status = t.status === 'done' ? 'todo' : 'done'
-    },
-    updateMarketingTask(state, { payload }) {
-      const idx = state.list.findIndex(t => t.id === payload.id)
-      if (idx !== -1) state.list[idx] = payload
-    },
-    deleteMarketingTask(state, { payload }) { state.list = state.list.filter(t => t.id !== payload) },
     setFilter(state, { payload }) { state.filter = payload },
-    setLoading(state, { payload }) { state.loading = payload },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMarketingTasks.pending, (state) => { state.loading = true; state.error = null })
+      .addCase(fetchMarketingTasks.fulfilled, (state, { payload }) => { state.loading = false; state.list = payload })
+      .addCase(fetchMarketingTasks.rejected, (state, { payload }) => { state.loading = false; state.error = payload })
+      .addCase(createMarketingTask.fulfilled, (state, { payload }) => { upsert(state, payload) })
+      .addCase(updateMarketingTask.fulfilled, (state, { payload }) => { upsert(state, payload) })
+      .addCase(toggleMarketingTask.fulfilled, (state, { payload }) => { upsert(state, payload) })
+      .addCase(deleteMarketingTask.fulfilled, (state, { payload }) => {
+        state.list = state.list.filter((t) => t.id !== payload)
+      })
   },
 })
 
-export const { addMarketingTask, toggleMarketingTask, updateMarketingTask, deleteMarketingTask, setFilter, setLoading } = marketingTaskSlice.actions
+export const { setFilter } = marketingTaskSlice.actions
 export default marketingTaskSlice.reducer

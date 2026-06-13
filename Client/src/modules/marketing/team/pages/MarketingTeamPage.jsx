@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Add } from '@mui/icons-material'
 import PageHeader from '../../../../components/common/PageHeader'
@@ -7,13 +7,17 @@ import TeamFilters from '../components/TeamFilters'
 import TeamTable from '../components/TeamTable'
 import TeamMemberForm from '../components/TeamMemberForm'
 import TeamMemberDrawer from '../components/TeamMemberDrawer'
-import { addTeamMember, updateTeamMember } from '../../../../redux/slices/teamSlice'
+import { addTeamMember, updateTeamMember, fetchMarketingTeam } from '../../../../redux/slices/teamSlice'
 import useTeamPermissions from '../hooks/useTeamPermissions'
 
 export default function MarketingTeamPage() {
   const dispatch = useDispatch()
   const list = useSelector((s) => s.team.marketing)
   const { canEdit } = useTeamPermissions()
+
+  useEffect(() => {
+    dispatch(fetchMarketingTeam())
+  }, [dispatch])
 
   const [filters, setFilters] = useState({
     search: '',

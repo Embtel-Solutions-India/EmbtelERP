@@ -1,3 +1,4 @@
+import "dotenv/config"; // load DATABASE_URL from .env when run via tsx (Prisma CLI does this automatically, tsx does not)
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
@@ -16,6 +17,15 @@ async function main() {
   await prisma.marketingTask.deleteMany();
   await prisma.marketingCampaign.deleteMany();
   await prisma.task.deleteMany();
+  // Sales lead/task/target graph (FKs into Employee & Business) — clear before
+  // their parents. Children first so foreign keys stay satisfied.
+  await prisma.salesTask.deleteMany();
+  await prisma.leadStatusHistory.deleteMany();
+  await prisma.leadAssignmentHistory.deleteMany();
+  await prisma.salesTargetHistory.deleteMany();
+  await prisma.salesTarget.deleteMany();
+  await prisma.salesLead.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.document.deleteMany();
   await prisma.perspectiveSession.deleteMany();
   await prisma.employeeHierarchy.deleteMany();
@@ -838,6 +848,41 @@ async function main() {
     dueDate: new Date(Date.now() + 5 * 86400000),
   }));
   await prisma.task.createMany({ data: tasksData });
+
+  console.log("Generating marketing tasks...");
+  const day = 86400000;
+  // A representative spread per marketing team: manager→exec, manager→intern,
+  // self-created exec/intern tasks, plus a completed and an overdue one. This
+  // exercises the My Tasks / Assigned Tasks views and the hierarchy RBAC.
+  const marketingTaskSeed = (
+    team: { id: string },
+    business: { id: string },
+    verticalId: string,
+    manager: { id: string },
+    exec: { id: string },
+    intern: { id: string },
+    label: string,
+  ) => [
+    { title: `Prepare Q3 campaign brief (${label})`, createdById: manager.id, assignedToId: exec.id,    status: "TODO" as const,        priority: "high",   dueDate: new Date(Date.now() + 3 * day) },
+    { title: `Collect competitor ad creatives (${label})`, createdById: manager.id, assignedToId: intern.id,  status: "TODO" as const,        priority: "medium", dueDate: new Date(Date.now() + 5 * day) },
+    { title: `Schedule weekly social posts (${label})`, createdById: exec.id,    assignedToId: exec.id,    status: "IN_PROGRESS" as const, priority: "medium", dueDate: new Date(Date.now() + 1 * day) },
+    { title: `Draft newsletter copy (${label})`,        createdById: intern.id,  assignedToId: intern.id,  status: "TODO" as const,        priority: "low",    dueDate: new Date(Date.now() + 2 * day) },
+    { title: `Review campaign performance (${label})`,  createdById: manager.id, assignedToId: manager.id, status: "COMPLETED" as const,   priority: "medium", dueDate: new Date(Date.now() - 1 * day), completedAt: new Date() },
+    { title: `Publish launch blog post (${label})`,     createdById: manager.id, assignedToId: exec.id,    status: "TODO" as const,        priority: "high",   dueDate: new Date(Date.now() - 2 * day) },
+  ].map((t) => ({
+    ...t,
+    organizationId: organization.id,
+    businessId: business.id,
+    teamId: team.id,
+    verticalId,
+  }));
+
+  await prisma.marketingTask.createMany({
+    data: [
+      ...marketingTaskSeed(tImmMarketing, bImmigration, vImmigration.id, marketingManagerImm, marketingExecImm, marketingInternImm, "Immigration"),
+      ...marketingTaskSeed(tEvalMarketing, bEvaluation, vEvaluation.id, marketingManagerEval, marketingExecEval, marketingInternEval, "Evaluation"),
+    ],
+  });
 
   console.log("Generating base KPIs...");
   const pStart = new Date("2025-06-01");

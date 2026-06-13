@@ -42,27 +42,6 @@ export const priorityLevelSchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
 export const leadCurrentStatusSchema = z.enum(["STUDENT", "WORKER", "BUSINESS_OWNER"]);
 export const interestedLevelSchema = z.enum(["hot", "warm", "cold"]);
 
-// Optional immigration profile sent by the Sales Executive Add Lead form
-// (parallel branch model). Every field optional so the core lead create is
-// unaffected when omitted.
-export const leadImmigrationSchema = z.object({
-  whatsapp:                  z.string().nullable().optional(),
-  countryOfResidence:        z.string().nullable().optional(),
-  nationality:               z.string().nullable().optional(),
-  visaCategory:              z.string().nullable().optional(),
-  interestedVisa:            z.string().nullable().optional(),
-  currentStatus:             z.string().nullable().optional(),
-  education:                 z.string().nullable().optional(),
-  workExperience:            z.coerce.number().int().nonnegative().nullable().optional(),
-  familyImmigrationRequired: z.coerce.boolean().nullable().optional(),
-  budgetMin:                 optionalMoney,
-  budgetMax:                 optionalMoney,
-  urgencyLevel:              z.string().nullable().optional(),
-  interestedLevel:           z.string().nullable().optional(),
-  consultationRequired:      z.coerce.boolean().nullable().optional(),
-  consultationDate:          nullableDate,
-});
-
 // Single source of truth for both create and update. `leadCode` and `leadScore`
 // are intentionally omitted here — the server generates/derives them.
 export const createSalesLeadSchema = z.object({
@@ -103,7 +82,6 @@ export const createSalesLeadSchema = z.object({
   estimatedValue: optionalMoney,
   convertedAt:    nullableDate,
   transferredAt:  nullableDate,
-  immigration:    leadImmigrationSchema.optional(),
 });
 
 // Update derives from create → any field added above automatically applies to

@@ -18,12 +18,14 @@ import {
   listKPIs,
   listLeads,
   listTasks,
+  assignableUsers,
   managerDashboard,
   updateActivity,
   updateCampaign,
   updateKPI,
   updateLead,
   updateTask,
+  promoteLead,
   deleteCampaign,
   deleteTask,
   deleteLead,
@@ -34,6 +36,7 @@ import {
   createMarketingKPISchema,
   createMarketingLeadSchema,
   createMarketingTaskSchema,
+  promoteMarketingLeadSchema,
   updateMarketingActivitySchema,
   updateMarketingCampaignSchema,
   updateMarketingKPISchema,
@@ -56,12 +59,14 @@ marketingRouter.patch("/campaigns/:id", validateBody(updateMarketingCampaignSche
 
 marketingRouter.get("/tasks", asyncHandler(listTasks));
 marketingRouter.post("/tasks", validateBody(createMarketingTaskSchema), asyncHandler(createTask));
+marketingRouter.get("/assignable-users", asyncHandler(assignableUsers));
 marketingRouter.get("/tasks/:id", asyncHandler(getTask));
 marketingRouter.patch("/tasks/:id", validateBody(updateMarketingTaskSchema), asyncHandler(updateTask));
 
 marketingRouter.get("/leads", asyncHandler(listLeads));
 marketingRouter.post("/leads", validateBody(createMarketingLeadSchema), asyncHandler(createLead));
 marketingRouter.patch("/leads/:id", validateBody(updateMarketingLeadSchema), asyncHandler(updateLead));
+marketingRouter.post("/leads/:id/promote", validateBody(promoteMarketingLeadSchema), asyncHandler(promoteLead));
 marketingRouter.delete("/leads/:id", asyncHandler(deleteLead));
 marketingRouter.delete("/campaigns/:id", asyncHandler(deleteCampaign));
 marketingRouter.delete("/tasks/:id", asyncHandler(deleteTask));

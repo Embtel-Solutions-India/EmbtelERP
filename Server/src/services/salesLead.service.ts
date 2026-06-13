@@ -1,4 +1,4 @@
-import { SalesLeadStatus, Prisma } from "@prisma/client";
+import { SalesLeadStatus, SalesLeadPaymentStatus, Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import type { DataScope } from "./scope.service.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -122,6 +122,42 @@ const QUALIFIED_OR_BEYOND: SalesLeadStatus[] = [
   SalesLeadStatus.TRANSFERRED,
 ];
 
+// ── Lifecycle state machine ─────────────────────────────────────────────────
+// Single source of truth for legal status transitions. Enforced in every
+// status-mutating path (update/convert/transfer) so illegal jumps (e.g.
+// NEW → TRANSFERRED) are rejected with 400 rather than silently accepted.
+const ALLOWED_TRANSITIONS: Record<SalesLeadStatus, SalesLeadStatus[]> = {
+  [SalesLeadStatus.NEW]:                    [SalesLeadStatus.CONTACTED, SalesLeadStatus.LOST],
+  [SalesLeadStatus.CONTACTED]:              [SalesLeadStatus.CONSULTATION_SCHEDULED, SalesLeadStatus.DOCUMENTS_REQUESTED, SalesLeadStatus.QUALIFIED, SalesLeadStatus.LOST],
+  [SalesLeadStatus.CONSULTATION_SCHEDULED]: [SalesLeadStatus.DOCUMENTS_REQUESTED, SalesLeadStatus.QUALIFIED, SalesLeadStatus.LOST],
+  [SalesLeadStatus.DOCUMENTS_REQUESTED]:    [SalesLeadStatus.QUALIFIED, SalesLeadStatus.LOST],
+  [SalesLeadStatus.QUALIFIED]:              [SalesLeadStatus.CONVERTED, SalesLeadStatus.TRANSFERRED, SalesLeadStatus.LOST],
+  [SalesLeadStatus.CONVERTED]:              [SalesLeadStatus.TRANSFERRED],
+  [SalesLeadStatus.TRANSFERRED]:            [],
+  [SalesLeadStatus.LOST]:                   [],
+};
+
+/** Reject illegal lifecycle transitions. A no-op (same status) is always allowed. */
+function assertTransition(from: SalesLeadStatus, to: SalesLeadStatus) {
+  if (from === to) return;
+  if (!ALLOWED_TRANSITIONS[from].includes(to)) {
+    throw new ApiError(400, `Illegal lead status transition: ${from} → ${to}`);
+  }
+}
+
+// Conversion requires at least a partial payment (per the lifecycle spec).
+const PAYMENT_OK_FOR_CONVERT: SalesLeadPaymentStatus[] = [
+  SalesLeadPaymentStatus.DONE,
+  SalesLeadPaymentStatus.PARTIALLY_DONE,
+];
+
+/** Reject conversion when payment is not at least partially completed. */
+function assertConvertPaymentOk(paymentStatus: SalesLeadPaymentStatus) {
+  if (!PAYMENT_OK_FOR_CONVERT.includes(paymentStatus)) {
+    throw new ApiError(400, "Lead can be converted only after payment is at least partially completed (PARTIALLY_DONE or DONE)");
+  }
+}
+
 /**
  * Transparent weighted 0–100 lead score. Recomputed on every create/update so
  * the value on the form is always derived (read-only) rather than user-entered.
@@ -164,9 +200,15 @@ export function computeLeadScore(lead: {
   return Math.min(100, Math.max(0, Math.round(score)));
 }
 
-/** Generate the next human-readable, unique lead code (e.g. LD-000123). */
-async function nextLeadCode(): Promise<string> {
-  const last = await prisma.salesLead.findFirst({
+/**
+ * Generate the next human-readable, unique lead code (e.g. LD-000123).
+ * Accepts an optional Prisma client so it can run inside a `$transaction`
+ * (e.g. the Marketing→Sales promotion); defaults to the global client.
+ */
+export async function nextLeadCode(
+  client: Prisma.TransactionClient = prisma,
+): Promise<string> {
+  const last = await client.salesLead.findFirst({
     orderBy: { leadCode: "desc" },
     select:  { leadCode: true },
   });
@@ -183,7 +225,241 @@ async function ensureScopedLead(id: string, access: SalesAccess) {
   return lead;
 }
 
+/**
+ * Append one row to a lead's never-overwritten ownership chain
+ * (LeadAssignmentHistory). Accepts an optional Prisma client so it can run
+ * inside a `$transaction` (e.g. the Marketing→Sales promotion); defaults to the
+ * global client. Errors propagate — the chain is an audit record, not best-effort.
+ */
+export async function recordAssignmentHistory(
+  input: {
+    leadId: string;
+    reason: Prisma.LeadAssignmentHistoryUncheckedCreateInput["reason"];
+    fromEmployeeId?: string | null;
+    toEmployeeId?: string | null;
+    changedById?: string | null;
+    note?: string | null;
+  },
+  client: Prisma.TransactionClient = prisma,
+) {
+  await client.leadAssignmentHistory.create({
+    data: {
+      leadId:         input.leadId,
+      reason:         input.reason,
+      fromEmployeeId: input.fromEmployeeId ?? null,
+      toEmployeeId:   input.toEmployeeId ?? null,
+      changedById:    input.changedById ?? null,
+      note:           input.note ?? null,
+    },
+  });
+}
+
+/**
+ * Append one row to a lead's never-overwritten lifecycle trail
+ * (LeadStatusHistory). Accepts an optional Prisma client for use inside a
+ * `$transaction`; defaults to the global client. Errors propagate.
+ */
+export async function recordStatusHistory(
+  input: {
+    leadId: string;
+    toStatus: SalesLeadStatus;
+    fromStatus?: SalesLeadStatus | null;
+    changedById?: string | null;
+    note?: string | null;
+  },
+  client: Prisma.TransactionClient = prisma,
+) {
+  await client.leadStatusHistory.create({
+    data: {
+      leadId:      input.leadId,
+      toStatus:    input.toStatus,
+      fromStatus:  input.fromStatus ?? null,
+      changedById: input.changedById ?? null,
+      note:        input.note ?? null,
+    },
+  });
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
+
+/** Ownership chain for a lead (newest first), with from/to/actor names resolved. */
+export async function getLeadAssignmentHistory(ctx: SalesLeadContext, id: string) {
+  const access = await resolveAccess(ctx);
+  await ensureScopedLead(id, access); // enforces visibility
+
+  const rows = await prisma.leadAssignmentHistory.findMany({
+    where:   { leadId: id },
+    orderBy: { createdAt: "desc" },
+    include: { changedBy: { select: { id: true, firstName: true, lastName: true } } },
+  });
+
+  // Batch-resolve from/to employee names (soft refs, no relation on the model).
+  const empIds = [
+    ...new Set(
+      rows.flatMap((r) => [r.fromEmployeeId, r.toEmployeeId]).filter((v): v is string => Boolean(v)),
+    ),
+  ];
+  const emps = empIds.length
+    ? await prisma.employee.findMany({
+        where:  { id: { in: empIds } },
+        select: { id: true, firstName: true, lastName: true },
+      })
+    : [];
+  const byId = new Map(emps.map((e) => [e.id, e]));
+
+  return rows.map((r) => ({
+    ...r,
+    fromEmployee: r.fromEmployeeId ? byId.get(r.fromEmployeeId) ?? null : null,
+    toEmployee:   r.toEmployeeId   ? byId.get(r.toEmployeeId)   ?? null : null,
+  }));
+}
+
+/** Lifecycle trail for a lead (newest first), with actor names resolved. */
+export async function getLeadStatusHistory(ctx: SalesLeadContext, id: string) {
+  const access = await resolveAccess(ctx);
+  await ensureScopedLead(id, access); // enforces visibility
+
+  return prisma.leadStatusHistory.findMany({
+    where:   { leadId: id },
+    orderBy: { createdAt: "desc" },
+    include: { changedBy: { select: { id: true, firstName: true, lastName: true } } },
+  });
+}
+
+type TimelineEventType = "STATUS" | "ASSIGNMENT" | "TASK" | "PAYMENT";
+type TimelineActor = { id: string; name: string } | null;
+type TimelineEvent = {
+  type:   TimelineEventType;
+  at:     Date;
+  actor:  TimelineActor;
+  title:  string;
+  detail: string | null;
+};
+
+const personName = (p: { firstName: string; lastName: string } | null | undefined) =>
+  p ? `${p.firstName} ${p.lastName}`.trim() : null;
+const personRef = (p: { id: string; firstName: string; lastName: string } | null | undefined): TimelineActor =>
+  p ? { id: p.id, name: personName(p)! } : null;
+
+/**
+ * Read-only projection: the complete "one screen" view of a single lead —
+ * origin, a derived summary, and one chronological timeline merging status,
+ * ownership, follow-up tasks, and payment events. Not a new source of truth.
+ */
+export async function getLeadTimeline(ctx: SalesLeadContext, id: string) {
+  const access = await resolveAccess(ctx);
+  await ensureScopedLead(id, access); // enforces visibility
+
+  const empSel = { select: { id: true, firstName: true, lastName: true } } as const;
+
+  const lead = await prisma.salesLead.findUnique({
+    where: { id },
+    include: {
+      assignedTo:    empSel,
+      marketingLead: { select: { id: true, source: true, createdBy: empSel } },
+    },
+  });
+  if (!lead) throw new ApiError(404, "Sales lead not found"); // unreachable after scope check
+
+  const [statusRows, assignRows, tasks, paymentRows] = await Promise.all([
+    prisma.leadStatusHistory.findMany({
+      where: { leadId: id }, orderBy: { createdAt: "asc" }, include: { changedBy: empSel },
+    }),
+    prisma.leadAssignmentHistory.findMany({
+      where: { leadId: id }, orderBy: { createdAt: "asc" }, include: { changedBy: empSel },
+    }),
+    prisma.salesTask.findMany({
+      where: { leadId: id }, orderBy: { createdAt: "asc" }, include: { assignee: empSel },
+    }),
+    prisma.activity.findMany({
+      where: { targetType: "SalesLead", targetId: id, action: "PAYMENT_STATUS_CHANGE" },
+      orderBy: { createdAt: "asc" }, include: { actor: empSel },
+    }),
+  ]);
+
+  // Resolve the soft from/to employee refs on assignment rows in one query.
+  const empIds = [
+    ...new Set(
+      assignRows.flatMap((r) => [r.fromEmployeeId, r.toEmployeeId]).filter((v): v is string => Boolean(v)),
+    ),
+  ];
+  const emps = empIds.length
+    ? await prisma.employee.findMany({ where: { id: { in: empIds } }, select: { id: true, firstName: true, lastName: true } })
+    : [];
+  const byId = new Map(emps.map((e) => [e.id, e]));
+
+  const timeline: TimelineEvent[] = [
+    ...statusRows.map((r): TimelineEvent => ({
+      type: "STATUS",
+      at: r.createdAt,
+      actor: personRef(r.changedBy),
+      title: `Status → ${r.toStatus}`,
+      detail: r.fromStatus ? `from ${r.fromStatus}` : "initial status",
+    })),
+    ...assignRows.map((r): TimelineEvent => {
+      const from = r.fromEmployeeId ? byId.get(r.fromEmployeeId) : null;
+      const to   = r.toEmployeeId   ? byId.get(r.toEmployeeId)   : null;
+      return {
+        type: "ASSIGNMENT",
+        at: r.createdAt,
+        actor: personRef(r.changedBy),
+        title: `Owner → ${personName(to) ?? "unassigned"}`,
+        detail: `${personName(from) ?? "—"} (${r.reason})`,
+      };
+    }),
+    ...tasks.map((t): TimelineEvent => ({
+      type: "TASK",
+      at: t.completedAt ?? t.dueDate ?? t.createdAt,
+      actor: personRef(t.assignee),
+      title: t.title || t.taskType,
+      detail: [t.taskType, t.result ? `result: ${t.result}` : null, `(${t.status})`].filter(Boolean).join(" · "),
+    })),
+    ...paymentRows.map((a): TimelineEvent => ({
+      type: "PAYMENT",
+      at: a.createdAt,
+      actor: personRef(a.actor),
+      title: "Payment status changed",
+      detail: (a.metadata as { paymentStatus?: string } | null)?.paymentStatus ?? null,
+    })),
+  ].sort((a, b) => a.at.getTime() - b.at.getTime());
+
+  const firstContactAt =
+    statusRows.find((r) => r.toStatus === SalesLeadStatus.CONTACTED)?.createdAt ?? null;
+  const consultationAt =
+    statusRows.find((r) => r.toStatus === SalesLeadStatus.CONSULTATION_SCHEDULED)?.createdAt ??
+    tasks.find((t) => t.taskType === "CONSULTATION_MEETING")?.completedAt ?? null;
+  const generatedBy = personRef(lead.marketingLead?.createdBy);
+  const currentOwner = personRef(lead.assignedTo);
+
+  return {
+    lead: {
+      id:             lead.id,
+      leadCode:       lead.leadCode,
+      name:           lead.name,
+      status:         lead.status,
+      source:         lead.source,
+      leadScore:      lead.leadScore,
+      paymentStatus:  lead.paymentStatus,
+      paymentAmount:  lead.paymentAmount,
+      estimatedValue: lead.estimatedValue,
+      currentOwner,
+    },
+    origin: lead.marketingLead
+      ? { marketingLeadId: lead.marketingLeadId, generatedBy, source: lead.marketingLead.source }
+      : null,
+    summary: {
+      createdAt:        lead.createdAt,
+      firstContactAt,
+      consultationAt,
+      convertedAt:      lead.convertedAt,
+      transferredAt:    lead.transferredAt,
+      currentOwner,
+      generatedBy,
+      revenueCollected: lead.paymentAmount, // this lead's collected payment — NOT org revenue (see P2)
+    },
+    timeline,
+  };
+}
 
 export async function listSalesLeads(ctx: SalesLeadContext) {
   const access = await resolveAccess(ctx);
@@ -220,9 +496,6 @@ export async function createSalesLead(ctx: SalesLeadContext, input: Partial<Crea
     assignedToId,
     leadScore:      computeLeadScore({ ...input, status: input.status as SalesLeadStatus }),
   } as CreateInput;
-  // `immigration` is an optional nested object from a parallel branch's form;
-  // it is not a SalesLead column, so drop it before the Prisma write.
-  delete (baseData as Record<string, unknown>).immigration;
 
   // Retry on the (rare) chance of a leadCode collision under concurrency.
   let lead;
@@ -242,6 +515,19 @@ export async function createSalesLead(ctx: SalesLeadContext, input: Partial<Crea
       throw err;
     }
   }
+
+  // Start the ownership chain and lifecycle trail.
+  await recordAssignmentHistory({
+    leadId:       lead.id,
+    reason:       "CREATED",
+    toEmployeeId: lead.assignedToId,
+    changedById:  access.employeeId,
+  });
+  await recordStatusHistory({
+    leadId:      lead.id,
+    toStatus:    lead.status,
+    changedById: access.employeeId,
+  });
 
   await recordActivity({
     actorId:    access.employeeId,
@@ -292,6 +578,17 @@ export async function updateSalesLead(
   const merged = { ...existing, ...input } as Parameters<typeof computeLeadScore>[0];
   data.leadScore = computeLeadScore(merged);
 
+  // Enforce the lifecycle state machine + payment gate on any status change.
+  const statusChanging = input.status !== undefined && input.status !== existing.status;
+  if (statusChanging) {
+    assertTransition(existing.status, input.status as SalesLeadStatus);
+    if (input.status === SalesLeadStatus.CONVERTED) {
+      const effectivePayment =
+        (input.paymentStatus as SalesLeadPaymentStatus | undefined) ?? existing.paymentStatus;
+      assertConvertPaymentOk(effectivePayment);
+    }
+  }
+
   if (input.status === SalesLeadStatus.CONVERTED && !existing.convertedAt && !input.convertedAt) {
     data.convertedAt = new Date();
   }
@@ -320,6 +617,27 @@ export async function updateSalesLead(
     action === "PAYMENT_STATUS_CHANGE"  ? { paymentStatus: lead.paymentStatus } :
     action === "ASSIGNMENT_CHANGE"      ? { assignedToId: lead.assignedToId } :
     undefined;
+
+  // Extend the ownership chain on reassignment.
+  if (action === "ASSIGNMENT_CHANGE") {
+    await recordAssignmentHistory({
+      leadId:         lead.id,
+      reason:         "REASSIGNED",
+      fromEmployeeId: existing.assignedToId,
+      toEmployeeId:   lead.assignedToId,
+      changedById:    access.employeeId,
+    });
+  }
+
+  // Extend the lifecycle trail on status change.
+  if (statusChanging) {
+    await recordStatusHistory({
+      leadId:      lead.id,
+      fromStatus:  existing.status,
+      toStatus:    lead.status,
+      changedById: access.employeeId,
+    });
+  }
 
   await recordActivity({
     actorId:    access.employeeId,
@@ -357,6 +675,10 @@ export async function convertSalesLead(ctx: SalesLeadContext, id: string) {
     throw new ApiError(403, "You can only convert leads assigned to you");
   }
 
+  // Lifecycle guard: only QUALIFIED → CONVERTED, and only with payment recorded.
+  assertTransition(existing.status, SalesLeadStatus.CONVERTED);
+  assertConvertPaymentOk(existing.paymentStatus);
+
   const lead = await prisma.salesLead.update({
     where: { id },
     data: {
@@ -367,6 +689,10 @@ export async function convertSalesLead(ctx: SalesLeadContext, id: string) {
     include: leadInclude,
   });
 
+  await recordStatusHistory({
+    leadId: lead.id, fromStatus: existing.status, toStatus: lead.status,
+    changedById: access.employeeId,
+  });
   await recordActivity({
     actorId: access.employeeId, businessId: lead.businessId,
     action: "STATUS_CHANGE", targetType: "SalesLead", targetId: lead.id,
@@ -393,12 +719,9 @@ export async function transferSalesLead(ctx: SalesLeadContext, id: string) {
   ) {
     throw new ApiError(403, "You can only transfer leads assigned to you");
   }
-  if (
-    existing.status !== SalesLeadStatus.QUALIFIED &&
-    existing.status !== SalesLeadStatus.CONVERTED
-  ) {
-    throw new ApiError(400, "Only qualified or converted leads can be transferred to Documentation");
-  }
+  // Lifecycle guard (single source of truth): the map permits TRANSFERRED only
+  // from QUALIFIED or CONVERTED.
+  assertTransition(existing.status, SalesLeadStatus.TRANSFERRED);
 
   const lead = await prisma.salesLead.update({
     where: { id },
@@ -407,6 +730,20 @@ export async function transferSalesLead(ctx: SalesLeadContext, id: string) {
       transferredAt: existing.transferredAt ?? new Date(),
     },
     include: leadInclude,
+  });
+
+  // Ownership leaves Sales toward Documentation.
+  await recordAssignmentHistory({
+    leadId:         lead.id,
+    reason:         "TRANSFERRED",
+    fromEmployeeId: existing.assignedToId,
+    toEmployeeId:   null,
+    changedById:    access.employeeId,
+    note:           "Transferred to Documentation team",
+  });
+  await recordStatusHistory({
+    leadId: lead.id, fromStatus: existing.status, toStatus: lead.status,
+    changedById: access.employeeId,
   });
 
   await recordActivity({

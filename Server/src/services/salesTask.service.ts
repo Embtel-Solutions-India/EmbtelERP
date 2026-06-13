@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 import type { DataScope } from "./scope.service.js";
 import { ApiError } from "../utils/ApiError.js";
 import { recordActivity, recordAudit } from "./activity-writer.service.js";
+import { canAssignTaskTo } from "./hierarchy.service.js";
 
 export type SalesTaskContext = {
   viewer: AuthUser;
@@ -103,6 +104,22 @@ async function ensureScopedTask(id: string, access: SalesTaskAccess) {
   return task;
 }
 
+/**
+ * Hierarchical assignment guard. Self-assignment is always allowed; otherwise
+ * the assignee must sit at the tier directly below the caller in their reporting
+ * subtree (Vertical Manager → Heads, Head → Execs/Interns). Shared with the
+ * assignee picker and the Sales Targets module via hierarchy.service.
+ */
+async function assertAssignable(access: SalesTaskAccess, assigneeId: string) {
+  if (assigneeId === access.employeeId) return; // self-assign always ok
+  if (access.roleLevel < 2) {
+    throw new ApiError(403, "You are not allowed to assign tasks to others");
+  }
+  if (!(await canAssignTaskTo(access.employeeId, assigneeId))) {
+    throw new ApiError(403, "You can only assign tasks to your team members");
+  }
+}
+
 /** Next human-readable, unique task code (e.g. ST-000123). */
 async function nextTaskCode(): Promise<string> {
   const last = await prisma.salesTask.findFirst({
@@ -147,14 +164,10 @@ export async function listSalesTasks(ctx: SalesTaskContext) {
 export async function createSalesTask(ctx: SalesTaskContext, input: Partial<CreateInput>) {
   const access = await resolveAccess(ctx);
 
-  // Managers can assign to anyone in scope; everyone else is self-assigned.
-  const assigneeId = access.roleLevel >= 2
-    ? (input.assigneeId ?? access.employeeId)
-    : access.employeeId;
-
-  if (input.assigneeId && access.roleLevel < 4 && !access.scope.visibleEmployees.includes(String(input.assigneeId))) {
-    throw new ApiError(403, "Assignee is outside the active perspective scope");
-  }
+  // Tasks may only be assigned to the caller's direct reports (or self).
+  const requestedAssignee = input.assigneeId ? String(input.assigneeId) : access.employeeId;
+  await assertAssignable(access, requestedAssignee);
+  const assigneeId = requestedAssignee;
 
   // Default team/vertical from the creator's own record when not supplied.
   const needsDefaults = input.teamId == null || input.verticalId == null;
@@ -212,6 +225,10 @@ export async function updateSalesTask(ctx: SalesTaskContext, id: string, input: 
   }
   if (access.roleLevel < 2 && "assigneeId" in input) {
     throw new ApiError(403, "Only managers can reassign tasks");
+  }
+  // Reassignment is restricted to the caller's direct reports.
+  if ("assigneeId" in input && input.assigneeId != null && input.assigneeId !== existing.assigneeId) {
+    await assertAssignable(access, String(input.assigneeId));
   }
 
   const data: Partial<UpdateInput> = { ...input };

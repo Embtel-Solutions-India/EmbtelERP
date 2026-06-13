@@ -74,7 +74,25 @@ export const taskFormSections = [
 export const taskDefaultValues = {
   taskCode: '', leadId: '', title: '', taskType: 'CALL', priority: 'MEDIUM',
   dueDate: '', dueTime: '', description: '', status: 'TODO', result: '',
-  nextFollowUpDate: '', notes: '',
+  nextFollowUpDate: '', notes: '', assigneeId: '',
+}
+
+/**
+ * Returns the task form sections, optionally including an "Assign To" picker.
+ * Only managers (callers with at least one direct report) pass options here;
+ * everyone else gets the base sections and tasks default to self-assignment.
+ */
+export function buildTaskFormSections(assigneeOptions) {
+  if (!assigneeOptions || assigneeOptions.length === 0) return taskFormSections
+  const assigneeField = {
+    name: 'assigneeId',
+    label: 'Assign To',
+    type: 'select',
+    options: [{ value: '', label: 'Myself' }, ...assigneeOptions],
+  }
+  return taskFormSections.map((section, i) =>
+    i === 0 ? { ...section, fields: [...section.fields, assigneeField] } : section,
+  )
 }
 
 const optEnum = (vals) => z.union([z.enum(vals), z.literal('')]).optional()
@@ -114,6 +132,7 @@ export function buildTaskInitialValues(task) {
     result: task.result ?? '',
     description: task.description ?? '',
     notes: task.notes ?? '',
+    assigneeId: task.assigneeId ?? '',
     dueDate: dateOnly(task.dueDate),
     dueTime: timeOnly(task.dueDate),
     nextFollowUpDate: dateOnly(task.nextFollowUpDate),
@@ -131,7 +150,7 @@ function combineDateTime(date, time) {
 }
 
 export function toTaskPayload(values) {
-  return {
+  const payload = {
     leadId: emptyToNull(values.leadId),
     title: values.title,
     taskType: values.taskType,
@@ -143,4 +162,8 @@ export function toTaskPayload(values) {
     nextFollowUpDate: values.nextFollowUpDate ? new Date(`${values.nextFollowUpDate}T00:00:00`).toISOString() : null,
     notes: emptyToNull(values.notes),
   }
+  // Only send assigneeId when an explicit subordinate is chosen — empty means
+  // "Myself" on create (server defaults to the caller) and "no change" on edit.
+  if (values.assigneeId) payload.assigneeId = values.assigneeId
+  return payload
 }

@@ -85,7 +85,7 @@ dashboardRouter.get(
 dashboardRouter.get(
   "/layout/:role",
   asyncHandler(async (req, res) => {
-    const { role } = req.params;
+    const role = String(req.params.role);
     let configs = await prisma.dashboardConfig.findMany({
       where: { role },
       orderBy: { position: "asc" }
@@ -118,7 +118,7 @@ dashboardRouter.get(
 dashboardRouter.post(
   "/layout/:role",
   asyncHandler(async (req, res) => {
-    const { role } = req.params;
+    const role = String(req.params.role);
     const { widgets } = req.body;
 
     if (!Array.isArray(widgets)) {

@@ -12,6 +12,7 @@ import {
   getMarketingManagerDashboard,
   getMarketingTask,
   listMarketingActivities,
+  listMarketingAssignableUsers,
   listMarketingCampaigns,
   listMarketingKPIs,
   listMarketingLeads,
@@ -21,6 +22,7 @@ import {
   updateMarketingKPI,
   updateMarketingLead,
   updateMarketingTask,
+  promoteMarketingLeadToSales,
   deleteMarketingCampaign,
   deleteMarketingTask,
   deleteMarketingLead,
@@ -59,6 +61,10 @@ export async function getTask(req: Request, res: Response) {
   res.json({ data: await getMarketingTask(marketingContext(req), String(req.params.id)) });
 }
 
+export async function assignableUsers(req: Request, res: Response) {
+  res.json({ data: await listMarketingAssignableUsers(marketingContext(req)) });
+}
+
 export async function createTask(req: Request, res: Response) {
   const data = await createMarketingTask(marketingContext(req), req.body);
   res.status(201).json({ data });
@@ -79,6 +85,11 @@ export async function createLead(req: Request, res: Response) {
 
 export async function updateLead(req: Request, res: Response) {
   res.json({ data: await updateMarketingLead(marketingContext(req), String(req.params.id), req.body) });
+}
+
+export async function promoteLead(req: Request, res: Response) {
+  const data = await promoteMarketingLeadToSales(marketingContext(req), String(req.params.id), req.body);
+  res.status(201).json({ data });
 }
 
 export async function listActivities(req: Request, res: Response) {

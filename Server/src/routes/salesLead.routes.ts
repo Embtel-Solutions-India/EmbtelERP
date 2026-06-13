@@ -5,6 +5,8 @@ import { attachScope } from "../middleware/scope.middleware.js";
 import { validateBody } from "../middleware/validate.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { resolveAggregationScope } from "../services/dashboard.service.js";
+import { getAssignableSubordinates } from "../services/hierarchy.service.js";
+import { isRevenueLead, leadRevenue } from "../services/revenue.js";
 import {
   createSalesLeadSchema,
   updateSalesLeadSchema,
@@ -20,6 +22,9 @@ import {
   updateLead,
   convertLead,
   transferLead,
+  leadHistory,
+  leadStatusHistory,
+  leadTimeline,
 } from "../controllers/salesLead.controller.js";
 import {
   listTasks   as listSalesTasks,
@@ -52,6 +57,9 @@ salesRouter.get(   "/leads",     asyncHandler(listLeads));
 salesRouter.post(  "/leads",     validateBody(createSalesLeadSchema), asyncHandler(createLead));
 salesRouter.patch( "/leads/:id", validateBody(updateSalesLeadSchema), asyncHandler(updateLead));
 salesRouter.delete("/leads/:id", asyncHandler(deleteLead));
+salesRouter.get(   "/leads/:id/history",  asyncHandler(leadHistory));
+salesRouter.get(   "/leads/:id/status-history", asyncHandler(leadStatusHistory));
+salesRouter.get(   "/leads/:id/timeline", asyncHandler(leadTimeline));
 salesRouter.post(  "/leads/:id/convert",  asyncHandler(convertLead));
 salesRouter.post(  "/leads/:id/transfer", asyncHandler(transferLead));
 
@@ -60,6 +68,13 @@ salesRouter.get(   "/tasks",     asyncHandler(listSalesTasks));
 salesRouter.post(  "/tasks",     validateBody(createSalesTaskSchema), asyncHandler(createSalesTask));
 salesRouter.patch( "/tasks/:id", validateBody(updateSalesTaskSchema), asyncHandler(updateSalesTask));
 salesRouter.delete("/tasks/:id", asyncHandler(deleteSalesTask));
+
+// Team members the caller may assign a task to (matches the tier-based guard in
+// salesTask.service.assertAssignable). Returns [] for execs/interns.
+salesRouter.get("/assignable-users", asyncHandler(async (req, res) => {
+  const me = req.effectiveUser?.id ?? req.user!.employeeId;
+  res.json({ data: await getAssignableSubordinates(me) });
+}));
 
 // ── Sales targets (target management system) ─────────────────────────────────
 // Specific routes registered before "/targets/:id" so they aren't captured by it.
@@ -93,7 +108,7 @@ salesRouter.get(
         designation: true,
         level: true,
         tasksOwned: { select: { status: true, dueDate: true } },
-        salesLeadsAssigned: { select: { status: true, estimatedValue: true } },
+        salesLeadsAssigned: { select: { status: true, paymentAmount: true, convertedAt: true } },
       },
     });
 
@@ -112,7 +127,8 @@ salesRouter.get(
             !["completed", "done", "COMPLETED"].includes(t.status),
         ).length;
         const wonLeads = leads.filter((l) => l.status === "CONVERTED").length;
-        const leadValue = leads.reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0);
+        // Revenue = collected payment of converted leads (services/revenue.ts).
+        const leadValue = leads.filter(isRevenueLead).reduce((s, l) => s + leadRevenue(l), 0);
         const score = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
         return {
@@ -155,7 +171,7 @@ salesRouter.get(
       include: {
         employees: { select: { id: true, isActive: true } },
         tasks: { select: { status: true, dueDate: true } },
-        salesLeads: { select: { status: true, estimatedValue: true } },
+        salesLeads: { select: { status: true, paymentAmount: true, convertedAt: true } },
       },
     });
 
@@ -176,7 +192,8 @@ salesRouter.get(
         totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
       const leads = team.salesLeads;
       const wonLeads = leads.filter((l) => l.status === "CONVERTED").length;
-      const revenue = leads.reduce((s, l) => s + Number(l.estimatedValue ?? 0), 0);
+      // Revenue = collected payment of converted leads (services/revenue.ts).
+      const revenue = leads.filter(isRevenueLead).reduce((s, l) => s + leadRevenue(l), 0);
 
       return {
         id: team.id,

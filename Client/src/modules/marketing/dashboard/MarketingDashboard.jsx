@@ -17,6 +17,7 @@ import MarketingTopCampaignsTable from '../components/MarketingTopCampaignsTable
 import MarketingSocialEngagement from '../components/MarketingSocialEngagement'
 import MarketingCalendarWidget from '../components/MarketingCalendarWidget'
 import { fetchMarketingDashboardData } from '../redux/marketingDashboardSlice'
+import { fetchMarketingTasks } from '../redux/marketingTaskSlice'
 import { fetchRoleWorkspace } from '../../../redux/slices/dashboardSlice'
 
 // Role-specific dashboards
@@ -33,6 +34,7 @@ export default function MarketingDashboard() {
 
   useEffect(() => {
     dispatch(fetchMarketingDashboardData())
+    dispatch(fetchMarketingTasks())
     dispatch(fetchRoleWorkspace())
   }, [dispatch, activePerspective])
 

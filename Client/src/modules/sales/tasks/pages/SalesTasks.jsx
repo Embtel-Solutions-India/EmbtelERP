@@ -10,29 +10,73 @@ import {
   fetchSalesTasks, addSalesTask, updateSalesTask, deleteSalesTask,
 } from '../../../../redux/slices/salesTaskSlice'
 import {
-  taskFormSections, taskFormSchema, taskDefaultValues, buildTaskInitialValues, toTaskPayload,
+  buildTaskFormSections, taskFormSchema, taskDefaultValues, buildTaskInitialValues, toTaskPayload,
   TASK_TYPE_LABELS, TASK_RESULT_LABELS, TASK_STATUS_LABELS, TASK_STATUS_COLORS,
   TASK_PRIORITY_COLORS,
 } from '../taskFormConfig'
+import { salesTaskService } from '../../../../services/salesTaskService'
 import { formatDate } from '../../../../utils'
+
+const TABS = [
+  { id: 'mine', label: 'My Tasks' },
+  { id: 'assigned', label: 'Assigned Tasks' },
+]
 
 export default function SalesTasks() {
   const dispatch = useDispatch()
   const { list: tasks, loading, error } = useSelector((s) => s.salesTasks)
   const { list: leads } = useSelector((s) => s.leads)
+  const { user } = useSelector((s) => s.auth)
   const activePerspective = useSelector((s) => s.perspective?.current)
   const [isFormOpen, setFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
+  const [assignableUsers, setAssignableUsers] = useState([])
+  const [activeTab, setActiveTab] = useState('mine')
+
+  const myId = user?.id
+  const level = Number(user?.employeeLevel ?? user?.roleLevel ?? 0)
+  const canAssign = level >= 2
 
   useEffect(() => {
     dispatch(fetchSalesTasks())
     dispatch(fetchLeads())
   }, [dispatch, activePerspective])
 
+  // Direct reports the manager can assign to (drives the "Assign To" picker).
+  useEffect(() => {
+    if (!canAssign) { setAssignableUsers([]); return }
+    let active = true
+    salesTaskService.getAssignableUsers()
+      .then((res) => { if (active) setAssignableUsers(res.data || []) })
+      .catch(() => { if (active) setAssignableUsers([]) })
+    return () => { active = false }
+  }, [canAssign, activePerspective])
+
   const leadOptions = useMemo(
     () => leads.map((l) => ({ value: l.id, label: `${l.leadCode ? `${l.leadCode} — ` : ''}${l.name}` })),
     [leads],
   )
+
+  const assigneeOptions = useMemo(
+    () => assignableUsers.map((u) => ({
+      value: u.id,
+      label: `${u.firstName} ${u.lastName}${u.designation ? ` (${u.designation})` : ''}`.trim(),
+    })),
+    [assignableUsers],
+  )
+
+  const formSections = useMemo(
+    () => buildTaskFormSections(canAssign ? assigneeOptions : []),
+    [canAssign, assigneeOptions],
+  )
+
+  // My Tasks = assigned to me; Assigned Tasks = I assigned to a subordinate.
+  const visibleTasks = useMemo(() => {
+    if (!canAssign || activeTab === 'mine') {
+      return tasks.filter((t) => t.assignee?.id === myId)
+    }
+    return tasks.filter((t) => t.createdBy?.id === myId && t.assignee?.id !== myId)
+  }, [tasks, activeTab, canAssign, myId])
 
   const initialValues = useMemo(
     () => (editingTask ? buildTaskInitialValues(editingTask) : { ...taskDefaultValues }),
@@ -57,7 +101,7 @@ export default function SalesTasks() {
     <div className="space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Tasks"
-        subtitle={`${tasks.length} follow-up tasks`}
+        subtitle={`${visibleTasks.length} follow-up tasks`}
         breadcrumbs={['Dashboard', 'Tasks']}
         actions={
           <button onClick={() => { setEditingTask(null); setFormOpen(true) }} className="btn-primary text-sm flex items-center gap-2">
@@ -66,11 +110,31 @@ export default function SalesTasks() {
         }
       />
 
+      {/* My Tasks / Assigned Tasks toggle — only managers assign, so the second
+          tab is hidden for executives and interns. */}
+      {canAssign && (
+        <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-700 rounded-xl p-1 max-w-xs">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === tab.id
+                  ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <SchemaForm
         open={isFormOpen}
         title={editingTask ? 'Update Task' : 'Add Task'}
         subtitle={editingTask ? 'Update task and outcome' : 'Create a follow-up task linked to a lead'}
-        sections={taskFormSections}
+        sections={formSections}
         schema={taskFormSchema}
         defaultValues={initialValues}
         mode={editingTask ? 'edit' : 'create'}
@@ -84,10 +148,16 @@ export default function SalesTasks() {
         <div className="card p-10 text-center text-sm text-neutral-500">Loading tasks…</div>
       ) : error ? (
         <div className="card p-10 text-center text-sm text-red-500">Failed to load tasks: {String(error)}</div>
-      ) : tasks.length === 0 ? (
+      ) : visibleTasks.length === 0 ? (
         <div className="card p-10 text-center">
-          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">No tasks yet</p>
-          <p className="mt-1 text-xs text-neutral-400">Create a follow-up task to keep your leads moving.</p>
+          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+            {canAssign && activeTab === 'assigned' ? 'No tasks assigned to your team yet' : 'No tasks yet'}
+          </p>
+          <p className="mt-1 text-xs text-neutral-400">
+            {canAssign && activeTab === 'assigned'
+              ? 'Assign a task to one of your direct reports to see it here.'
+              : 'Create a follow-up task to keep your leads moving.'}
+          </p>
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -102,7 +172,7 @@ export default function SalesTasks() {
               </thead>
               <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
                 <AnimatePresence>
-                  {tasks.map((t, i) => (
+                  {visibleTasks.map((t, i) => (
                     <motion.tr key={t.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                       transition={{ delay: i * 0.03 }}
                       className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group">

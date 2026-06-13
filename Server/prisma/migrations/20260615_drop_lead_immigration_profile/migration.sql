@@ -1,0 +1,11 @@
+-- Drop the redundant LeadImmigrationProfile table.
+--
+-- Its columns 1:1-duplicated SalesLead's own immigration columns
+-- (countryOfResidence, visaCategory, education, etc.). The live UI always sent
+-- flat SalesLead fields and never a nested `immigration` object, so this table
+-- was never written or read. SalesLead's own columns are the canonical source
+-- of truth. Approved drop (see docs/Remediation-and-Roadmap.md P2).
+--
+-- The unique index "LeadImmigrationProfile_leadId_key" and the FK constraint
+-- "LeadImmigrationProfile_leadId_fkey" are dropped automatically with the table.
+DROP TABLE IF EXISTS "LeadImmigrationProfile";

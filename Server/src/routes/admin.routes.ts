@@ -184,7 +184,7 @@ adminRouter.patch(
   asyncHandler(async (req, res) => {
     const { name, code, isActive } = req.body;
     const updated = await prisma.business.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: {
         name,
         code,
@@ -220,7 +220,7 @@ adminRouter.patch(
   asyncHandler(async (req, res) => {
     const { name, code, isActive } = req.body;
     const updated = await prisma.vertical.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: {
         name,
         code,
@@ -257,7 +257,7 @@ adminRouter.patch(
   asyncHandler(async (req, res) => {
     const { name, code, isActive, verticalId } = req.body;
     const updated = await prisma.team.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: {
         name,
         code,
@@ -276,7 +276,7 @@ adminRouter.patch(
   asyncHandler(async (req, res) => {
     const { firstName, lastName, email, designation, level, businessId, teamId, roleId, isActive } = req.body;
     const updated = await prisma.employee.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: {
         firstName,
         lastName,

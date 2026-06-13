@@ -15,9 +15,11 @@
 
 ---
 
-## P1 — Marketing → Sales handoff is missing
+## P1 — Marketing → Sales handoff ✅ DONE (Phase 1)
 
-**Problem:** `MarketingLead` and `SalesLead` are disconnected — no FK, no promotion endpoint. The Marketing→Sales ownership chain in the org chart / spec does not exist in code. Marketing "CONVERTED" only stamps `convertedAt` on the marketing lead.
+**Status:** Implemented. `SalesLead.marketingLeadId` (nullable, unique) links back to the originating `MarketingLead`; `promoteMarketingLeadToSales` + `POST /marketing/leads/:id/promote` (Marketing Executive+, assignee validated to promoter's scope) create the linked sales lead, mark the marketing lead `CONVERTED`, and record `ASSIGNMENT_CHANGE`/`STATUS_CHANGE` — atomically. Migration `20260616_link_marketing_to_sales_lead` (additive).
+
+**Original problem:** `MarketingLead` and `SalesLead` are disconnected — no FK, no promotion endpoint. The Marketing→Sales ownership chain in the org chart / spec does not exist in code. Marketing "CONVERTED" only stamps `convertedAt` on the marketing lead.
 
 **Acceptance:** A marketer (or manager) can promote a `MarketingLead` to a `SalesLead`; the new sales lead carries source, original creator, and a link back to the marketing lead; the action is scope-checked and audit-logged; the marketing lead is marked converted; no existing tables altered destructively.
 
@@ -30,9 +32,11 @@
 
 ---
 
-## P1 — Lead lifecycle has no state-machine guard
+## P1 — Lead lifecycle state-machine guard ✅ DONE (Phase 3)
 
-**Problem:** `updateSalesLead` accepts any `status` via PATCH, so illegal jumps (e.g. `NEW → TRANSFERRED`) bypass the guard the `/transfer` endpoint enforces. Conversion also doesn't require payment completion, contrary to the intended lifecycle.
+**Status:** Implemented. A single `ALLOWED_TRANSITIONS` map in `salesLead.service` is enforced in `updateSalesLead`/`convertSalesLead`/`transferSalesLead` (illegal jumps → 400); conversion requires `paymentStatus` `PARTIALLY_DONE` or `DONE`. Every change is recorded in the new `LeadStatusHistory` (read: `GET /sales/leads/:id/status-history`). Migration `20260618_add_lead_status_history` (additive + backfill).
+
+**Original problem:** `updateSalesLead` accepts any `status` via PATCH, so illegal jumps (e.g. `NEW → TRANSFERRED`) bypass the guard the `/transfer` endpoint enforces. Conversion also doesn't require payment completion, contrary to the intended lifecycle.
 
 **Acceptance:** Only legal transitions succeed; illegal ones return 400; convert is gated on `paymentStatus = DONE` (confirm this rule first); existing valid flows unaffected.
 
@@ -52,9 +56,11 @@
 
 ---
 
-## P2 — Revenue definition is inconsistent
+## P2 — Revenue definition ✅ DONE (Phase 5)
 
-**Problem:** Revenue/KPIs sum `estimatedValue` of CONVERTED leads, not collected `paymentAmount`/payments; `getRevenue` buckets by `updatedAt` not `convertedAt` (so later edits re-date revenue); TRANSFERRED (post-conversion) leads drop out of revenue.
+**Status:** Implemented. One definition lives in `Server/src/services/revenue.ts` and is used by `immigration.service.ts`, `/sales/leaderboard`, and `/sales/team-stats`: **revenue = Σ collected `paymentAmount` of leads with `convertedAt` set (counts converted-then-TRANSFERRED), dated/bucketed by `convertedAt`.** No `updatedAt` re-dating; no schema change. Funnel stage `value` stays `estimatedValue` (pipeline, deliberately not revenue).
+
+**Original problem:** Revenue/KPIs sum `estimatedValue` of CONVERTED leads, not collected `paymentAmount`/payments; `getRevenue` buckets by `updatedAt` not `convertedAt` (so later edits re-date revenue); TRANSFERRED (post-conversion) leads drop out of revenue.
 
 **Acceptance:** A single documented revenue definition applied consistently across `immigration.service.ts`, `/sales/leaderboard`, `/sales/team-stats`; revenue dated by conversion, not last edit; converted-then-transferred leads still count.
 

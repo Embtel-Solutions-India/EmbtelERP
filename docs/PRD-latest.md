@@ -92,10 +92,12 @@ A user has a home scope (self + subtree) and may switch perspective to any node 
 Models: `MarketingCampaign`, `MarketingTask`, `MarketingLead`, `MarketingActivity`, `MarketingKPI`.
 - Campaigns (DRAFT→ACTIVE→PAUSED→COMPLETED→CANCELLED); tasks (TODO→…→COMPLETED); leads (NEW→CONTACTED→QUALIFIED→CONVERTED→LOST); activity logging; KPI tracking.
 - Role-scoped dashboards: `/marketing/dashboard/{manager,executive,intern}`. All records tagged org/business/vertical/team and filtered by `DataScope`.
+- **Lead capture synced with Sales:** `MarketingLead` carries the same qualification fields as the Sales Add-Lead form (contact, visa/immigration interest, budget, urgency, interested level, consultation) plus an auto `leadScore` (derived by the shared `computeLeadScore` — no second scorer). All fields nullable/additive.
+- **Marketing → Sales handoff:** `POST /marketing/leads/:id/promote` (Marketing Executive+; body `{ assignedToId, teamId?, verticalId? }`). Creates a linked `SalesLead` (assigned to a Sales Executive within the promoter's scope), **copies the synced capture fields across**, marks the marketing lead `CONVERTED`, and records the ownership-chain events — all in one transaction. The `SalesLead.marketingLeadId` link is unique, so a marketing lead can be promoted at most once.
 - **Tracked work-unit fields (from PRD 13):** campaign name & type, target audience, service promoted, emails sent, open rate, click rate, leads generated, conversions. **(enhancement where fields are not yet modeled.)**
 
 ### 7.2 Sales — Leads
-Model: `SalesLead` (+ optional 1:1 `LeadImmigrationProfile` — flagged for consolidation in the remediation backlog).
+Model: `SalesLead` (immigration fields live directly on `SalesLead`; the redundant 1:1 `LeadImmigrationProfile` was consolidated away and dropped — see remediation P2).
 - **Lifecycle:** `NEW → CONTACTED → CONSULTATION_SCHEDULED → DOCUMENTS_REQUESTED → QUALIFIED → CONVERTED → TRANSFERRED` (+ `LOST`). Interested level: Hot / Warm / Cold.
 - **Pipeline stages configurable per vertical.** **(enhancement — stages are a fixed enum today.)**
 - **Lead source tracking** with a controlled list: campaign, referral, walk-in, website (+ Facebook/Google/WhatsApp as used). **(enhancement — `source` is currently a free string.)**
@@ -104,8 +106,12 @@ Model: `SalesLead` (+ optional 1:1 `LeadImmigrationProfile` — flagged for cons
 - **Lead-to-client conversion workflow:** `POST /sales/leads/:id/convert`; transfer to next stage via `POST /sales/leads/:id/transfer` (only from QUALIFIED/CONVERTED).
 - **Lead score** is derived (read-only), 0–100, recomputed on every create/update from interested level, urgency, budget, experience, consultation, family, and stage.
 - **Payment / billing (manual record-keeping, no gateway):** `paymentStatus` (INITIATED / IN_PROGRESS / PARTIALLY_DONE / DONE), `paymentAmount`, plus `paymentDate` and `paymentMethod` (free text: cash/check/wire/card). **(enhancement — date/method fields net-new.)**
+- **Revenue (one definition, `services/revenue.ts`):** revenue = Σ collected `paymentAmount` of leads that were converted (`convertedAt` set, so converted-then-transferred still counts), dated/bucketed by `convertedAt` — never `updatedAt`. Applied consistently across immigration analytics, `/sales/leaderboard`, and `/sales/team-stats`. (Pipeline funnel `value` is `estimatedValue` — potential, not collected revenue.)
 - **Sales work-unit / KPI inputs (from PRD 13):** calls made, emails sent, leads added, deal value, daily revenue, weekly forecast, service interest, visa category. Surfaced on the Sales Executive dashboard. **(enhancement where not yet captured.)**
-- API: `GET/POST /sales/leads`, `PATCH/DELETE /sales/leads/:id` (delete L2+), `POST /sales/leads/:id/{convert,transfer}`.
+- **Ownership chain:** `LeadAssignmentHistory` records every ownership change (initial assignment, Marketing→Sales promotion, reassignment, transfer) as a never-overwritten row. Read via `GET /sales/leads/:id/history`.
+- **Lifecycle state machine:** status changes are validated against a single transition map (e.g. `NEW→{CONTACTED,LOST}`, `QUALIFIED→{CONVERTED,TRANSFERRED,LOST}`, `CONVERTED→{TRANSFERRED}`); illegal jumps return 400. Conversion additionally requires `paymentStatus` of `PARTIALLY_DONE` or `DONE`. Every change is recorded in `LeadStatusHistory`, read via `GET /sales/leads/:id/status-history`.
+- **Lead timeline (one-screen view):** `GET /sales/leads/:id/timeline` — a read-only projection returning `{ lead, origin, summary, timeline }`. The `timeline` merges status, ownership, follow-up-task, and payment events chronologically; `summary` surfaces origin (generated-by), first contact, consultation, conversion, transfer, current owner, and collected payment. Read-only — not a source of truth.
+- API: `GET/POST /sales/leads`, `PATCH/DELETE /sales/leads/:id` (delete L2+), `GET /sales/leads/:id/history`, `GET /sales/leads/:id/status-history`, `GET /sales/leads/:id/timeline`, `POST /sales/leads/:id/{convert,transfer}`.
 
 ### 7.3 Sales — Tasks
 Model: `SalesTask` — typed follow-ups (Call, WhatsApp, Email, Consultation, Document Collection, Payment Follow-up, etc.) with result, next-follow-up date, completion. API `/sales/tasks`.
