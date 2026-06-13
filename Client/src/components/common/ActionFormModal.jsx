@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Close, Save } from '@mui/icons-material'
+import SelectField from './SelectField'
 
 export default function ActionFormModal({
   open,
@@ -79,13 +80,15 @@ export default function ActionFormModal({
                       {field.label}
                     </span>
                     {field.type === 'select' ? (
-                      <select {...commonProps}>
-                        {field.options.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      <SelectField
+                        id={field.name}
+                        name={field.name}
+                        value={values[field.name] ?? ''}
+                        options={field.options}
+                        disabled={field.disabled}
+                        placeholder={field.placeholder}
+                        onChange={(value) => handleChange(field.name, value)}
+                      />
                     ) : field.type === 'textarea' ? (
                       <textarea {...commonProps} rows={field.rows || 4} />
                     ) : (
