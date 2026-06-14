@@ -27,6 +27,9 @@ import hrReducer from '../modules/hr/redux/hrSlice'
 // Immigration Reducer
 import immigrationReducer from '../modules/immigration/redux/immigrationSlice'
 
+// Admin — Super Admin Organization Explorer
+import orgExplorerReducer from '../modules/admin/redux/orgExplorerSlice'
+
 const appReducer = combineReducers({
   auth: authReducer,
   dashboard: dashboardReducer,
@@ -55,6 +58,9 @@ const appReducer = combineReducers({
 
   // Immigration slice
   immigration: immigrationReducer,
+
+  // Super Admin Organization Explorer
+  orgExplorer: orgExplorerReducer,
 })
 
 // Reset all per-user state on logout or on a fresh login so one member can never

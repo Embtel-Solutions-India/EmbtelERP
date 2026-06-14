@@ -226,3 +226,27 @@ export const adminMenu = [
 ]
 
 export const superAdminMenu = withDashboardPath(adminMenu, '/super-admin/dashboard')
+
+// ─── Calendar route scoping ──────────────────────────────────────────────────
+// The calendar is a strictly personal, per-role screen. Each menu's Calendar entry
+// opens its own module-scoped route (e.g. /sales/calendar, /head/calendar) — all
+// mounted in App.jsx. Keeping the calendar inside the module namespace preserves
+// hierarchy context so the sidebar's Dashboard link returns to the correct role
+// dashboard (never bounces to /sales/dashboard). Never link to the bare /calendar.
+function scopeCalendarRoute(menu) {
+  const dash = menu.find((i) => i.id === 'dashboard')
+  const cal  = menu.find((i) => i.id === 'calendar')
+  if (dash && cal) cal.path = `/${moduleFromPath(dash.path)}/calendar`
+  return menu
+}
+
+;[
+  salesInternMenu, salesExecutiveMenu, salesHeadMenu,
+  marketingInternMenu, marketingExecutiveMenu, marketingManagerMenu,
+  productionInternMenu, productionExecutiveMenu, productionManagerMenu,
+  documentationInternMenu, documentationExecutiveMenu, documentationManagerMenu,
+  evaluationMenu, headEvaluationMenu, professorMenu,
+  hrMenu, hrExecutiveMenu, recruitmentMenu,
+  ownerMenu, headMenu, verticalMenu,
+  adminMenu, superAdminMenu,
+].forEach(scopeCalendarRoute)

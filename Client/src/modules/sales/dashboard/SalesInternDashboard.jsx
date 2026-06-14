@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useAutoRefresh } from '../../../hooks/useAutoRefresh'
 import { useDispatch } from 'react-redux'
 import { fetchWorkspaceFollowUps, fetchWorkspaceLeads, fetchWorkspaceActivities } from '../../../redux/slices/workspaceSlice'
 import { fetchRoleWorkspace, fetchDashboardOverview, fetchDashboardPerformance } from '../../../redux/slices/dashboardSlice'
@@ -13,7 +13,7 @@ import WelcomeSection from '../../../components/dashboard/WelcomeSection'
 export default function SalesInternDashboard() {
   const dispatch = useDispatch()
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     dispatch(fetchLeads())
     dispatch(fetchWorkspaceLeads())
     dispatch(fetchWorkspaceFollowUps())

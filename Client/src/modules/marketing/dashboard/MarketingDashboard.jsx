@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useAutoRefresh } from '../../../hooks/useAutoRefresh'
 import {
   FaUsers, FaUserPlus, FaStar, FaTrophy, FaDollarSign, FaBullseye, FaBullhorn, FaEnvelope,
 } from 'react-icons/fa'
@@ -32,7 +32,7 @@ export default function MarketingDashboard() {
   const { workspace } = useSelector((s) => s.dashboard)
   const { current: activePerspective } = useSelector((s) => s.perspective)
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     dispatch(fetchMarketingDashboardData())
     dispatch(fetchMarketingTasks())
     dispatch(fetchRoleWorkspace())
@@ -72,21 +72,6 @@ export default function MarketingDashboard() {
       title: 'Campaign ROI', value: kpiStats.campaignRoi,
       icon: <FaBullseye size={18} />, suffix: 'x', color: '#8b5cf6',
       change: 0, changeLabel: 'budget ratio',
-    },
-    {
-      title: 'Website Traffic', value: kpiStats.websiteTraffic,
-      icon: <FaUsers size={18} />, color: '#6366f1',
-      change: 0, changeLabel: 'not tracked yet',
-    },
-    {
-      title: 'Social Engagement', value: kpiStats.socialEngagement,
-      icon: <FaStar size={18} />, suffix: '%', color: '#f59e0b',
-      change: 0, changeLabel: 'not tracked yet',
-    },
-    {
-      title: 'Email Open Rate', value: kpiStats.emailOpenRate,
-      icon: <FaEnvelope size={18} />, suffix: '%', color: '#10b981',
-      change: 0, changeLabel: 'not tracked yet',
     },
   ]
 

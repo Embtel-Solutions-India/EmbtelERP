@@ -196,10 +196,7 @@ export default function DashboardLayoutEngine({ role }) {
       {/* ── Vertical Manager ─────────────────────────────────────────── */}
       {role === 'vertical_manager' && <>
         <W id="target_summary" role={role} />
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2"><W id="performance" role={role} /></div>
-          <W id="dept_health" role={role} />
-        </div>
+        <W id="performance" role={role} />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <W id="leaderboard" role={role} />
           <W id="task_summary" role={role} />
@@ -262,10 +259,7 @@ export default function DashboardLayoutEngine({ role }) {
 
       {/* ── Business Owner ───────────────────────────────────────────── */}
       {role === 'business_owner' && <>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2"><W id="performance" role={role} /></div>
-          <W id="business_health_details" role={role} />
-        </div>
+        <W id="performance" role={role} />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <W id="leaderboard" role={role} />
           <W id="task_summary" role={role} />

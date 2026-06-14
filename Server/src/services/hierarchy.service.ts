@@ -528,6 +528,110 @@ export async function getFullOrganizationTree(): Promise<OrganizationTree> {
 }
 
 /**
+ * Super-Admin-only: read-only overview of a single employee, built entirely from
+ * real data (identity + task counts + lead counts). Metrics without a backend
+ * source (revenue, campaigns, cases, performance score) are intentionally omitted
+ * rather than fabricated.
+ */
+export async function getEmployeeOverviewForAdmin(employeeId: string) {
+  const emp = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: {
+      id: true, firstName: true, lastName: true, designation: true, level: true,
+      role:     { select: { name: true, level: true } },
+      team:     { select: { name: true } },
+      vertical: { select: { name: true } },
+      business: { select: { name: true } },
+      manager:  { select: { firstName: true, lastName: true, designation: true } },
+    },
+  });
+  if (!emp) return null;
+
+  const now = new Date();
+  const [taskTotal, taskCompleted, taskOverdue, leads] = await Promise.all([
+    prisma.task.count({ where: { assigneeId: employeeId } }),
+    prisma.task.count({ where: { assigneeId: employeeId, status: "completed" } }),
+    prisma.task.count({
+      where: { assigneeId: employeeId, status: { notIn: ["completed", "cancelled"] }, dueDate: { lt: now } },
+    }),
+    prisma.salesLead.findMany({ where: { assignedToId: employeeId }, select: { status: true } }),
+  ]);
+
+  const taskPending  = Math.max(0, taskTotal - taskCompleted);
+  const leadsTotal     = leads.length;
+  const leadsConverted = leads.filter((l) => l.status === "CONVERTED").length;
+  const closed         = leads.filter((l) => l.status === "CONVERTED" || l.status === "LOST").length;
+
+  return {
+    id:               emp.id,
+    name:             `${emp.firstName} ${emp.lastName}`,
+    designation:      emp.designation ?? null,
+    role:             emp.role?.name ?? null,
+    roleLevel:        emp.level ?? emp.role?.level ?? 0,
+    team:             emp.team?.name ?? null,
+    vertical:         emp.vertical?.name ?? null,
+    business:         emp.business?.name ?? null,
+    reportingManager: emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : null,
+    tasks: {
+      total:          taskTotal,
+      completed:      taskCompleted,
+      pending:        taskPending,
+      overdue:        taskOverdue,
+      completionRate: taskTotal > 0 ? Math.round((taskCompleted / taskTotal) * 100) : 0,
+    },
+    leads: {
+      total:          leadsTotal,
+      converted:      leadsConverted,
+      conversionRate: closed > 0 ? Math.round((leadsConverted / closed) * 100) : 0,
+    },
+  };
+}
+
+/**
+ * Super-Admin-only: task details added for/by an employee within a period.
+ * period = daily (since start of today) | weekly (last 7 days) | monthly (since
+ * start of month). Returns real Task rows the employee created or is assigned.
+ */
+export async function getEmployeeTasksForAdmin(employeeId: string, period: string) {
+  const now = new Date();
+  const since =
+    period === "weekly"  ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) :
+    period === "monthly" ? new Date(now.getFullYear(), now.getMonth(), 1) :
+    /* daily */            new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const tasks = await prisma.task.findMany({
+    where: {
+      createdAt: { gte: since },
+      OR: [{ assigneeId: employeeId }, { createdById: employeeId }],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: {
+      id: true, title: true, taskType: true, status: true, priority: true,
+      dueDate: true, createdAt: true, assigneeId: true, createdById: true,
+    },
+  });
+
+  return {
+    period,
+    total: tasks.length,
+    tasks: tasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      taskType: t.taskType,
+      status: t.status,
+      priority: t.priority,
+      dueDate: t.dueDate,
+      createdAt: t.createdAt,
+      relation:
+        t.createdById === employeeId && t.assigneeId === employeeId ? "own"
+        : t.assigneeId === employeeId ? "assigned"
+        : "created",
+    })),
+  };
+}
+
+/**
  * Get hierarchy tree for a specific business.
  */
 export async function getBusinessHierarchyTree(

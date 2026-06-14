@@ -60,6 +60,7 @@ import {
 } from "../config/sidebarConfig";
 import { APP_NAME } from "../constants";
 import { getInitials } from "../utils";
+import SuperAdminOrgTree from "../modules/admin/components/SuperAdminOrgTree";
 import {
   fetchPerspectives,
   switchPerspective,
@@ -472,6 +473,8 @@ export default function Sidebar({ open, mobileOpen }) {
   const items = resolveMenu(activeModule, level, designation);
   const platformLabel = moduleLabelMap[activeModule] || "Sales Platform";
   const isViewingOther = activePerspective !== null;
+  // Organization Explorer tree is Super-Admin-only (level 5 / "super admin").
+  const isSuperAdmin = level >= 5 || designation.toLowerCase().includes("super admin");
 
   useEffect(() => {
     dispatch(fetchPerspectives());
@@ -655,6 +658,9 @@ export default function Sidebar({ open, mobileOpen }) {
           ))}
         </div>
       )} */}
+
+      {/* Organization Explorer — Super Admin only */}
+      {isSuperAdmin && <SuperAdminOrgTree collapsed={isCollapsed} />}
 
       {/* Navigation */}
       <nav className="flex-1 px-2.5 py-3 overflow-y-auto">

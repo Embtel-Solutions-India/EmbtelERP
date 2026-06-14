@@ -17,6 +17,8 @@ import {
   getNodeAncestors,
   getNodeDescendants,
   getManagers,
+  getEmployeeOverviewForAdmin,
+  getEmployeeTasksForAdmin,
 } from "../services/hierarchy.service.js";
 import { getAvailablePerspectives } from "../services/perspective.service.js";
 import { getHierarchyTreeHandler } from "../controllers/hierarchy.controller.js";
@@ -57,6 +59,47 @@ hierarchyRouter.get(
   asyncHandler(async (_req, res) => {
     const tree = await getFullOrganizationTree();
     res.json({ data: tree });
+  }),
+);
+
+/**
+ * GET /hierarchy/super-admin/organization-tree
+ * SUPER ADMIN ONLY — full real org tree for the sidebar Organization Explorer.
+ */
+hierarchyRouter.get(
+  "/super-admin/organization-tree",
+  requireRole(ROLE_LEVEL.SUPER_ADMIN),
+  asyncHandler(async (_req, res) => {
+    const tree = await getFullOrganizationTree();
+    res.json({ data: tree });
+  }),
+);
+
+/**
+ * GET /hierarchy/super-admin/employee/:id
+ * SUPER ADMIN ONLY — read-only employee overview (real data) for the drill-down.
+ */
+hierarchyRouter.get(
+  "/super-admin/employee/:id",
+  requireRole(ROLE_LEVEL.SUPER_ADMIN),
+  asyncHandler(async (req, res) => {
+    const data = await getEmployeeOverviewForAdmin(String(req.params.id));
+    if (!data) { res.status(404).json({ error: "Employee not found" }); return; }
+    res.json({ data });
+  }),
+);
+
+/**
+ * GET /hierarchy/super-admin/employee/:id/tasks?period=daily|weekly|monthly
+ * SUPER ADMIN ONLY — task details for an employee, filtered by period.
+ */
+hierarchyRouter.get(
+  "/super-admin/employee/:id/tasks",
+  requireRole(ROLE_LEVEL.SUPER_ADMIN),
+  asyncHandler(async (req, res) => {
+    const period = String(req.query.period ?? "daily");
+    const data = await getEmployeeTasksForAdmin(String(req.params.id), period);
+    res.json({ data });
   }),
 );
 

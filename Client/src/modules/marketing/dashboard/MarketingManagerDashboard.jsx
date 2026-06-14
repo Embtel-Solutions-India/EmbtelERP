@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useAutoRefresh } from '../../../hooks/useAutoRefresh'
 import { useDispatch } from 'react-redux'
 import { fetchTeamLeaderboard, fetchTeamStats, fetchWorkspaceLeads, fetchWorkspacePipeline } from '../../../redux/slices/workspaceSlice'
 import { fetchRoleWorkspace, fetchDashboardOverview, fetchDashboardPerformance } from '../../../redux/slices/dashboardSlice'
@@ -10,7 +10,7 @@ import WelcomeSection from '../../../components/dashboard/WelcomeSection'
 export default function MarketingManagerDashboard() {
   const dispatch = useDispatch()
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     dispatch(fetchTeamLeaderboard())
     dispatch(fetchTeamStats())
     dispatch(fetchWorkspaceLeads())

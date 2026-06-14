@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useAutoRefresh } from '../../../hooks/useAutoRefresh'
 import { useDispatch, useSelector } from 'react-redux'
 import WelcomeSection from '../../../components/dashboard/WelcomeSection'
 import DashboardLayoutEngine from '../../../components/dashboard/DashboardLayoutEngine'
@@ -11,7 +11,7 @@ export default function AdminDashboard() {
   const dispatch = useDispatch()
   const { overview, loading } = useSelector(s => s.dashboard)
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     dispatch(fetchRoleWorkspace())
     dispatch(fetchDashboardOverview())
     dispatch(fetchDashboardPerformance())

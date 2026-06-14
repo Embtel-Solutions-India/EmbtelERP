@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useAutoRefresh } from '../../../hooks/useAutoRefresh'
 import { useSelector, useDispatch } from 'react-redux'
 import WelcomeSection from '../../../components/dashboard/WelcomeSection'
 import DashboardLayoutEngine from '../../../components/dashboard/DashboardLayoutEngine'
@@ -17,7 +17,7 @@ export default function OwnerDashboard() {
   const { overview, loading } = useSelector(s => s.dashboard)
   const { current: activePerspective } = useSelector(s => s.perspective)
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     dispatch(fetchDashboardOverview())
     dispatch(fetchDashboardPerformance())
     dispatch(fetchDashboardInsights())
