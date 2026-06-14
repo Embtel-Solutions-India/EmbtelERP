@@ -40,6 +40,7 @@ export const salesExecutiveMenu = [
 export const salesHeadMenu = [
   { id: 'dashboard',      label: 'Dashboard',       icon: 'Dashboard',     path: '/sales-manager/dashboard' },
   { id: 'team',           label: 'Team',            icon: 'People',        path: '/sales/team'              },
+  { id: 'tasks',          label: 'Tasks',           icon: 'TaskAlt',       path: '/sales/tasks'             },
   { id: 'leads',          label: 'Lead Assignment', icon: 'PersonAdd',     path: '/sales/leads'             },
   { id: 'targets',        label: 'Targets',         icon: 'Leaderboard',   path: '/sales/targets'           },
   { id: 'performance',    label: 'Performance',     icon: 'Leaderboard',   path: '/sales/performance'       },
@@ -83,6 +84,7 @@ export const marketingManagerMenu = [
   { id: 'dashboard',       label: 'Dashboard',       icon: 'Dashboard',     path: '/marketing-manager/dashboard' },
   { id: 'campaigns',       label: 'Campaigns',        icon: 'TrendingUp',    path: '/marketing/campaigns'         },
   { id: 'team',            label: 'Team',             icon: 'People',        path: '/marketing/team'              },
+  { id: 'tasks',           label: 'Tasks',            icon: 'TaskAlt',       path: '/marketing/tasks'             },
   { id: 'leads',           label: 'Lead Funnels',     icon: 'PersonAdd',     path: '/marketing/leads'             },
   { id: 'performance',     label: 'Performance',      icon: 'Leaderboard',   path: '/marketing/performance'       },
   { id: 'approvals',       label: 'Approvals',        icon: 'TaskAlt',       path: '/marketing/approvals'         },
@@ -121,6 +123,7 @@ export const productionExecutiveMenu = [
 export const productionManagerMenu = [
   { id: 'dashboard',    label: 'Dashboard', icon: 'Dashboard',     path: '/production/dashboard'  },
   { id: 'cases',        label: 'Cases',     icon: 'RequestQuote',  path: '/production/cases'      },
+  { id: 'tasks',        label: 'Tasks',     icon: 'TaskAlt',       path: '/production/tasks'      },
   { id: 'approvals',    label: 'Approvals', icon: 'TaskAlt',       path: '/production/approvals'  },
   { id: 'team',         label: 'Team',      icon: 'People',        path: '/production/team'       },
   { id: 'reports',      label: 'Reports',   icon: 'Assessment',    path: '/production/reports'    },
