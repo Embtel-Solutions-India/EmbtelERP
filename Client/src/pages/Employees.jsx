@@ -8,6 +8,7 @@ import ActionFormModal from '../components/common/ActionFormModal'
 import { fetchEmployees, createEmployeeAsync, updateEmployeeAsync, deactivateEmployeeAsync } from '../redux/slices/employeeSlice'
 import { getInitials } from '../utils'
 import api from '../services/api'
+import OrgEmployeeDrawer from '../modules/admin/components/OrgEmployeeDrawer'
 
 export default function Employees() {
   const dispatch = useDispatch()
@@ -17,6 +18,8 @@ export default function Employees() {
   const [search, setSearch] = useState('')
   const [isFormOpen, setFormOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
+  // Super-Admin-only: open the shared org employee overview/task drawer.
+  const [overviewId, setOverviewId] = useState(null)
 
   // Lookup metadata for dropdown fields
   const [meta, setMeta] = useState({
@@ -36,6 +39,7 @@ export default function Employees() {
   const level = Number(user?.roleLevel ?? user?.employeeLevel ?? 0)
   const designation = (user?.designation || '').toLowerCase()
   const canManage = level >= 3 || designation.includes('hr') || designation.includes('owner') || designation.includes('admin')
+  const isSuperAdmin = level >= 5 || designation.includes('super admin')
 
   const filteredEmployees = employees.filter((emp) => {
     const query = search.toLowerCase()
@@ -212,12 +216,16 @@ export default function Employees() {
                 <motion.tr key={emp.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                   className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group text-sm">
                   <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
+                    <div
+                      onClick={isSuperAdmin ? () => setOverviewId(emp.id) : undefined}
+                      title={isSuperAdmin ? 'View tasks & details' : undefined}
+                      className={`flex items-center gap-3 ${isSuperAdmin ? 'cursor-pointer group/emp' : ''}`}
+                    >
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                         {getInitials(`${emp.firstName} ${emp.lastName}`)}
                       </div>
                       <div>
-                        <p className="font-semibold text-neutral-800 dark:text-neutral-100">{emp.firstName} {emp.lastName}</p>
+                        <p className={`font-semibold text-neutral-800 dark:text-neutral-100 ${isSuperAdmin ? 'group-hover/emp:text-indigo-600 dark:group-hover/emp:text-indigo-400' : ''}`}>{emp.firstName} {emp.lastName}</p>
                         <p className="text-xs text-neutral-400 dark:text-neutral-500">{emp.email}</p>
                       </div>
                     </div>
@@ -258,6 +266,9 @@ export default function Employees() {
           </table>
         </div>
       </div>
+
+      {/* Super-Admin-only employee overview + task drawer (reused from Org Explorer) */}
+      {isSuperAdmin && <OrgEmployeeDrawer employeeId={overviewId} onClose={() => setOverviewId(null)} />}
     </div>
   )
 }
