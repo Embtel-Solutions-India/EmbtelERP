@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -189,10 +189,10 @@ enum SalesTargetHistoryAction {
 }
 
 enum LeadAssignmentReason {
-  CREATED                  // initial owner set when the sales lead was created
-  PROMOTED_FROM_MARKETING  // first owner via a Marketing→Sales promotion
-  REASSIGNED               // ownership handed to another employee
-  TRANSFERRED              // ownership left Sales (e.g. toward Documentation)
+  CREATED // initial owner set when the sales lead was created
+  PROMOTED_FROM_MARKETING // first owner via a Marketing→Sales promotion
+  REASSIGNED // ownership handed to another employee
+  TRANSFERRED // ownership left Sales (e.g. toward Documentation)
 }
 
 enum MarketingActivityType {
@@ -214,140 +214,149 @@ enum MarketingKPIType {
 }
 
 model Organization {
-  id         String     @id @default(cuid())
-  name       String
-  slug       String     @unique
-  businesses Business[]
-  employees  Employee[]
-  marketingCampaigns MarketingCampaign[]
-  marketingTasks     MarketingTask[]
-  marketingLeads     MarketingLead[]
+  id                  String              @id @default(cuid())
+  name                String
+  slug                String              @unique
+  businesses          Business[]
+  employees           Employee[]
+  marketingCampaigns  MarketingCampaign[]
+  marketingTasks      MarketingTask[]
+  marketingLeads      MarketingLead[]
   marketingActivities MarketingActivity[]
-  marketingKPIs      MarketingKPI[]
-  salesLeads         SalesLead[]
-  salesTasks         SalesTask[]
-  salesTargets       SalesTarget[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  marketingKPIs       MarketingKPI[]
+  salesLeads          SalesLead[]
+  salesTasks          SalesTask[]
+  salesTargets        SalesTarget[]
+  itSprints           ITSprint[]
+  itSprintTasks       ITSprintTask[]
+  itEodReports        ITEodReport[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 }
 
 model Business {
-  id             String       @id @default(cuid())
-  organizationId  String
-  name           String
-  code           String       @unique
-  isActive       Boolean      @default(true)
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  departments    Department[]
-  teams          Team[]
-  verticals      Vertical[]
-  employees      Employee[]
-  notifications  Notification[] @relation("NotificationBusiness")
-  tasks          Task[]
-  documents     Document[]
-  activities    Activity[]
-  auditLogs     AuditLog[]
-  marketingCampaigns MarketingCampaign[]
-  marketingTasks     MarketingTask[]
-  marketingLeads     MarketingLead[]
+  id                  String              @id @default(cuid())
+  organizationId      String
+  name                String
+  code                String              @unique
+  isActive            Boolean             @default(true)
+  organization        Organization        @relation(fields: [organizationId], references: [id])
+  departments         Department[]
+  teams               Team[]
+  verticals           Vertical[]
+  employees           Employee[]
+  notifications       Notification[]      @relation("NotificationBusiness")
+  tasks               Task[]
+  documents           Document[]
+  activities          Activity[]
+  auditLogs           AuditLog[]
+  marketingCampaigns  MarketingCampaign[]
+  marketingTasks      MarketingTask[]
+  marketingLeads      MarketingLead[]
   marketingActivities MarketingActivity[]
-  marketingKPIs      MarketingKPI[]
-  salesLeads         SalesLead[]
-  salesTasks         SalesTask[]
-  salesTargets       SalesTarget[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  marketingKPIs       MarketingKPI[]
+  salesLeads          SalesLead[]
+  salesTasks          SalesTask[]
+  salesTargets        SalesTarget[]
+  itSprints           ITSprint[]
+  itSprintTasks       ITSprintTask[]
+  itEodReports        ITEodReport[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 }
 
 model Department {
-  id              String       @id @default(cuid())
-  businessId      String
-  name            String
-  code            String
-  parentId        String?
-  isActive        Boolean      @default(true)
-  business        Business     @relation(fields: [businessId], references: [id])
-  parent          Department?  @relation("DepartmentTree", fields: [parentId], references: [id])
-  children        Department[] @relation("DepartmentTree")
-  teams           Team[]
-  employees       Employee[]
-  tasks           Task[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id         String       @id @default(cuid())
+  businessId String
+  name       String
+  code       String
+  parentId   String?
+  isActive   Boolean      @default(true)
+  business   Business     @relation(fields: [businessId], references: [id])
+  parent     Department?  @relation("DepartmentTree", fields: [parentId], references: [id])
+  children   Department[] @relation("DepartmentTree")
+  teams      Team[]
+  employees  Employee[]
+  tasks      Task[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
   @@unique([businessId, code])
 }
 
 model Vertical {
-  id           String      @id @default(cuid())
-  businessId   String
-  name         String
-  code         String
-  isActive     Boolean     @default(true)
-  business     Business    @relation(fields: [businessId], references: [id])
-  teams        Team[]
-  employees    Employee[]
-  tasks        Task[]
-  marketingCampaigns MarketingCampaign[]
-  marketingTasks     MarketingTask[]
-  marketingLeads     MarketingLead[]
+  id                  String              @id @default(cuid())
+  businessId          String
+  name                String
+  code                String
+  isActive            Boolean             @default(true)
+  business            Business            @relation(fields: [businessId], references: [id])
+  teams               Team[]
+  employees           Employee[]
+  tasks               Task[]
+  marketingCampaigns  MarketingCampaign[]
+  marketingTasks      MarketingTask[]
+  marketingLeads      MarketingLead[]
   marketingActivities MarketingActivity[]
-  marketingKPIs      MarketingKPI[]
-  salesLeads         SalesLead[]
-  salesTasks         SalesTask[]
-  salesTargets       SalesTarget[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  marketingKPIs       MarketingKPI[]
+  salesLeads          SalesLead[]
+  salesTasks          SalesTask[]
+  salesTargets        SalesTarget[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   @@unique([businessId, code])
 }
 
 model Team {
-  id           String      @id @default(cuid())
-  businessId   String
-  departmentId String?
-  verticalId   String?
-  name         String
-  code         String
-  isActive     Boolean     @default(true)
-  business     Business    @relation(fields: [businessId], references: [id])
-  department   Department? @relation(fields: [departmentId], references: [id])
-  vertical     Vertical?   @relation(fields: [verticalId], references: [id])
-  employees    Employee[]
-  tasks        Task[]
-  marketingCampaigns MarketingCampaign[]
-  marketingTasks     MarketingTask[]
-  marketingLeads     MarketingLead[]
+  id                  String              @id @default(cuid())
+  businessId          String
+  departmentId        String?
+  verticalId          String?
+  name                String
+  code                String
+  isActive            Boolean             @default(true)
+  business            Business            @relation(fields: [businessId], references: [id])
+  department          Department?         @relation(fields: [departmentId], references: [id])
+  vertical            Vertical?           @relation(fields: [verticalId], references: [id])
+  employees           Employee[]
+  tasks               Task[]
+  marketingCampaigns  MarketingCampaign[]
+  marketingTasks      MarketingTask[]
+  marketingLeads      MarketingLead[]
   marketingActivities MarketingActivity[]
-  marketingKPIs      MarketingKPI[]
-  salesLeads         SalesLead[]
-  salesTasks         SalesTask[]
-  salesTargets       SalesTarget[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  marketingKPIs       MarketingKPI[]
+  salesLeads          SalesLead[]
+  salesTasks          SalesTask[]
+  salesTargets        SalesTarget[]
+  itSprints           ITSprint[]
+  itSprintTasks       ITSprintTask[]
+  itEodReports        ITEodReport[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   @@unique([businessId, code])
 }
 
 model Role {
-  id          String       @id @default(cuid())
+  id          String           @id @default(cuid())
   name        String
-  level       Int          @unique
+  level       Int              @unique
   description String?
-  isSystem    Boolean      @default(true)
+  isSystem    Boolean          @default(true)
   permissions RolePermission[]
   employees   Employee[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model Permission {
-  id          String            @id @default(cuid())
-  code        String            @unique
+  id          String           @id @default(cuid())
+  code        String           @unique
   description String?
   roles       RolePermission[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model RolePermission {
@@ -360,62 +369,65 @@ model RolePermission {
 }
 
 model Employee {
-  id                 String           @id @default(cuid())
-  organizationId     String
-  businessId         String
-  departmentId       String?
-  teamId             String?
-  verticalId         String?
-  roleId             String
-  firstName          String
-  lastName           String
-  employeeCode       String?          @unique
-  fullName           String?
-  level              Int?
-  email              String           @unique
-  passwordHash       String
-  isActive           Boolean          @default(true)
-  designation        String?
-  organization       Organization     @relation(fields: [organizationId], references: [id])
-  business           Business         @relation(fields: [businessId], references: [id])
-  department         Department?      @relation(fields: [departmentId], references: [id])
-  team               Team?            @relation(fields: [teamId], references: [id])
-  vertical           Vertical?        @relation(fields: [verticalId], references: [id])
-  role               Role             @relation(fields: [roleId], references: [id])
-  managerId          String?
-  manager            Employee?        @relation("ManagerSubordinates", fields: [managerId], references: [id])
-  subordinates       Employee[]       @relation("ManagerSubordinates")
-  hierarchyAsEmployee EmployeeHierarchy[] @relation("HierarchyEmployee")
-  hierarchyAsManager EmployeeHierarchy[] @relation("HierarchyManager")
-  perspectiveSessionsAsUser PerspectiveSession[] @relation("PerspectiveSessionUser")
-  sessions           Session[] @relation("SessionUser")
-  notificationsAsActor Notification[] @relation("NotificationActor")
-  notificationsAsRecipient Notification[] @relation("NotificationRecipient")
-  tasksOwned         Task[]           @relation("TaskAssignee")
-  tasksCreated       Task[]           @relation("TaskCreator")
-  documentsCreated   Document[]       @relation("DocumentCreator")
-  activities         Activity[]       @relation("ActivityActor")
-  auditLogs          AuditLog[]       @relation("AuditActor")
-  marketingCampaignsCreated MarketingCampaign[] @relation("MarketingCampaignCreator")
-  marketingCampaignsAssigned MarketingCampaign[] @relation("MarketingCampaignAssignee")
-  marketingTasksCreated MarketingTask[] @relation("MarketingTaskCreator")
-  marketingTasksAssigned MarketingTask[] @relation("MarketingTaskAssignee")
-  marketingLeadsCreated MarketingLead[] @relation("MarketingLeadCreator")
-  marketingLeadsAssigned MarketingLead[] @relation("MarketingLeadAssignee")
-  salesLeadsCreated  SalesLead[]     @relation("SalesLeadCreator")
-  salesLeadsAssigned SalesLead[]     @relation("SalesLeadAssignee")
-  salesTasksCreated  SalesTask[]     @relation("SalesTaskCreator")
-  salesTasksAssigned SalesTask[]     @relation("SalesTaskAssignee")
-  salesTargetsAssigned   SalesTarget[]        @relation("SalesTargetAssignee")
-  salesTargetsAssignedBy SalesTarget[]        @relation("SalesTargetAssignedBy")
-  salesTargetsCreated    SalesTarget[]        @relation("SalesTargetCreator")
-  salesTargetHistory     SalesTargetHistory[] @relation("SalesTargetHistoryActor")
-  leadAssignmentChanges  LeadAssignmentHistory[] @relation("LeadAssignmentActor")
-  leadStatusChanges      LeadStatusHistory[]     @relation("LeadStatusActor")
-  marketingActivities MarketingActivity[] @relation("MarketingActivityActor")
-  marketingKPIs MarketingKPI[] @relation("MarketingKPIEmployee")
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                         String                  @id @default(cuid())
+  organizationId             String
+  businessId                 String
+  departmentId               String?
+  teamId                     String?
+  verticalId                 String?
+  roleId                     String
+  firstName                  String
+  lastName                   String
+  employeeCode               String?                 @unique
+  fullName                   String?
+  level                      Int?
+  email                      String                  @unique
+  passwordHash               String
+  isActive                   Boolean                 @default(true)
+  designation                String?
+  organization               Organization            @relation(fields: [organizationId], references: [id])
+  business                   Business                @relation(fields: [businessId], references: [id])
+  department                 Department?             @relation(fields: [departmentId], references: [id])
+  team                       Team?                   @relation(fields: [teamId], references: [id])
+  vertical                   Vertical?               @relation(fields: [verticalId], references: [id])
+  role                       Role                    @relation(fields: [roleId], references: [id])
+  managerId                  String?
+  manager                    Employee?               @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates               Employee[]              @relation("ManagerSubordinates")
+  hierarchyAsEmployee        EmployeeHierarchy[]     @relation("HierarchyEmployee")
+  hierarchyAsManager         EmployeeHierarchy[]     @relation("HierarchyManager")
+  perspectiveSessionsAsUser  PerspectiveSession[]    @relation("PerspectiveSessionUser")
+  sessions                   Session[]               @relation("SessionUser")
+  notificationsAsActor       Notification[]          @relation("NotificationActor")
+  notificationsAsRecipient   Notification[]          @relation("NotificationRecipient")
+  tasksOwned                 Task[]                  @relation("TaskAssignee")
+  tasksCreated               Task[]                  @relation("TaskCreator")
+  documentsCreated           Document[]              @relation("DocumentCreator")
+  activities                 Activity[]              @relation("ActivityActor")
+  auditLogs                  AuditLog[]              @relation("AuditActor")
+  marketingCampaignsCreated  MarketingCampaign[]     @relation("MarketingCampaignCreator")
+  marketingCampaignsAssigned MarketingCampaign[]     @relation("MarketingCampaignAssignee")
+  marketingTasksCreated      MarketingTask[]         @relation("MarketingTaskCreator")
+  marketingTasksAssigned     MarketingTask[]         @relation("MarketingTaskAssignee")
+  marketingLeadsCreated      MarketingLead[]         @relation("MarketingLeadCreator")
+  marketingLeadsAssigned     MarketingLead[]         @relation("MarketingLeadAssignee")
+  salesLeadsCreated          SalesLead[]             @relation("SalesLeadCreator")
+  salesLeadsAssigned         SalesLead[]             @relation("SalesLeadAssignee")
+  salesTasksCreated          SalesTask[]             @relation("SalesTaskCreator")
+  salesTasksAssigned         SalesTask[]             @relation("SalesTaskAssignee")
+  salesTargetsAssigned       SalesTarget[]           @relation("SalesTargetAssignee")
+  salesTargetsAssignedBy     SalesTarget[]           @relation("SalesTargetAssignedBy")
+  salesTargetsCreated        SalesTarget[]           @relation("SalesTargetCreator")
+  salesTargetHistory         SalesTargetHistory[]    @relation("SalesTargetHistoryActor")
+  leadAssignmentChanges      LeadAssignmentHistory[] @relation("LeadAssignmentActor")
+  leadStatusChanges          LeadStatusHistory[]     @relation("LeadStatusActor")
+  marketingActivities        MarketingActivity[]     @relation("MarketingActivityActor")
+  marketingKPIs              MarketingKPI[]          @relation("MarketingKPIEmployee")
+  itTasksAssigned            ITSprintTask[]          @relation("ITTaskAssignee")
+  itTasksCreated             ITSprintTask[]          @relation("ITTaskCreator")
+  itEodReports               ITEodReport[]           @relation("ITEodAuthor")
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
 
   @@index([businessId])
   @@index([departmentId])
@@ -446,71 +458,71 @@ model PerspectiveSession {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
 
-  user                Employee              @relation("PerspectiveSessionUser", fields: [userId], references: [id])
+  user Employee @relation("PerspectiveSessionUser", fields: [userId], references: [id])
 
   @@index([userId])
   @@index([perspectiveTargetId])
 }
 
 model Session {
-  id         String    @id @default(cuid())
-  userId     String?
-  token      String    @unique
-  data       Json?
-  expiresAt  DateTime?
-  createdAt  DateTime  @default(now())
+  id        String    @id @default(cuid())
+  userId    String?
+  token     String    @unique
+  data      Json?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
 
-  user       Employee? @relation("SessionUser", fields: [userId], references: [id])
+  user Employee? @relation("SessionUser", fields: [userId], references: [id])
 
   @@index([userId])
 }
 
 model Notification {
-  id         String    @id @default(cuid())
-  businessId String?
-  actorId    String?
+  id          String   @id @default(cuid())
+  businessId  String?
+  actorId     String?
   recipientId String?
-  type       String
-  payload    Json?
-  isRead     Boolean   @default(false)
-  createdAt  DateTime  @default(now())
+  type        String
+  payload     Json?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
-  business   Business? @relation("NotificationBusiness", fields: [businessId], references: [id])
-  actor      Employee? @relation("NotificationActor", fields: [actorId], references: [id])
-  recipient  Employee? @relation("NotificationRecipient", fields: [recipientId], references: [id])
+  business  Business? @relation("NotificationBusiness", fields: [businessId], references: [id])
+  actor     Employee? @relation("NotificationActor", fields: [actorId], references: [id])
+  recipient Employee? @relation("NotificationRecipient", fields: [recipientId], references: [id])
 
   @@index([recipientId])
   @@index([businessId])
 }
 
 model Task {
-  id            String    @id @default(cuid())
-  businessId    String
-  departmentId  String?
-  teamId        String?
-  verticalId    String?
-  assigneeId    String?
-  createdById   String?
-  leadId        String?
-  title         String
-  description   String?
-  status        String
-  priority      String
+  id               String      @id @default(cuid())
+  businessId       String
+  departmentId     String?
+  teamId           String?
+  verticalId       String?
+  assigneeId       String?
+  createdById      String?
+  leadId           String?
+  title            String
+  description      String?
+  status           String
+  priority         String
   taskType         String?
-  dueDate       DateTime?
+  dueDate          DateTime?
   dueTime          String?
   taskResult       String?
   nextFollowUpDate DateTime?
   outcomeNotes     String?
-  business      Business  @relation(fields: [businessId], references: [id])
-  department    Department? @relation(fields: [departmentId], references: [id])
-  team          Team?     @relation(fields: [teamId], references: [id])
-  vertical      Vertical? @relation(fields: [verticalId], references: [id])
-  assignee      Employee? @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  createdBy     Employee? @relation("TaskCreator", fields: [createdById], references: [id])
-  lead          SalesLead? @relation("SalesLeadTasks", fields: [leadId], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  business         Business    @relation(fields: [businessId], references: [id])
+  department       Department? @relation(fields: [departmentId], references: [id])
+  team             Team?       @relation(fields: [teamId], references: [id])
+  vertical         Vertical?   @relation(fields: [verticalId], references: [id])
+  assignee         Employee?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdBy        Employee?   @relation("TaskCreator", fields: [createdById], references: [id])
+  lead             SalesLead?  @relation("SalesLeadTasks", fields: [leadId], references: [id])
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   @@index([businessId])
   @@index([assigneeId])
@@ -532,37 +544,37 @@ model Document {
 }
 
 model Activity {
-  id            String         @id @default(cuid())
-  businessId    String
-  actorId       String?
-  targetType    String
-  targetId      String?
-  action        ActivityAction
-  metadata      Json?
-  business      Business       @relation(fields: [businessId], references: [id])
-  actor         Employee?      @relation("ActivityActor", fields: [actorId], references: [id])
-  createdAt     DateTime       @default(now())
+  id         String         @id @default(cuid())
+  businessId String
+  actorId    String?
+  targetType String
+  targetId   String?
+  action     ActivityAction
+  metadata   Json?
+  business   Business       @relation(fields: [businessId], references: [id])
+  actor      Employee?      @relation("ActivityActor", fields: [actorId], references: [id])
+  createdAt  DateTime       @default(now())
 
   @@index([businessId])
   @@index([actorId])
 }
 
 model AuditLog {
-  id             String         @id @default(cuid())
-  businessId     String?
-  actorId        String?
-  action         ActivityAction
-  entityType     String
-  entityName     String?
-  entityId       String?
-  before         Json?
-  after          Json?
-  perspectiveId  String?
-  ipAddress      String?
-  userAgent      String?
-  createdAt      DateTime       @default(now())
-  business       Business?      @relation(fields: [businessId], references: [id])
-  actor          Employee?      @relation("AuditActor", fields: [actorId], references: [id])
+  id            String         @id @default(cuid())
+  businessId    String?
+  actorId       String?
+  action        ActivityAction
+  entityType    String
+  entityName    String?
+  entityId      String?
+  before        Json?
+  after         Json?
+  perspectiveId String?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime       @default(now())
+  business      Business?      @relation(fields: [businessId], references: [id])
+  actor         Employee?      @relation("AuditActor", fields: [actorId], references: [id])
 
   @@index([actorId])
   @@index([businessId])
@@ -644,21 +656,21 @@ model MarketingTask {
 }
 
 model MarketingLead {
-  id             String              @id @default(cuid())
-  organizationId String
-  businessId     String
-  teamId         String?
-  verticalId     String?
-  campaignId     String?
-  createdById    String?
-  assignedToId   String?
-  name           String
-  email          String?
-  phone          String?
-  source         String
-  status         MarketingLeadStatus @default(NEW)
-  estimatedValue Decimal?            @db.Decimal(14, 2)
-  notes          String?
+  id                        String              @id @default(cuid())
+  organizationId            String
+  businessId                String
+  teamId                    String?
+  verticalId                String?
+  campaignId                String?
+  createdById               String?
+  assignedToId              String?
+  name                      String
+  email                     String?
+  phone                     String?
+  source                    String
+  status                    MarketingLeadStatus @default(NEW)
+  estimatedValue            Decimal?            @db.Decimal(14, 2)
+  notes                     String?
   // ── Capture fields mirrored from SalesLead so a promoted lead carries the
   // same qualification data into Sales (Phase 6 sync). All nullable/additive;
   // leadScore is auto-derived via the shared computeLeadScore.
@@ -676,24 +688,24 @@ model MarketingLead {
   budgetAvailable           Decimal?            @db.Decimal(14, 2)
   urgencyLevel              PriorityLevel?
   leadScore                 Int                 @default(0)
-  priority                  String?             // Interested Level / Lead Temperature: hot / warm / cold
+  priority                  String? // Interested Level / Lead Temperature: hot / warm / cold
   expectedInvestment        Decimal?            @db.Decimal(14, 2)
   consultationRequired      Boolean?
   consultationDate          DateTime?
-  convertedAt    DateTime?
-  organization   Organization        @relation(fields: [organizationId], references: [id])
-  business       Business            @relation(fields: [businessId], references: [id])
-  team           Team?               @relation(fields: [teamId], references: [id])
-  vertical       Vertical?           @relation(fields: [verticalId], references: [id])
-  campaign       MarketingCampaign?  @relation(fields: [campaignId], references: [id])
-  createdBy      Employee?           @relation("MarketingLeadCreator", fields: [createdById], references: [id])
-  assignedTo     Employee?           @relation("MarketingLeadAssignee", fields: [assignedToId], references: [id])
-  activities     MarketingActivity[]
+  convertedAt               DateTime?
+  organization              Organization        @relation(fields: [organizationId], references: [id])
+  business                  Business            @relation(fields: [businessId], references: [id])
+  team                      Team?               @relation(fields: [teamId], references: [id])
+  vertical                  Vertical?           @relation(fields: [verticalId], references: [id])
+  campaign                  MarketingCampaign?  @relation(fields: [campaignId], references: [id])
+  createdBy                 Employee?           @relation("MarketingLeadCreator", fields: [createdById], references: [id])
+  assignedTo                Employee?           @relation("MarketingLeadAssignee", fields: [assignedToId], references: [id])
+  activities                MarketingActivity[]
   // Set when this marketing lead is promoted into the sales pipeline (Phase 1
   // Marketing→Sales handoff). 1:1 — at most one SalesLead per MarketingLead.
-  salesLead      SalesLead?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  salesLead                 SalesLead?
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
 
   @@index([organizationId])
   @@index([businessId])
@@ -742,7 +754,7 @@ model MarketingActivity {
 }
 
 model MarketingKPI {
-  id             String           @id @default(cuid())
+  id             String             @id @default(cuid())
   organizationId String
   businessId     String
   teamId         String?
@@ -751,18 +763,18 @@ model MarketingKPI {
   campaignId     String?
   metricType     MarketingKPIType
   name           String
-  value          Decimal          @db.Decimal(14, 2)
-  target         Decimal?         @db.Decimal(14, 2)
+  value          Decimal            @db.Decimal(14, 2)
+  target         Decimal?           @db.Decimal(14, 2)
   periodStart    DateTime
   periodEnd      DateTime
-  organization   Organization     @relation(fields: [organizationId], references: [id])
-  business       Business         @relation(fields: [businessId], references: [id])
-  team           Team?            @relation(fields: [teamId], references: [id])
-  vertical       Vertical?        @relation(fields: [verticalId], references: [id])
-  employee       Employee?        @relation("MarketingKPIEmployee", fields: [employeeId], references: [id])
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  business       Business           @relation(fields: [businessId], references: [id])
+  team           Team?              @relation(fields: [teamId], references: [id])
+  vertical       Vertical?          @relation(fields: [verticalId], references: [id])
+  employee       Employee?          @relation("MarketingKPIEmployee", fields: [employeeId], references: [id])
   campaign       MarketingCampaign? @relation(fields: [campaignId], references: [id])
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@index([organizationId])
   @@index([businessId])
@@ -774,64 +786,64 @@ model MarketingKPI {
 }
 
 model SalesLead {
-  id             String          @id @default(cuid())
-  leadCode       String          @unique
-  organizationId String
-  businessId     String
-  teamId         String?
-  verticalId     String?
-  createdById    String?
-  assignedToId   String?
+  id                        String                  @id @default(cuid())
+  leadCode                  String                  @unique
+  organizationId            String
+  businessId                String
+  teamId                    String?
+  verticalId                String?
+  createdById               String?
+  assignedToId              String?
   // Link back to the originating MarketingLead when this lead was promoted from
   // marketing (Phase 1 handoff). Nullable: leads created directly in Sales have none.
-  marketingLeadId String?        @unique
+  marketingLeadId           String?                 @unique
   // Section 1: Lead Information
-  name           String
-  company        String?
-  email          String?
-  phone          String?
-  whatsappNumber String?
-  countryOfResidence String?
-  nationality    String?
-  visaCategory   VisaCategory?
-  source         String
-  priorityLevel  PriorityLevel   @default(MEDIUM)
+  name                      String
+  company                   String?
+  email                     String?
+  phone                     String?
+  whatsappNumber            String?
+  countryOfResidence        String?
+  nationality               String?
+  visaCategory              VisaCategory?
+  source                    String
+  priorityLevel             PriorityLevel           @default(MEDIUM)
   // Section 2: Immigration Requirement
-  interestedVisa VisaCategory?
-  currentStatus  LeadCurrentStatus?
-  education      String?
-  workExperienceYears Int?
-  familyImmigrationRequired Boolean @default(false)
-  budgetAvailable Decimal?       @db.Decimal(14, 2)
-  urgencyLevel   PriorityLevel   @default(MEDIUM)
+  interestedVisa            VisaCategory?
+  currentStatus             LeadCurrentStatus?
+  education                 String?
+  workExperienceYears       Int?
+  familyImmigrationRequired Boolean                 @default(false)
+  budgetAvailable           Decimal?                @db.Decimal(14, 2)
+  urgencyLevel              PriorityLevel           @default(MEDIUM)
   // Section 3: Lead Qualification
-  leadScore      Int             @default(0)
-  priority       String          @default("warm")   // Interested Level: hot / warm / cold
-  expectedInvestment Decimal?    @db.Decimal(14, 2)
-  consultationRequired Boolean   @default(false)
-  consultationDate DateTime?
-  notes          String?                            // Remarks
+  leadScore                 Int                     @default(0)
+  priority                  String                  @default("warm") // Interested Level: hot / warm / cold
+  expectedInvestment        Decimal?                @db.Decimal(14, 2)
+  consultationRequired      Boolean                 @default(false)
+  consultationDate          DateTime?
+  notes                     String? // Remarks
   // Section 4: Payment
-  paymentStatus  SalesLeadPaymentStatus @default(INITIATED)
-  paymentAmount  Decimal?        @db.Decimal(14, 2)
+  paymentStatus             SalesLeadPaymentStatus  @default(INITIATED)
+  paymentAmount             Decimal?                @db.Decimal(14, 2)
   // Section 5: Status / lifecycle
-  status         SalesLeadStatus @default(NEW)
-  estimatedValue Decimal?        @db.Decimal(14, 2)
-  convertedAt    DateTime?
-  transferredAt  DateTime?
-  organization   Organization    @relation(fields: [organizationId], references: [id])
-  business       Business        @relation(fields: [businessId], references: [id])
-  team           Team?           @relation(fields: [teamId], references: [id])
-  vertical       Vertical?       @relation(fields: [verticalId], references: [id])
-  createdBy      Employee?       @relation("SalesLeadCreator",  fields: [createdById],  references: [id])
-  assignedTo     Employee?       @relation("SalesLeadAssignee", fields: [assignedToId], references: [id])
-  marketingLead  MarketingLead?  @relation(fields: [marketingLeadId], references: [id], onDelete: SetNull)
-  assignmentHistory LeadAssignmentHistory[]
-  statusHistory  LeadStatusHistory[]
-  salesTasks     SalesTask[]
-  tasks          Task[]          @relation("SalesLeadTasks")
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  status                    SalesLeadStatus         @default(NEW)
+  estimatedValue            Decimal?                @db.Decimal(14, 2)
+  convertedAt               DateTime?
+  transferredAt             DateTime?
+  organization              Organization            @relation(fields: [organizationId], references: [id])
+  business                  Business                @relation(fields: [businessId], references: [id])
+  team                      Team?                   @relation(fields: [teamId], references: [id])
+  vertical                  Vertical?               @relation(fields: [verticalId], references: [id])
+  createdBy                 Employee?               @relation("SalesLeadCreator", fields: [createdById], references: [id])
+  assignedTo                Employee?               @relation("SalesLeadAssignee", fields: [assignedToId], references: [id])
+  marketingLead             MarketingLead?          @relation(fields: [marketingLeadId], references: [id], onDelete: SetNull)
+  assignmentHistory         LeadAssignmentHistory[]
+  statusHistory             LeadStatusHistory[]
+  salesTasks                SalesTask[]
+  tasks                     Task[]                  @relation("SalesLeadTasks")
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
 
   @@index([organizationId])
   @@index([businessId])
@@ -846,8 +858,8 @@ model SalesLead {
 }
 
 model SalesTask {
-  id               String          @id @default(cuid())
-  taskCode         String          @unique
+  id               String           @id @default(cuid())
+  taskCode         String           @unique
   organizationId   String
   businessId       String
   teamId           String?
@@ -858,22 +870,22 @@ model SalesTask {
   title            String
   taskType         SalesTaskType
   description      String?
-  status           SalesTaskStatus @default(TODO)
-  priority         PriorityLevel   @default(MEDIUM)
+  status           SalesTaskStatus  @default(TODO)
+  priority         PriorityLevel    @default(MEDIUM)
   dueDate          DateTime?
   result           SalesTaskResult?
   nextFollowUpDate DateTime?
   notes            String?
   completedAt      DateTime?
-  organization     Organization    @relation(fields: [organizationId], references: [id])
-  business         Business        @relation(fields: [businessId], references: [id])
-  team             Team?           @relation(fields: [teamId], references: [id])
-  vertical         Vertical?       @relation(fields: [verticalId], references: [id])
-  lead             SalesLead?      @relation(fields: [leadId], references: [id])
-  assignee         Employee?       @relation("SalesTaskAssignee", fields: [assigneeId], references: [id])
-  createdBy        Employee?       @relation("SalesTaskCreator",  fields: [createdById],  references: [id])
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  organization     Organization     @relation(fields: [organizationId], references: [id])
+  business         Business         @relation(fields: [businessId], references: [id])
+  team             Team?            @relation(fields: [teamId], references: [id])
+  vertical         Vertical?        @relation(fields: [verticalId], references: [id])
+  lead             SalesLead?       @relation(fields: [leadId], references: [id])
+  assignee         Employee?        @relation("SalesTaskAssignee", fields: [assigneeId], references: [id])
+  createdBy        Employee?        @relation("SalesTaskCreator", fields: [createdById], references: [id])
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([organizationId])
   @@index([businessId])
@@ -887,36 +899,36 @@ model SalesTask {
 }
 
 model SalesTarget {
-  id              String              @id @default(cuid())
-  targetCode      String              @unique
-  organizationId  String
-  businessId      String
-  verticalId      String?
-  teamId          String?
-  parentTargetId  String?
-  name            String
-  category        SalesTargetCategory
-  metric          SalesTargetMetric
-  targetValue     Decimal             @db.Decimal(14, 2)
-  startDate       DateTime
-  endDate         DateTime
-  description     String?
-  status          SalesTargetStatus   @default(ACTIVE)
-  assignedById    String?
-  assignedToId    String
-  createdById     String?
-  organization    Organization        @relation(fields: [organizationId], references: [id])
-  business        Business            @relation(fields: [businessId], references: [id])
-  vertical        Vertical?           @relation(fields: [verticalId], references: [id])
-  team            Team?               @relation(fields: [teamId], references: [id])
-  parentTarget    SalesTarget?        @relation("SalesTargetBreakdown", fields: [parentTargetId], references: [id])
-  children        SalesTarget[]       @relation("SalesTargetBreakdown")
-  assignedBy      Employee?           @relation("SalesTargetAssignedBy", fields: [assignedById], references: [id])
-  assignedTo      Employee            @relation("SalesTargetAssignee",   fields: [assignedToId], references: [id])
-  createdBy       Employee?           @relation("SalesTargetCreator",    fields: [createdById],  references: [id])
-  history         SalesTargetHistory[]
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id             String               @id @default(cuid())
+  targetCode     String               @unique
+  organizationId String
+  businessId     String
+  verticalId     String?
+  teamId         String?
+  parentTargetId String?
+  name           String
+  category       SalesTargetCategory
+  metric         SalesTargetMetric
+  targetValue    Decimal              @db.Decimal(14, 2)
+  startDate      DateTime
+  endDate        DateTime
+  description    String?
+  status         SalesTargetStatus    @default(ACTIVE)
+  assignedById   String?
+  assignedToId   String
+  createdById    String?
+  organization   Organization         @relation(fields: [organizationId], references: [id])
+  business       Business             @relation(fields: [businessId], references: [id])
+  vertical       Vertical?            @relation(fields: [verticalId], references: [id])
+  team           Team?                @relation(fields: [teamId], references: [id])
+  parentTarget   SalesTarget?         @relation("SalesTargetBreakdown", fields: [parentTargetId], references: [id])
+  children       SalesTarget[]        @relation("SalesTargetBreakdown")
+  assignedBy     Employee?            @relation("SalesTargetAssignedBy", fields: [assignedById], references: [id])
+  assignedTo     Employee             @relation("SalesTargetAssignee", fields: [assignedToId], references: [id])
+  createdBy      Employee?            @relation("SalesTargetCreator", fields: [createdById], references: [id])
+  history        SalesTargetHistory[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([organizationId])
   @@index([businessId])
@@ -983,12 +995,12 @@ model LeadStatusHistory {
 
 model DashboardConfig {
   id        String   @id @default(cuid())
-  role      String   // e.g. "sales_intern", "sales_executive", "sales_head", "marketing_intern", "marketing_executive", "marketing_manager", "documentation_executive", "documentation_manager", "vertical_manager", "immigration_head", "evaluation_head", "hr_manager", "business_owner", "super_admin"
-  widget    String   // e.g. "kpi_cards", "calendar", "activities", "notifications", "quick_actions", "task_summary", "performance", "upcoming_events", ...
-  position  Int      // Order position
-  priority  String   // "critical", "high", "medium", "low"
-  colSpan   Json?    // { xs: 1, sm: 2, md: 3, lg: 4, xl: 5 }
-  height    String?  // "small", "medium", "large"
+  role      String // e.g. "sales_intern", "sales_executive", "sales_head", "marketing_intern", "marketing_executive", "marketing_manager", "documentation_executive", "documentation_manager", "vertical_manager", "immigration_head", "evaluation_head", "hr_manager", "business_owner", "super_admin"
+  widget    String // e.g. "kpi_cards", "calendar", "activities", "notifications", "quick_actions", "task_summary", "performance", "upcoming_events", ...
+  position  Int // Order position
+  priority  String // "critical", "high", "medium", "low"
+  colSpan   Json? // { xs: 1, sm: 2, md: 3, lg: 4, xl: 5 }
+  height    String? // "small", "medium", "large"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1024,33 +1036,33 @@ enum CalendarEventPriority {
 }
 
 model CalendarEvent {
-  id              String                @id @default(cuid())
-  title           String
-  description     String?
-  eventType       CalendarEventType     @default(OTHER)
-  status          CalendarEventStatus   @default(SCHEDULED)
-  priority        CalendarEventPriority @default(MEDIUM)
-  date            DateTime
-  startTime       String?               // "09:00"
-  endTime         String?               // "10:00"
+  id          String                @id @default(cuid())
+  title       String
+  description String?
+  eventType   CalendarEventType     @default(OTHER)
+  status      CalendarEventStatus   @default(SCHEDULED)
+  priority    CalendarEventPriority @default(MEDIUM)
+  date        DateTime
+  startTime   String? // "09:00"
+  endTime     String? // "10:00"
 
   // Org scoping
-  organizationId  String
-  businessId      String
+  organizationId String
+  businessId     String
 
   // Ownership
-  createdById     String
-  assignedToId    String?
+  createdById  String
+  assignedToId String?
 
   // Optional related records (soft links — no FK constraint to keep it flexible)
-  relatedLeadId      String?
-  relatedTaskId      String?
-  relatedEmployeeId  String?
-  relatedCampaignId  String?
-  relatedModule      String?            // e.g. "lead", "campaign", "task", "employee"
+  relatedLeadId     String?
+  relatedTaskId     String?
+  relatedEmployeeId String?
+  relatedCampaignId String?
+  relatedModule     String? // e.g. "lead", "campaign", "task", "employee"
 
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([businessId])
@@ -1060,3 +1072,113 @@ model CalendarEvent {
   @@index([eventType])
 }
 
+// ─── IT Development module (isolated; software/custom-solution dev team) ──────
+
+enum ITBoardColumn {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum ITPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model ITSprint {
+  id             String            @id @default(cuid())
+  organizationId String
+  businessId     String
+  teamId         String
+  name           String // e.g. "Sprint 4"
+  goal           String?
+  startDate      DateTime
+  endDate        DateTime
+  targetPoints   Int               @default(0)
+  isActive       Boolean           @default(true)
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  business       Business          @relation(fields: [businessId], references: [id])
+  team           Team              @relation(fields: [teamId], references: [id])
+  tasks          ITSprintTask[]
+  burndown       ITBurndownPoint[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([businessId])
+  @@index([teamId])
+  @@index([isActive])
+}
+
+model ITSprintTask {
+  id             String        @id @default(cuid())
+  sprintId       String
+  organizationId String
+  businessId     String
+  teamId         String
+  assigneeId     String?
+  createdById    String?
+  title          String
+  description    String?
+  column         ITBoardColumn @default(BACKLOG)
+  priority       ITPriority    @default(MEDIUM)
+  storyPoints    Int?
+  prdRef         String?
+  dueDate        DateTime?
+  orderIndex     Int           @default(0)
+  sprint         ITSprint      @relation(fields: [sprintId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  business       Business      @relation(fields: [businessId], references: [id])
+  team           Team          @relation(fields: [teamId], references: [id])
+  assignee       Employee?     @relation("ITTaskAssignee", fields: [assigneeId], references: [id])
+  createdBy      Employee?     @relation("ITTaskCreator", fields: [createdById], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([sprintId])
+  @@index([businessId])
+  @@index([teamId])
+  @@index([assigneeId])
+  @@index([column])
+}
+
+model ITBurndownPoint {
+  id           String   @id @default(cuid())
+  sprintId     String
+  dayIndex     Int // 0..14
+  date         DateTime
+  idealPoints  Int // ideal remaining
+  actualPoints Int? // null = future day (not yet logged)
+  sprint       ITSprint @relation(fields: [sprintId], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@unique([sprintId, dayIndex])
+  @@index([sprintId])
+}
+
+model ITEodReport {
+  id             String       @id @default(cuid())
+  organizationId String
+  businessId     String
+  teamId         String?
+  employeeId     String
+  reportDate     DateTime
+  completed      String
+  pending        String?
+  blockers       String?
+  tomorrow       String?
+  submittedAt    DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  business       Business     @relation(fields: [businessId], references: [id])
+  team           Team?        @relation(fields: [teamId], references: [id])
+  employee       Employee     @relation("ITEodAuthor", fields: [employeeId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([businessId])
+  @@index([employeeId])
+  @@index([reportDate])
+}

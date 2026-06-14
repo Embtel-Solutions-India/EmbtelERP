@@ -17,6 +17,11 @@ import {
   updateEmployee,
   deactivateEmployee,
 } from "../services/employee.service.js";
+import {
+  getEmployeeOverviewForAdmin,
+  getEmployeeTasksForAdmin,
+} from "../services/hierarchy.service.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const createEmployeeSchema = z.object({
   organizationId: z.string().min(1),
@@ -50,6 +55,21 @@ employeesRouter.get(
   asyncHandler(async (req, res) => {
     const employee = await getEmployeeById(String(req.params.id));
     res.json({ data: employee });
+  }),
+);
+
+// Scope-checked employee overview (task/lead stats + recent activity) for the
+// Team member drawer. Reuses the same real-data service the Super-Admin org
+// explorer uses; requireEmployeeScope limits it to the caller's own subtree.
+employeesRouter.get(
+  "/:id/overview",
+  requireEmployeeScope("id"),
+  asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
+    const overview = await getEmployeeOverviewForAdmin(id);
+    if (!overview) throw new ApiError(404, "Employee not found");
+    const recent = await getEmployeeTasksForAdmin(id, "monthly");
+    res.json({ data: { ...overview, recentActivity: recent.tasks.slice(0, 6) } });
   }),
 );
 

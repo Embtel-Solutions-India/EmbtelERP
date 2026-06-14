@@ -55,6 +55,7 @@ import {
   ownerMenu,
   headMenu,
   verticalMenu,
+  itMenu,
   adminMenu,
   superAdminMenu,
 } from "../config/sidebarConfig";
@@ -181,6 +182,9 @@ function resolveMenu(activeModule, level, designation) {
     case "vertical":
       return verticalMenu;
 
+    case "it":
+      return itMenu;
+
     case "admin":
       return adminMenu;
 
@@ -212,6 +216,7 @@ const moduleLabelMap = {
   owner: "Management Platform",
   head: "Management Platform",
   vertical: "Management Platform",
+  it: "IT Platform",
   admin: "Admin Platform",
   "super-admin": "Admin Platform",
 };
@@ -474,7 +479,8 @@ export default function Sidebar({ open, mobileOpen }) {
   const platformLabel = moduleLabelMap[activeModule] || "Sales Platform";
   const isViewingOther = activePerspective !== null;
   // Organization Explorer tree is Super-Admin-only (level 5 / "super admin").
-  const isSuperAdmin = level >= 5 || designation.toLowerCase().includes("super admin");
+  const isSuperAdmin =
+    level >= 5 || designation.toLowerCase().includes("super admin");
 
   useEffect(() => {
     dispatch(fetchPerspectives());
@@ -660,7 +666,7 @@ export default function Sidebar({ open, mobileOpen }) {
       )} */}
 
       {/* Organization Explorer — Super Admin only */}
-      {isSuperAdmin && <SuperAdminOrgTree collapsed={isCollapsed} />}
+      {/* {isSuperAdmin && <SuperAdminOrgTree collapsed={isCollapsed} />} */}
 
       {/* Navigation */}
       <nav className="flex-1 px-2.5 py-3 overflow-y-auto">

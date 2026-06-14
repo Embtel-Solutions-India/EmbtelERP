@@ -213,6 +213,21 @@ export const verticalMenu = [
   ...verticalBase.slice(1),
 ]
 
+// ─── IT DEVELOPMENT MODULE (isolated) ─────────────────────────────────────────
+// Mirrors the mockup: an IT-team nav group + a Reporting group. The non-Overview
+// items are stubs that point at the dashboard (their backends are not built yet).
+export const itMenu = [
+  { id: 'dashboard',    label: 'Overview',         icon: 'Dashboard',     path: '/it/dashboard'    },
+  { id: 'tasks',        label: 'My tasks',         icon: 'TaskAlt',       path: '/it/tasks'        },
+  { id: 'tickets',      label: 'Tickets',          icon: 'RequestQuote',  path: '/it/tickets'      },
+  { id: 'credentials',  label: 'Credential vault', icon: 'Settings',      path: '/it/credentials'  },
+  { id: 'productivity', label: 'Dev productivity', icon: 'TrendingUp',    path: '/it/productivity' },
+  { id: 'reviews',      label: 'Code reviews',     icon: 'Assessment',    path: '/it/code-reviews' },
+  { id: 'audit',        label: 'Audit Logs',       icon: 'Assessment',    path: '/audit'           },
+  { id: 'calendar',     label: 'Calendar',         icon: 'CalendarMonth', path: '/calendar'        },
+  { id: 'profile',      label: 'Profile',          icon: 'AccountCircle', path: '/it/dashboard'    },
+]
+
 // ─── ADMIN MODULE ─────────────────────────────────────────────────────────────
 
 export const adminMenu = [

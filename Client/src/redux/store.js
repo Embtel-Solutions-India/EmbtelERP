@@ -27,6 +27,9 @@ import hrReducer from '../modules/hr/redux/hrSlice'
 // Immigration Reducer
 import immigrationReducer from '../modules/immigration/redux/immigrationSlice'
 
+// IT Development Reducer
+import itReducer from '../modules/it/redux/itSlice'
+
 // Admin — Super Admin Organization Explorer
 import orgExplorerReducer from '../modules/admin/redux/orgExplorerSlice'
 
@@ -58,6 +61,9 @@ const appReducer = combineReducers({
 
   // Immigration slice
   immigration: immigrationReducer,
+
+  // IT Development slice
+  it: itReducer,
 
   // Super Admin Organization Explorer
   orgExplorer: orgExplorerReducer,

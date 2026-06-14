@@ -46,7 +46,10 @@ export const ROLE_DASHBOARD_MAP = {
 // Designation keyword → route. Checked in order; first match wins.
 // Uses designation.includes(keyword) — case-insensitive.
 const DESIGNATION_ROUTE_MAP = [
-  [['super admin', 'it head'],                         '/super-admin/dashboard'],
+  // IT development team (own isolated dashboard) — must win over the generic
+  // 'sales'/level fallbacks below, so IT devs/leads don't land on Sales.
+  [['it head', 'development team lead', 'developer'],  '/it/dashboard'],
+  [['super admin'],                                    '/super-admin/dashboard'],
   [['immigration head', 'head of immigration'],         '/head/dashboard'],
   [['evaluation head', 'head of evaluation'],           '/head-evaluation/dashboard'],
   [['vertical manager'],                                '/vertical/dashboard'],

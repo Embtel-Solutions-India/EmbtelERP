@@ -19,6 +19,7 @@ import { documentsRouter } from "./routes/documents.routes.js";
 import { calendarRouter } from "./routes/calendar.routes.js";
 import { salesRouter }    from "./routes/salesLead.routes.js";
 import { immigrationRouter } from "./routes/immigration.routes.js";
+import { itRouter } from "./routes/it.routes.js";
 
 export function createApp() {
   const app = express();
@@ -53,6 +54,7 @@ export function createApp() {
   app.use("/calendar", calendarRouter);
   app.use("/sales",        salesRouter);
   app.use("/immigration",  immigrationRouter);
+  app.use("/it",           itRouter);
 
   app.use(errorHandler);
   return app;

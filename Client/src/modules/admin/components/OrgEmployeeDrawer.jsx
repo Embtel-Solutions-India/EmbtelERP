@@ -99,14 +99,16 @@ export default function OrgEmployeeDrawer({ employeeId, onClose }) {
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">Leads</p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <Stat label="Assigned" value={emp.leads.total} />
-                    <Stat label="Converted" value={emp.leads.converted} accent="text-emerald-600 dark:text-emerald-400" />
-                    <Stat label="Conversion" value={`${emp.leads.conversionRate}%`} />
+                {emp.domain !== 'IT' && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">Leads</p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <Stat label="Assigned" value={emp.leads.total} />
+                      <Stat label="Converted" value={emp.leads.converted} accent="text-emerald-600 dark:text-emerald-400" />
+                      <Stat label="Conversion" value={`${emp.leads.conversionRate}%`} />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Task details — daily / weekly / monthly */}
                 <div>

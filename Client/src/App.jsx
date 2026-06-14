@@ -74,6 +74,9 @@ import HeadAnalyticsPage  from './pages/HeadAnalyticsPage'
 import HeadReportsPage    from './pages/HeadReportsPage'
 import HeadApprovalsPage  from './pages/HeadApprovalsPage'
 
+// ── IT Development Module ─────────────────────────────────────────────────────
+import ItDashboard       from './pages/ItDashboard'
+
 /**
  * Sends authenticated users to the route that matches their role.
  */
@@ -251,6 +254,18 @@ export default function App() {
           {/* ── Super Admin module ────────────────────────────────────────── */}
           <Route element={<RoleRouteGuard allowedLevels={[5]} allowedDesignations={['super admin', 'it head']} />}>
             <Route path="super-admin/dashboard"     element={<AdminDashboard />} />
+          </Route>
+
+          {/* ── IT Development module (isolated) ──────────────────────────── */}
+          {/* Visible to IT's own staff (by designation) + level 4/5 oversight.
+              No allowedLevels for L1–L3 so other departments can't see IT. */}
+          <Route element={<RoleRouteGuard allowedLevels={[4, 5]} allowedDesignations={['it head', 'development team lead', 'developer']} />}>
+            <Route path="it/dashboard"     element={<ItDashboard />} />
+            <Route path="it/tasks"         element={<ItDashboard />} />
+            <Route path="it/tickets"       element={<ItDashboard />} />
+            <Route path="it/credentials"   element={<ItDashboard />} />
+            <Route path="it/productivity"  element={<ItDashboard />} />
+            <Route path="it/code-reviews"  element={<ItDashboard />} />
           </Route>
 
           {/* ── Admin module ──────────────────────────────────────────────── */}

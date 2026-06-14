@@ -25,6 +25,11 @@ async function main() {
   await prisma.salesTargetHistory.deleteMany();
   await prisma.salesTarget.deleteMany();
   await prisma.salesLead.deleteMany();
+  // IT development module graph (children before parents).
+  await prisma.iTBurndownPoint.deleteMany();
+  await prisma.iTSprintTask.deleteMany();
+  await prisma.iTEodReport.deleteMany();
+  await prisma.iTSprint.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.document.deleteMany();
   await prisma.perspectiveSession.deleteMany();
@@ -901,6 +906,116 @@ async function main() {
     periodEnd: pEnd,
   }));
   await prisma.marketingKPI.createMany({ data: kpisData });
+
+  console.log("Seeding IT development sprint board...");
+  const dayMs = 86400000;
+  const sprintStart = new Date(Date.now() - 9 * dayMs); // 14-day sprint, 5 days left
+  const sprintEnd = new Date(Date.now() + 5 * dayMs);
+  const itSprint = await prisma.iTSprint.create({
+    data: {
+      organizationId: organization.id,
+      businessId: bIT.id,
+      teamId: tIT.id,
+      name: "Sprint 4",
+      goal: "Platform stabilization + lead-flow groundwork",
+      startDate: sprintStart,
+      endDate: sprintEnd,
+      targetPoints: 40,
+      isActive: true,
+    },
+  });
+
+  // AK = developer, RS = devLead (mirrors the mockup's two assignees).
+  const itTaskSeed: Array<{
+    title: string;
+    column: "BACKLOG" | "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
+    priority: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+    storyPoints: number;
+    assigneeId?: string;
+    prdRef?: string;
+    dueOffsetDays?: number;
+  }> = [
+    // Backlog (4)
+    { title: "OCR pipeline — Google Document AI", column: "BACKLOG", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id },
+    { title: "Dynamic sidebar DB config model", column: "BACKLOG", priority: "MEDIUM", storyPoints: 5 },
+    { title: "Global search endpoint (role-scoped)", column: "BACKLOG", priority: "LOW", storyPoints: 5 },
+    { title: "Credential vault — AES-256 encryption", column: "BACKLOG", priority: "HIGH", storyPoints: 6 },
+    // To do (3)
+    { title: "BillingRecord entity + migration", column: "TODO", priority: "MEDIUM", storyPoints: 5, assigneeId: devLead.id, prdRef: "BILL-002" },
+    { title: "Revenue visibility role gate (L3+)", column: "TODO", priority: "CRITICAL", storyPoints: 3, assigneeId: developer.id },
+    { title: "KPI condition tier formula", column: "TODO", priority: "MEDIUM", storyPoints: 3, assigneeId: devLead.id },
+    // In progress (3)
+    { title: "Twilio click-to-call integration", column: "IN_PROGRESS", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id, dueOffsetDays: 2 },
+    { title: "Marketing → Sales lead promotion endpoint", column: "IN_PROGRESS", priority: "CRITICAL", storyPoints: 5, assigneeId: devLead.id, prdRef: "MKT-001" },
+    { title: "AttendanceRecord model + clockIn/Out API", column: "IN_PROGRESS", priority: "MEDIUM", storyPoints: 5, prdRef: "HR-ATT-001" },
+    // Review (2)
+    { title: "Lead status machine — transition guard", column: "REVIEW", priority: "CRITICAL", storyPoints: 5, assigneeId: devLead.id },
+    { title: "TypeScript build errors — fix all type guards", column: "REVIEW", priority: "HIGH", storyPoints: 4, assigneeId: developer.id },
+    // Done (6) — story points sum to 34 (sprint velocity)
+    { title: "Lead source tracking FK on SalesLead", column: "DONE", priority: "MEDIUM", storyPoints: 3, assigneeId: devLead.id },
+    { title: "SMTP2GO email log entity", column: "DONE", priority: "MEDIUM", storyPoints: 5, assigneeId: developer.id },
+    { title: "Leave request model + TL approval flow", column: "DONE", priority: "HIGH", storyPoints: 5, assigneeId: devLead.id },
+    { title: "Org hierarchy tree endpoint", column: "DONE", priority: "MEDIUM", storyPoints: 5, assigneeId: developer.id },
+    { title: "JWT refresh token rotation", column: "DONE", priority: "HIGH", storyPoints: 8, assigneeId: devLead.id },
+    { title: "Audit log middleware", column: "DONE", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id },
+  ];
+  await prisma.iTSprintTask.createMany({
+    data: itTaskSeed.map((t, i) => ({
+      sprintId: itSprint.id,
+      organizationId: organization.id,
+      businessId: bIT.id,
+      teamId: tIT.id,
+      assigneeId: t.assigneeId ?? null,
+      createdById: devLead.id,
+      title: t.title,
+      column: t.column,
+      priority: t.priority,
+      storyPoints: t.storyPoints,
+      prdRef: t.prdRef ?? null,
+      dueDate: t.dueOffsetDays != null ? new Date(Date.now() + t.dueOffsetDays * dayMs) : null,
+      orderIndex: i,
+    })),
+  });
+
+  // Burndown: ideal linear 40→0 over 15 day-marks; actual logged for elapsed days.
+  const ideal = [40, 37, 34, 31, 28, 25, 22, 19, 16, 13, 10, 7, 4, 2, 0];
+  const actual: (number | null)[] = [40, 38, 36, 35, 33, 30, 27, 25, 22, 20, null, null, null, null, null];
+  await prisma.iTBurndownPoint.createMany({
+    data: ideal.map((idealPoints, dayIndex) => ({
+      sprintId: itSprint.id,
+      dayIndex,
+      date: new Date(sprintStart.getTime() + dayIndex * dayMs),
+      idealPoints,
+      actualPoints: actual[dayIndex],
+    })),
+  });
+
+  await prisma.iTEodReport.createMany({
+    data: [
+      {
+        organizationId: organization.id,
+        businessId: bIT.id,
+        teamId: tIT.id,
+        employeeId: developer.id,
+        reportDate: new Date(Date.now() - 1 * dayMs),
+        completed: "Finished Twilio click-to-call endpoint; wrote unit tests for the lead state machine.",
+        pending: "BillingRecord migration needs review from the team lead.",
+        blockers: "Waiting on Twilio test credentials from the vault.",
+        tomorrow: "Push Twilio to review and start credential vault encryption.",
+      },
+      {
+        organizationId: organization.id,
+        businessId: bIT.id,
+        teamId: tIT.id,
+        employeeId: developer.id,
+        reportDate: new Date(),
+        completed: "Fixed remaining TypeScript build errors across the sales module.",
+        pending: "Revenue visibility role gate still in progress.",
+        blockers: null,
+        tomorrow: "Wire the revenue gate to L3+ and begin the global search endpoint.",
+      },
+    ],
+  });
 
   console.log(
     `Seeding complete. Seeded ${allEmployees.length} employees successfully.`,

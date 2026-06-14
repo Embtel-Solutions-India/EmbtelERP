@@ -1,40 +1,44 @@
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Close, AccountCircle, ContactPhone, Work, BarChart, History } from '@mui/icons-material'
+import { employeeService } from '../../../../services/employeeService'
 
-const SALES_KPIS = [
-  { label: 'Leads Handled', value: '148', color: 'text-indigo-600 dark:text-indigo-400' },
-  { label: 'Won Deals',     value: '36',  color: 'text-emerald-600 dark:text-emerald-400' },
-  { label: 'Conversion',    value: '24.3%', color: 'text-purple-600 dark:text-purple-400' },
-  { label: 'Pipeline Val',  value: '$120K', color: 'text-amber-600 dark:text-amber-400' },
-]
-
-const MARKETING_KPIS = [
-  { label: 'Campaigns Run',  value: '12',   color: 'text-indigo-600 dark:text-indigo-400' },
-  { label: 'Leads Gen',      value: '580',  color: 'text-emerald-600 dark:text-emerald-400' },
-  { label: 'Avg CPL',        value: '$12.50', color: 'text-rose-600 dark:text-rose-400' },
-  { label: 'Campaign ROI',   value: '3.4x', color: 'text-amber-600 dark:text-amber-400' },
-]
-
-const SALES_ACTIVITIES = [
-  'Contacted Rohan Kapoor from Wipro Systems',
-  'Scheduled discovery meeting with Tech Mahindra',
-  'Updated deal status for Oracleproposal to proposal',
-  'Logged follow up call with Tata Consultancy',
-]
-
-const MARKETING_ACTIVITIES = [
-  'Optimized Google Ads PPC budget target',
-  'Created draft template for Q2 newsletter blast',
-  'Uploaded Banner Creative v2 to asset manager',
-  'Published DBaaS integration tech SEO blog post',
-]
+const RELATION_LABELS = { own: 'Own task', assigned: 'Assigned to them', created: 'Created by them' }
 
 export default function TeamMemberDrawer({ open, member, onClose }) {
+  const [overview, setOverview] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Self-fetch the member's real task/lead stats + recent activity when opened.
+  useEffect(() => {
+    if (!open || !member?.id) return
+    let active = true
+    setLoading(true)
+    setError(null)
+    setOverview(null)
+    employeeService.getOverview(member.id)
+      .then((res) => { if (active) setOverview(res.data) })
+      .catch((err) => { if (active) setError(err.message || 'Failed to load') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [open, member?.id])
+
   if (!member) return null
 
-  const isSales = member.department.toLowerCase() === 'sales'
-  const kpis = isSales ? SALES_KPIS : MARKETING_KPIS
-  const activities = isSales ? SALES_ACTIVITIES : MARKETING_ACTIVITIES
+  const tasks = overview?.tasks
+  const leads = overview?.leads
+  const kpis = overview
+    ? [
+        { label: 'Total Tasks',   value: tasks.total,                 color: 'text-indigo-600 dark:text-indigo-400' },
+        { label: 'Completed',     value: tasks.completed,             color: 'text-emerald-600 dark:text-emerald-400' },
+        { label: 'Pending',       value: tasks.pending,               color: 'text-amber-600 dark:text-amber-400' },
+        { label: 'Overdue',       value: tasks.overdue,               color: 'text-red-600 dark:text-red-400' },
+        { label: 'Completion',    value: `${tasks.completionRate}%`,  color: 'text-purple-600 dark:text-purple-400' },
+        { label: 'Leads Won',     value: `${leads.converted}/${leads.total}`, color: 'text-blue-600 dark:text-blue-400' },
+      ]
+    : []
+  const activities = overview?.recentActivity ?? []
 
   return (
     <AnimatePresence>
@@ -130,38 +134,59 @@ export default function TeamMemberDrawer({ open, member, onClose }) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-neutral-400">Reporting Manager</span>
-                    <span className="font-semibold text-neutral-800 dark:text-neutral-200">{member.reporting_manager || 'None'}</span>
+                    <span className="font-semibold text-neutral-800 dark:text-neutral-200">{overview?.reportingManager || member.reporting_manager || 'None'}</span>
                   </div>
                 </div>
               </div>
 
-              {/* KPI Summary */}
+              {/* KPI Summary — real task/lead stats */}
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
                   <BarChart style={{ fontSize: 16 }} /> Performance Statistics
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {kpis.map((kpi) => (
-                    <div key={kpi.label} className="p-3 rounded-xl border border-neutral-100 dark:border-neutral-800/50 text-center">
-                      <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase">{kpi.label}</p>
-                      <p className={`text-base font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
-                    </div>
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="h-16 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
+                    ))}
+                  </div>
+                ) : error ? (
+                  <p className="text-xs text-red-500 p-3.5 rounded-xl border border-neutral-100 dark:border-neutral-800/50">Failed to load stats: {String(error)}</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {kpis.map((kpi) => (
+                      <div key={kpi.label} className="p-3 rounded-xl border border-neutral-100 dark:border-neutral-800/50 text-center">
+                        <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase">{kpi.label}</p>
+                        <p className={`text-base font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Recent Activities */}
+              {/* Recent Activities — real recent tasks */}
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
                   <History style={{ fontSize: 16 }} /> Recent Activities
                 </h4>
                 <div className="space-y-2 p-3.5 rounded-xl border border-neutral-100 dark:border-neutral-800/50 text-xs">
-                  {activities.map((act, idx) => (
-                    <div key={idx} className="flex gap-2.5 items-start">
-                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5" />
-                      <span className="text-neutral-600 dark:text-neutral-400 leading-relaxed">{act}</span>
-                    </div>
-                  ))}
+                  {loading ? (
+                    <p className="text-neutral-400 text-center py-2">Loading…</p>
+                  ) : activities.length === 0 ? (
+                    <p className="text-neutral-400 text-center py-2">No recent task activity</p>
+                  ) : (
+                    activities.map((act) => (
+                      <div key={act.id} className="flex gap-2.5 items-start">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5" />
+                        <span className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                          <span className="font-semibold text-neutral-700 dark:text-neutral-300">{act.title}</span>
+                          {' · '}
+                          <span className="capitalize">{String(act.status).replace('_', ' ')}</span>
+                          {act.relation && <span className="text-neutral-400"> · {RELATION_LABELS[act.relation] || act.relation}</span>}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

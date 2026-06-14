@@ -533,6 +533,87 @@ export async function getFullOrganizationTree(): Promise<OrganizationTree> {
  * source (revenue, campaigns, cases, performance score) are intentionally omitted
  * rather than fabricated.
  */
+/**
+ * An employee's work "domain" decides which task/lead module backs their
+ * overview: Sales → SalesTask/SalesLead, Marketing → MarketingTask/MarketingLead,
+ * IT dev → ITSprintTask (no leads), everyone else → the generic Task table.
+ * Resolved from designation first (handles the IT business's own sales/marketing
+ * sub-team leads), then the business name.
+ */
+type EmpDomain = "IT" | "SALES" | "MARKETING" | "GENERIC";
+
+function resolveEmployeeDomain(designation?: string | null, businessName?: string | null): EmpDomain {
+  const d = (designation ?? "").toLowerCase();
+  const b = (businessName ?? "").toLowerCase();
+  if (d.includes("developer") || d.includes("development team lead") || d.includes("it head")) return "IT";
+  if (d.includes("sales")) return "SALES";
+  if (d.includes("marketing")) return "MARKETING";
+  if (b.includes("it services")) return "IT";
+  return "GENERIC";
+}
+
+function taskStatShape(total: number, completed: number, overdue: number) {
+  return {
+    total,
+    completed,
+    pending: Math.max(0, total - completed),
+    overdue,
+    completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
+async function domainTaskStats(domain: EmpDomain, employeeId: string) {
+  const now = new Date();
+  if (domain === "SALES") {
+    const [total, completed, overdue] = await Promise.all([
+      prisma.salesTask.count({ where: { assigneeId: employeeId } }),
+      prisma.salesTask.count({ where: { assigneeId: employeeId, status: "COMPLETED" } }),
+      prisma.salesTask.count({ where: { assigneeId: employeeId, status: { notIn: ["COMPLETED", "CANCELLED"] }, dueDate: { lt: now } } }),
+    ]);
+    return taskStatShape(total, completed, overdue);
+  }
+  if (domain === "MARKETING") {
+    const [total, completed, overdue] = await Promise.all([
+      prisma.marketingTask.count({ where: { assignedToId: employeeId } }),
+      prisma.marketingTask.count({ where: { assignedToId: employeeId, status: "COMPLETED" } }),
+      prisma.marketingTask.count({ where: { assignedToId: employeeId, status: { notIn: ["COMPLETED", "CANCELLED"] }, dueDate: { lt: now } } }),
+    ]);
+    return taskStatShape(total, completed, overdue);
+  }
+  if (domain === "IT") {
+    const [total, completed, overdue] = await Promise.all([
+      prisma.iTSprintTask.count({ where: { assigneeId: employeeId } }),
+      prisma.iTSprintTask.count({ where: { assigneeId: employeeId, column: "DONE" } }),
+      prisma.iTSprintTask.count({ where: { assigneeId: employeeId, column: { not: "DONE" }, dueDate: { lt: now } } }),
+    ]);
+    return taskStatShape(total, completed, overdue);
+  }
+  const [total, completed, overdue] = await Promise.all([
+    prisma.task.count({ where: { assigneeId: employeeId } }),
+    prisma.task.count({ where: { assigneeId: employeeId, status: "completed" } }),
+    prisma.task.count({ where: { assigneeId: employeeId, status: { notIn: ["completed", "cancelled"] }, dueDate: { lt: now } } }),
+  ]);
+  return taskStatShape(total, completed, overdue);
+}
+
+function leadStatShape(statuses: string[]) {
+  const total = statuses.length;
+  const converted = statuses.filter((s) => s === "CONVERTED").length;
+  const closed = statuses.filter((s) => s === "CONVERTED" || s === "LOST").length;
+  return { total, converted, conversionRate: closed > 0 ? Math.round((converted / closed) * 100) : 0 };
+}
+
+async function domainLeadStats(domain: EmpDomain, employeeId: string) {
+  if (domain === "IT") return { total: 0, converted: 0, conversionRate: 0 };
+  if (domain === "MARKETING") {
+    const leads = await prisma.marketingLead.findMany({ where: { assignedToId: employeeId }, select: { status: true } });
+    return leadStatShape(leads.map((l) => l.status));
+  }
+  // SALES + GENERIC use the sales pipeline.
+  const leads = await prisma.salesLead.findMany({ where: { assignedToId: employeeId }, select: { status: true } });
+  return leadStatShape(leads.map((l) => l.status));
+}
+
 export async function getEmployeeOverviewForAdmin(employeeId: string) {
   const emp = await prisma.employee.findUnique({
     where: { id: employeeId },
@@ -547,20 +628,11 @@ export async function getEmployeeOverviewForAdmin(employeeId: string) {
   });
   if (!emp) return null;
 
-  const now = new Date();
-  const [taskTotal, taskCompleted, taskOverdue, leads] = await Promise.all([
-    prisma.task.count({ where: { assigneeId: employeeId } }),
-    prisma.task.count({ where: { assigneeId: employeeId, status: "completed" } }),
-    prisma.task.count({
-      where: { assigneeId: employeeId, status: { notIn: ["completed", "cancelled"] }, dueDate: { lt: now } },
-    }),
-    prisma.salesLead.findMany({ where: { assignedToId: employeeId }, select: { status: true } }),
+  const domain = resolveEmployeeDomain(emp.designation, emp.business?.name);
+  const [tasks, leads] = await Promise.all([
+    domainTaskStats(domain, employeeId),
+    domainLeadStats(domain, employeeId),
   ]);
-
-  const taskPending  = Math.max(0, taskTotal - taskCompleted);
-  const leadsTotal     = leads.length;
-  const leadsConverted = leads.filter((l) => l.status === "CONVERTED").length;
-  const closed         = leads.filter((l) => l.status === "CONVERTED" || l.status === "LOST").length;
 
   return {
     id:               emp.id,
@@ -572,25 +644,27 @@ export async function getEmployeeOverviewForAdmin(employeeId: string) {
     vertical:         emp.vertical?.name ?? null,
     business:         emp.business?.name ?? null,
     reportingManager: emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : null,
-    tasks: {
-      total:          taskTotal,
-      completed:      taskCompleted,
-      pending:        taskPending,
-      overdue:        taskOverdue,
-      completionRate: taskTotal > 0 ? Math.round((taskCompleted / taskTotal) * 100) : 0,
-    },
-    leads: {
-      total:          leadsTotal,
-      converted:      leadsConverted,
-      conversionRate: closed > 0 ? Math.round((leadsConverted / closed) * 100) : 0,
-    },
+    domain,
+    tasks,
+    leads,
   };
 }
 
+type RecentTask = {
+  id: string; title: string; taskType: string | null; status: string;
+  priority: string | null; dueDate: Date | null; createdAt: Date; relation: string;
+};
+
+function relationOf(assigneeId: string | null, createdById: string | null, employeeId: string) {
+  return createdById === employeeId && assigneeId === employeeId ? "own"
+    : assigneeId === employeeId ? "assigned"
+    : "created";
+}
+
 /**
- * Super-Admin-only: task details added for/by an employee within a period.
- * period = daily (since start of today) | weekly (last 7 days) | monthly (since
- * start of month). Returns real Task rows the employee created or is assigned.
+ * Recent task activity for an employee within a period, drawn from the module
+ * that matches their domain (see resolveEmployeeDomain).
+ * period = daily | weekly | monthly.
  */
 export async function getEmployeeTasksForAdmin(employeeId: string, period: string) {
   const now = new Date();
@@ -599,36 +673,45 @@ export async function getEmployeeTasksForAdmin(employeeId: string, period: strin
     period === "monthly" ? new Date(now.getFullYear(), now.getMonth(), 1) :
     /* daily */            new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      createdAt: { gte: since },
-      OR: [{ assigneeId: employeeId }, { createdById: employeeId }],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    select: {
-      id: true, title: true, taskType: true, status: true, priority: true,
-      dueDate: true, createdAt: true, assigneeId: true, createdById: true,
-    },
+  const emp = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { designation: true, business: { select: { name: true } } },
   });
+  const domain = resolveEmployeeDomain(emp?.designation, emp?.business?.name);
 
-  return {
-    period,
-    total: tasks.length,
-    tasks: tasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      taskType: t.taskType,
-      status: t.status,
-      priority: t.priority,
-      dueDate: t.dueDate,
-      createdAt: t.createdAt,
-      relation:
-        t.createdById === employeeId && t.assigneeId === employeeId ? "own"
-        : t.assigneeId === employeeId ? "assigned"
-        : "created",
-    })),
-  };
+  let tasks: RecentTask[] = [];
+
+  if (domain === "SALES") {
+    const rows = await prisma.salesTask.findMany({
+      where: { createdAt: { gte: since }, OR: [{ assigneeId: employeeId }, { createdById: employeeId }] },
+      orderBy: { createdAt: "desc" }, take: 100,
+      select: { id: true, title: true, taskType: true, status: true, priority: true, dueDate: true, createdAt: true, assigneeId: true, createdById: true },
+    });
+    tasks = rows.map((t) => ({ id: t.id, title: t.title, taskType: t.taskType, status: t.status, priority: t.priority, dueDate: t.dueDate, createdAt: t.createdAt, relation: relationOf(t.assigneeId, t.createdById, employeeId) }));
+  } else if (domain === "MARKETING") {
+    const rows = await prisma.marketingTask.findMany({
+      where: { createdAt: { gte: since }, OR: [{ assignedToId: employeeId }, { createdById: employeeId }] },
+      orderBy: { createdAt: "desc" }, take: 100,
+      select: { id: true, title: true, status: true, priority: true, dueDate: true, createdAt: true, assignedToId: true, createdById: true },
+    });
+    tasks = rows.map((t) => ({ id: t.id, title: t.title, taskType: null, status: t.status, priority: t.priority, dueDate: t.dueDate, createdAt: t.createdAt, relation: relationOf(t.assignedToId, t.createdById, employeeId) }));
+  } else if (domain === "IT") {
+    const rows = await prisma.iTSprintTask.findMany({
+      where: { createdAt: { gte: since }, OR: [{ assigneeId: employeeId }, { createdById: employeeId }] },
+      orderBy: { createdAt: "desc" }, take: 100,
+      select: { id: true, title: true, column: true, priority: true, dueDate: true, createdAt: true, assigneeId: true, createdById: true },
+    });
+    tasks = rows.map((t) => ({ id: t.id, title: t.title, taskType: null, status: t.column, priority: t.priority, dueDate: t.dueDate, createdAt: t.createdAt, relation: relationOf(t.assigneeId, t.createdById, employeeId) }));
+  } else {
+    const rows = await prisma.task.findMany({
+      where: { createdAt: { gte: since }, OR: [{ assigneeId: employeeId }, { createdById: employeeId }] },
+      orderBy: { createdAt: "desc" }, take: 100,
+      select: { id: true, title: true, taskType: true, status: true, priority: true, dueDate: true, createdAt: true, assigneeId: true, createdById: true },
+    });
+    tasks = rows.map((t) => ({ id: t.id, title: t.title, taskType: t.taskType, status: t.status, priority: t.priority, dueDate: t.dueDate, createdAt: t.createdAt, relation: relationOf(t.assigneeId, t.createdById, employeeId) }));
+  }
+
+  return { period, domain, total: tasks.length, tasks };
 }
 
 /**

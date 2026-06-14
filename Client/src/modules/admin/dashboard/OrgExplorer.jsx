@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
   ExpandMore,
@@ -25,7 +25,7 @@ import {
   AccessTime as TimeIcon,
   Badge as BadgeIcon,
   Rule as RuleIcon,
-} from '@mui/icons-material'
+} from "@mui/icons-material";
 import {
   ResponsiveContainer,
   BarChart,
@@ -37,57 +37,57 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts'
-import api from '../../../services/api'
+} from "recharts";
+import api from "../../../services/api";
 import {
   switchPerspective,
   resetPerspective,
   fetchPerspectives,
   fetchCurrentPerspective,
   fetchHierarchyTree,
-} from '../../../redux/slices/perspectiveSlice'
+} from "../../../redux/slices/perspectiveSlice";
 import {
   fetchDashboardOverview,
   fetchDashboardPerformance,
   fetchDashboardInsights,
   fetchDashboardTeam,
-} from '../../../redux/slices/dashboardSlice'
+} from "../../../redux/slices/dashboardSlice";
 
 export default function OrgExplorer() {
-  const dispatch = useDispatch()
-  const { user } = useSelector((s) => s.auth)
-  const { current: activePerspective } = useSelector((s) => s.perspective)
+  const dispatch = useDispatch();
+  const { user } = useSelector((s) => s.auth);
+  const { current: activePerspective } = useSelector((s) => s.perspective);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState('explorer') // explorer, analytics, control
+  const [activeTab, setActiveTab] = useState("explorer"); // explorer, analytics, control
 
   // Explorer Tab States
-  const [treeData, setTreeData] = useState(null)
-  const [employeesList, setEmployeesList] = useState([])
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null)
-  const [employeeDetails, setEmployeeDetails] = useState(null)
-  const [explorerTabSub, setExplorerTabSub] = useState('tree') // tree, list
+  const [treeData, setTreeData] = useState(null);
+  const [employeesList, setEmployeesList] = useState([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+  const [employeeDetails, setEmployeeDetails] = useState(null);
+  const [explorerTabSub, setExplorerTabSub] = useState("tree"); // tree, list
 
   // Filtering states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [businessFilter, setBusinessFilter] = useState('')
-  const [verticalFilter, setVerticalFilter] = useState('')
-  const [designationFilter, setDesignationFilter] = useState('')
-  const [levelFilter, setLevelFilter] = useState('')
+  const [searchQuery, setSearchQuery] = useState("");
+  const [businessFilter, setBusinessFilter] = useState("");
+  const [verticalFilter, setVerticalFilter] = useState("");
+  const [designationFilter, setDesignationFilter] = useState("");
+  const [levelFilter, setLevelFilter] = useState("");
 
   // Expand/collapse states for tree nodes
-  const [expandedNodes, setExpandedNodes] = useState({})
+  const [expandedNodes, setExpandedNodes] = useState({});
 
   // Loading states
-  const [treeLoading, setTreeLoading] = useState(false)
-  const [detailsLoading, setDetailsLoading] = useState(false)
+  const [treeLoading, setTreeLoading] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   // Analytics Tab States
-  const [analytics, setAnalytics] = useState(null)
-  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Control Modules Tab States
-  const [activeConfigTab, setActiveConfigTab] = useState('users') // users, businesses, verticals, teams, audit
+  const [activeConfigTab, setActiveConfigTab] = useState("users"); // users, businesses, verticals, teams, audit
   const [configLists, setConfigLists] = useState({
     businesses: [],
     verticals: [],
@@ -95,81 +95,88 @@ export default function OrgExplorer() {
     roles: [],
     permissions: [],
     users: [],
-  })
-  const [auditLogs, setAuditLogs] = useState([])
-  const [configLoading, setConfigLoading] = useState(false)
+  });
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [configLoading, setConfigLoading] = useState(false);
 
   // Modals for CRUD operations
-  const [crudModalOpen, setCrudModalOpen] = useState(false)
-  const [crudType, setCrudType] = useState('') // user, business, vertical, team
-  const [crudMode, setCrudMode] = useState('create') // create, edit
-  const [crudForm, setCrudForm] = useState({})
-  const [crudError, setCrudError] = useState('')
-  const [crudSubmitting, setCrudSubmitting] = useState(false)
+  const [crudModalOpen, setCrudModalOpen] = useState(false);
+  const [crudType, setCrudType] = useState(""); // user, business, vertical, team
+  const [crudMode, setCrudMode] = useState("create"); // create, edit
+  const [crudForm, setCrudForm] = useState({});
+  const [crudError, setCrudError] = useState("");
+  const [crudSubmitting, setCrudSubmitting] = useState(false);
 
   // Load initial data
   useEffect(() => {
-    loadExplorerTree()
-    loadGlobalAnalytics()
-    loadConfigLists()
-  }, [])
+    loadExplorerTree();
+    loadGlobalAnalytics();
+    loadConfigLists();
+  }, []);
 
   // Refresh tree and details when selected employee changes
   useEffect(() => {
     if (selectedEmployeeId) {
-      loadEmployeeDetails(selectedEmployeeId)
+      loadEmployeeDetails(selectedEmployeeId);
     }
-  }, [selectedEmployeeId])
+  }, [selectedEmployeeId]);
 
   const loadExplorerTree = async () => {
-    setTreeLoading(true)
+    setTreeLoading(true);
     try {
-      const treeRes = await api.get('/hierarchy/organization-tree')
-      const empRes = await api.get('/employees')
-      setTreeData(treeRes?.data || { businesses: [] })
-      setEmployeesList(empRes?.data || [])
+      const treeRes = await api.get("/hierarchy/organization-tree");
+      const empRes = await api.get("/employees");
+      setTreeData(treeRes?.data || { businesses: [] });
+      setEmployeesList(empRes?.data || []);
 
       // Auto-select first employee if none selected
-      const list = empRes?.data || []
+      const list = empRes?.data || [];
       if (list.length > 0 && !selectedEmployeeId) {
-        setSelectedEmployeeId(list[0].id)
+        setSelectedEmployeeId(list[0].id);
       }
     } catch (err) {
-      console.error('Failed to load hierarchy tree', err)
+      console.error("Failed to load hierarchy tree", err);
     } finally {
-      setTreeLoading(false)
+      setTreeLoading(false);
     }
-  }
+  };
 
   const loadEmployeeDetails = async (employeeId) => {
-    setDetailsLoading(true)
+    setDetailsLoading(true);
     try {
-      const [empRes, reportsRes, managersRes, tasksRes, actRes] = await Promise.all([
-        api.get(`/employees/${employeeId}`),
-        api.get(`/hierarchy/descendants/${employeeId}`).catch(() => ({ data: [] })),
-        api.get(`/hierarchy/managers/${employeeId}`).catch(() => ({ data: [] })),
-        api.get('/tasks').catch(() => ({ data: [] })),
-        api.get('/activities').catch(() => ({ data: [] })),
-      ])
+      const [empRes, reportsRes, managersRes, tasksRes, actRes] =
+        await Promise.all([
+          api.get(`/employees/${employeeId}`),
+          api
+            .get(`/hierarchy/descendants/${employeeId}`)
+            .catch(() => ({ data: [] })),
+          api
+            .get(`/hierarchy/managers/${employeeId}`)
+            .catch(() => ({ data: [] })),
+          api.get("/tasks").catch(() => ({ data: [] })),
+          api.get("/activities").catch(() => ({ data: [] })),
+        ]);
 
-      const emp = empRes?.data || {}
-      const allTasks = tasksRes?.data || []
-      const empTasks = allTasks.filter((t) => t.assigneeId === employeeId)
+      const emp = empRes?.data || {};
+      const allTasks = tasksRes?.data || [];
+      const empTasks = allTasks.filter((t) => t.assigneeId === employeeId);
 
-      const allActivities = actRes?.data || []
-      const empActivities = allActivities.filter((a) => a.actorId === employeeId)
+      const allActivities = actRes?.data || [];
+      const empActivities = allActivities.filter(
+        (a) => a.actorId === employeeId,
+      );
 
       // Calculate simple attendance grid
       const attendanceGrid = [
-        { day: 'Mon', status: 'present' },
-        { day: 'Tue', status: 'present' },
-        { day: 'Wed', status: 'present' },
-        { day: 'Thu', status: 'present' },
-        { day: 'Fri', status: 'absent' },
-      ]
+        { day: "Mon", status: "present" },
+        { day: "Tue", status: "present" },
+        { day: "Wed", status: "present" },
+        { day: "Thu", status: "present" },
+        { day: "Fri", status: "absent" },
+      ];
 
       // Extract unique manager
-      const manager = managersRes?.data?.[0] || null
+      const manager = managersRes?.data?.[0] || null;
 
       setEmployeeDetails({
         employee: emp,
@@ -179,152 +186,205 @@ export default function OrgExplorer() {
         activities: empActivities,
         attendanceGrid,
         attendanceRate: 92,
-        performanceScore: Math.min(100, 75 + Math.round((empTasks.filter((t) => t.status === 'completed').length / (empTasks.length || 1)) * 25)),
-      })
+        performanceScore: Math.min(
+          100,
+          75 +
+            Math.round(
+              (empTasks.filter((t) => t.status === "completed").length /
+                (empTasks.length || 1)) *
+                25,
+            ),
+        ),
+      });
     } catch (err) {
-      console.error('Failed to load employee details', err)
+      console.error("Failed to load employee details", err);
     } finally {
-      setDetailsLoading(false)
+      setDetailsLoading(false);
     }
-  }
+  };
 
   const loadGlobalAnalytics = async () => {
-    setAnalyticsLoading(true)
+    setAnalyticsLoading(true);
     try {
-      const res = await api.get('/admin/global-analytics')
-      setAnalytics(res?.data || null)
+      const res = await api.get("/admin/global-analytics");
+      setAnalytics(res?.data || null);
     } catch (err) {
-      console.error('Failed to load global analytics', err)
+      console.error("Failed to load global analytics", err);
     } finally {
-      setAnalyticsLoading(false)
+      setAnalyticsLoading(false);
     }
-  }
+  };
 
   const loadConfigLists = async () => {
-    setConfigLoading(true)
+    setConfigLoading(true);
     try {
-      const res = await api.get('/admin/config-lists')
-      const logsRes = await api.get('/audit-logs')
-      setConfigLists(res?.data || {
-        businesses: [],
-        verticals: [],
-        teams: [],
-        roles: [],
-        permissions: [],
-        users: [],
-      })
-      setAuditLogs(logsRes?.data || [])
+      const res = await api.get("/admin/config-lists");
+      const logsRes = await api.get("/audit-logs");
+      setConfigLists(
+        res?.data || {
+          businesses: [],
+          verticals: [],
+          teams: [],
+          roles: [],
+          permissions: [],
+          users: [],
+        },
+      );
+      setAuditLogs(logsRes?.data || []);
     } catch (err) {
-      console.error('Failed to load configuration configurations', err)
+      console.error("Failed to load configuration configurations", err);
     } finally {
-      setConfigLoading(false)
+      setConfigLoading(false);
     }
-  }
+  };
 
   // Perspective switch handler
   const handleViewAs = (employee) => {
-    const targetType = employee.level === 3 ? 'HEAD' : employee.level === 2 ? 'MANAGER' : employee.level === 0 ? 'INTERN' : 'EMPLOYEE'
-    dispatch(switchPerspective({ targetType, targetId: employee.id })).then(() => {
-      // Refresh global stores
-      dispatch(fetchPerspectives())
-      dispatch(fetchCurrentPerspective())
-      dispatch(fetchHierarchyTree())
-      dispatch(fetchDashboardOverview())
-      dispatch(fetchDashboardPerformance())
-      dispatch(fetchDashboardInsights())
-      dispatch(fetchDashboardTeam())
-    })
-  }
+    const targetType =
+      employee.level === 3
+        ? "HEAD"
+        : employee.level === 2
+          ? "MANAGER"
+          : employee.level === 0
+            ? "INTERN"
+            : "EMPLOYEE";
+    dispatch(switchPerspective({ targetType, targetId: employee.id })).then(
+      () => {
+        // Refresh global stores
+        dispatch(fetchPerspectives());
+        dispatch(fetchCurrentPerspective());
+        dispatch(fetchHierarchyTree());
+        dispatch(fetchDashboardOverview());
+        dispatch(fetchDashboardPerformance());
+        dispatch(fetchDashboardInsights());
+        dispatch(fetchDashboardTeam());
+      },
+    );
+  };
 
   // Exiting perspective
   const handleExitImpersonation = () => {
     dispatch(resetPerspective()).then(() => {
-      dispatch(fetchPerspectives())
-      dispatch(fetchCurrentPerspective())
-      dispatch(fetchHierarchyTree())
-      dispatch(fetchDashboardOverview())
-      dispatch(fetchDashboardPerformance())
-      dispatch(fetchDashboardInsights())
-      dispatch(fetchDashboardTeam())
-    })
-  }
+      dispatch(fetchPerspectives());
+      dispatch(fetchCurrentPerspective());
+      dispatch(fetchHierarchyTree());
+      dispatch(fetchDashboardOverview());
+      dispatch(fetchDashboardPerformance());
+      dispatch(fetchDashboardInsights());
+      dispatch(fetchDashboardTeam());
+    });
+  };
 
   // Expand/collapse node helpers
   const toggleNode = (nodeId) => {
     setExpandedNodes((prev) => ({
       ...prev,
       [nodeId]: !prev[nodeId],
-    }))
-  }
+    }));
+  };
 
   // Filtered employees list
   const filteredEmployees = employeesList.filter((emp) => {
     const matchesSearch =
-      `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (emp.designation || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (emp.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+      `${emp.firstName} ${emp.lastName}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (emp.designation || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (emp.email || "").toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesBusiness = !businessFilter || emp.businessId === businessFilter
-    const matchesVertical = !verticalFilter || emp.verticalId === verticalFilter
+    const matchesBusiness =
+      !businessFilter || emp.businessId === businessFilter;
+    const matchesVertical =
+      !verticalFilter || emp.verticalId === verticalFilter;
     const matchesDesignation =
-      !designationFilter || (emp.designation || '').toLowerCase().includes(designationFilter.toLowerCase())
-    const matchesLevel = !levelFilter || String(emp.level ?? emp.role?.level) === levelFilter
+      !designationFilter ||
+      (emp.designation || "")
+        .toLowerCase()
+        .includes(designationFilter.toLowerCase());
+    const matchesLevel =
+      !levelFilter || String(emp.level ?? emp.role?.level) === levelFilter;
 
-    return matchesSearch && matchesBusiness && matchesVertical && matchesDesignation && matchesLevel
-  })
+    return (
+      matchesSearch &&
+      matchesBusiness &&
+      matchesVertical &&
+      matchesDesignation &&
+      matchesLevel
+    );
+  });
 
   // CRUD Forms Submission
   const handleCrudSubmit = async (e) => {
-    e.preventDefault()
-    setCrudError('')
-    setCrudSubmitting(true)
+    e.preventDefault();
+    setCrudError("");
+    setCrudSubmitting(true);
     try {
-      let url = ''
-      let method = 'post'
+      let url = "";
+      let method = "post";
 
-      if (crudType === 'business') {
-        url = crudMode === 'create' ? '/admin/config/businesses' : `/admin/config/businesses/${crudForm.id}`
-        method = crudMode === 'create' ? 'post' : 'patch'
-      } else if (crudType === 'vertical') {
-        url = crudMode === 'create' ? '/admin/config/verticals' : `/admin/config/verticals/${crudForm.id}`
-        method = crudMode === 'create' ? 'post' : 'patch'
-      } else if (crudType === 'team') {
-        url = crudMode === 'create' ? '/admin/config/teams' : `/admin/config/teams/${crudForm.id}`
-        method = crudMode === 'create' ? 'post' : 'patch'
-      } else if (crudType === 'user') {
-        url = `/admin/config/users/${crudForm.id}`
-        method = 'patch'
+      if (crudType === "business") {
+        url =
+          crudMode === "create"
+            ? "/admin/config/businesses"
+            : `/admin/config/businesses/${crudForm.id}`;
+        method = crudMode === "create" ? "post" : "patch";
+      } else if (crudType === "vertical") {
+        url =
+          crudMode === "create"
+            ? "/admin/config/verticals"
+            : `/admin/config/verticals/${crudForm.id}`;
+        method = crudMode === "create" ? "post" : "patch";
+      } else if (crudType === "team") {
+        url =
+          crudMode === "create"
+            ? "/admin/config/teams"
+            : `/admin/config/teams/${crudForm.id}`;
+        method = crudMode === "create" ? "post" : "patch";
+      } else if (crudType === "user") {
+        url = `/admin/config/users/${crudForm.id}`;
+        method = "patch";
       }
 
-      await api[method](url, crudForm)
-      setCrudModalOpen(false)
-      loadConfigLists()
-      loadExplorerTree()
+      await api[method](url, crudForm);
+      setCrudModalOpen(false);
+      loadConfigLists();
+      loadExplorerTree();
     } catch (err) {
-      setCrudError(err.response?.data?.message || err.message || 'Operation failed')
+      setCrudError(
+        err.response?.data?.message || err.message || "Operation failed",
+      );
     } finally {
-      setCrudSubmitting(false)
+      setCrudSubmitting(false);
     }
-  }
+  };
 
   const openCreateModal = (type) => {
-    setCrudType(type)
-    setCrudMode('create')
-    setCrudError('')
-    setCrudForm({})
-    setCrudModalOpen(true)
-  }
+    setCrudType(type);
+    setCrudMode("create");
+    setCrudError("");
+    setCrudForm({});
+    setCrudModalOpen(true);
+  };
 
   const openEditModal = (type, data) => {
-    setCrudType(type)
-    setCrudMode('edit')
-    setCrudError('')
-    setCrudForm(data)
-    setCrudModalOpen(true)
-  }
+    setCrudType(type);
+    setCrudMode("edit");
+    setCrudError("");
+    setCrudForm(data);
+    setCrudModalOpen(true);
+  };
 
   // Colors mapping for charts
-  const COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#64748b']
+  const COLORS = [
+    "#3b82f6",
+    "#f59e0b",
+    "#10b981",
+    "#ec4899",
+    "#8b5cf6",
+    "#64748b",
+  ];
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
@@ -336,13 +396,16 @@ export default function OrgExplorer() {
             Super Admin Control Center
           </h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            Global administrative control center for businesses, role hierarchies, system settings, and analytics.
+            Global administrative control center for businesses, role
+            hierarchies, system settings, and analytics.
           </p>
         </div>
 
         {activePerspective && (
           <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-amber-700 dark:text-amber-300">
-            <span className="text-xs font-semibold">Viewing as Impersonator</span>
+            <span className="text-xs font-semibold">
+              Viewing as Impersonator
+            </span>
             <button
               onClick={handleExitImpersonation}
               className="btn-primary text-xs px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm"
@@ -356,33 +419,33 @@ export default function OrgExplorer() {
       {/* Main Tabs Navigation */}
       <div className="flex border-b border-neutral-200 dark:border-neutral-800 gap-1 overflow-x-auto">
         <button
-          onClick={() => setActiveTab('explorer')}
+          onClick={() => setActiveTab("explorer")}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === 'explorer'
-              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700'
+            activeTab === "explorer"
+              ? "border-primary-500 text-primary-600 dark:text-primary-400"
+              : "border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700"
           }`}
         >
           <VerticalIcon style={{ fontSize: 18 }} />
           Organization Explorer
         </button>
         <button
-          onClick={() => setActiveTab('analytics')}
+          onClick={() => setActiveTab("analytics")}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === 'analytics'
-              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700'
+            activeTab === "analytics"
+              ? "border-primary-500 text-primary-600 dark:text-primary-400"
+              : "border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700"
           }`}
         >
           <TrendingUpIcon style={{ fontSize: 18 }} />
           Global Analytics
         </button>
         <button
-          onClick={() => setActiveTab('control')}
+          onClick={() => setActiveTab("control")}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === 'control'
-              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700'
+            activeTab === "control"
+              ? "border-primary-500 text-primary-600 dark:text-primary-400"
+              : "border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700"
           }`}
         >
           <RuleIcon style={{ fontSize: 18 }} />
@@ -392,29 +455,31 @@ export default function OrgExplorer() {
 
       {/* Tab Contents */}
       <div className="mt-6">
-        {activeTab === 'explorer' && (
+        {activeTab === "explorer" && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {/* Search, Filters, & Hierarchy list/tree */}
             <div className="xl:col-span-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                <h3 className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Navigation Panel</h3>
+                <h3 className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+                  Navigation Panel
+                </h3>
                 <div className="flex gap-1 bg-neutral-50 dark:bg-neutral-800 p-1 rounded-lg">
                   <button
-                    onClick={() => setExplorerTabSub('tree')}
+                    onClick={() => setExplorerTabSub("tree")}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                      explorerTabSub === 'tree'
-                        ? 'bg-white dark:bg-neutral-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-neutral-500 dark:text-neutral-400'
+                      explorerTabSub === "tree"
+                        ? "bg-white dark:bg-neutral-700 text-primary-600 dark:text-primary-400 shadow-sm"
+                        : "text-neutral-500 dark:text-neutral-400"
                     }`}
                   >
                     Tree View
                   </button>
                   <button
-                    onClick={() => setExplorerTabSub('list')}
+                    onClick={() => setExplorerTabSub("list")}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                      explorerTabSub === 'list'
-                        ? 'bg-white dark:bg-neutral-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-neutral-500 dark:text-neutral-400'
+                      explorerTabSub === "list"
+                        ? "bg-white dark:bg-neutral-700 text-primary-600 dark:text-primary-400 shadow-sm"
+                        : "text-neutral-500 dark:text-neutral-400"
                     }`}
                   >
                     Search/Filters
@@ -422,7 +487,7 @@ export default function OrgExplorer() {
                 </div>
               </div>
 
-              {explorerTabSub === 'list' ? (
+              {explorerTabSub === "list" ? (
                 // Detailed Search/Filter view
                 <div className="space-y-3">
                   <div className="relative">
@@ -441,7 +506,9 @@ export default function OrgExplorer() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Business</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">
+                        Business
+                      </label>
                       <select
                         value={businessFilter}
                         onChange={(e) => setBusinessFilter(e.target.value)}
@@ -457,7 +524,9 @@ export default function OrgExplorer() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Vertical</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">
+                        Vertical
+                      </label>
                       <select
                         value={verticalFilter}
                         onChange={(e) => setVerticalFilter(e.target.value)}
@@ -473,7 +542,9 @@ export default function OrgExplorer() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Designation</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">
+                        Designation
+                      </label>
                       <input
                         type="text"
                         placeholder="e.g. Sales, Intern"
@@ -484,7 +555,9 @@ export default function OrgExplorer() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Level</label>
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">
+                        Level
+                      </label>
                       <select
                         value={levelFilter}
                         onChange={(e) => setLevelFilter(e.target.value)}
@@ -508,8 +581,8 @@ export default function OrgExplorer() {
                         onClick={() => setSelectedEmployeeId(emp.id)}
                         className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all text-xs font-semibold ${
                           selectedEmployeeId === emp.id
-                            ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-900/30'
-                            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-700 dark:text-neutral-300'
+                            ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-900/30"
+                            : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-700 dark:text-neutral-300"
                         }`}
                       >
                         <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -520,7 +593,9 @@ export default function OrgExplorer() {
                           <p className="truncate font-semibold">
                             {emp.firstName} {emp.lastName}
                           </p>
-                          <p className="text-[10px] text-neutral-400 truncate">{emp.designation || 'Staff'}</p>
+                          <p className="text-[10px] text-neutral-400 truncate">
+                            {emp.designation || "Staff"}
+                          </p>
                         </div>
                         <span className="ml-auto text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
                           L{emp.level ?? emp.role?.level}
@@ -528,17 +603,23 @@ export default function OrgExplorer() {
                       </button>
                     ))}
                     {filteredEmployees.length === 0 && (
-                      <p className="text-center text-xs text-neutral-400 py-6">No matching employees found.</p>
+                      <p className="text-center text-xs text-neutral-400 py-6">
+                        No matching employees found.
+                      </p>
                     )}
                   </div>
                 </div>
               ) : (
                 // Full Collapsible/Expandable Organization tree view
                 <div className="max-h-[550px] overflow-y-auto space-y-1 pr-1">
-                  {treeLoading && <p className="text-center text-xs text-neutral-400 py-6">Loading organization structure...</p>}
+                  {treeLoading && (
+                    <p className="text-center text-xs text-neutral-400 py-6">
+                      Loading organization structure...
+                    </p>
+                  )}
                   {treeData?.businesses?.map((biz) => {
-                    const bizNodeId = `biz-${biz.id}`
-                    const isBizExpanded = !!expandedNodes[bizNodeId]
+                    const bizNodeId = `biz-${biz.id}`;
+                    const isBizExpanded = !!expandedNodes[bizNodeId];
                     return (
                       <div key={biz.id} className="space-y-1">
                         <button
@@ -552,7 +633,10 @@ export default function OrgExplorer() {
                               <ChevronRight style={{ fontSize: 16 }} />
                             )}
                           </span>
-                          <BusinessIcon style={{ fontSize: 16 }} className="text-blue-500 flex-shrink-0" />
+                          <BusinessIcon
+                            style={{ fontSize: 16 }}
+                            className="text-blue-500 flex-shrink-0"
+                          />
                           <span className="truncate">{biz.name}</span>
                         </button>
 
@@ -560,21 +644,26 @@ export default function OrgExplorer() {
                           {isBizExpanded && (
                             <motion.div
                               initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
+                              animate={{ opacity: 1, height: "auto" }}
                               exit={{ opacity: 0, height: 0 }}
                               className="pl-4 border-l border-neutral-100 dark:border-neutral-800 ml-3.5 space-y-1 pt-1"
                             >
                               {/* Business Head */}
                               {biz.head && (
                                 <button
-                                  onClick={() => setSelectedEmployeeId(biz.head.id)}
+                                  onClick={() =>
+                                    setSelectedEmployeeId(biz.head.id)
+                                  }
                                   className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold transition-all ${
                                     selectedEmployeeId === biz.head.id
-                                      ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                      : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400'
+                                      ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                                      : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400"
                                   }`}
                                 >
-                                  <PersonIcon style={{ fontSize: 14 }} className="text-indigo-500 flex-shrink-0" />
+                                  <PersonIcon
+                                    style={{ fontSize: 14 }}
+                                    className="text-indigo-500 flex-shrink-0"
+                                  />
                                   <span className="truncate font-semibold">
                                     [Head] {biz.head.name}
                                   </span>
@@ -586,8 +675,9 @@ export default function OrgExplorer() {
 
                               {/* Verticals */}
                               {biz.verticals?.map((vert) => {
-                                const vertNodeId = `vert-${vert.id}`
-                                const isVertExpanded = !!expandedNodes[vertNodeId]
+                                const vertNodeId = `vert-${vert.id}`;
+                                const isVertExpanded =
+                                  !!expandedNodes[vertNodeId];
                                 return (
                                   <div key={vert.id} className="space-y-1">
                                     <button
@@ -596,13 +686,22 @@ export default function OrgExplorer() {
                                     >
                                       <span className="flex-shrink-0">
                                         {isVertExpanded ? (
-                                          <ExpandMore style={{ fontSize: 14 }} />
+                                          <ExpandMore
+                                            style={{ fontSize: 14 }}
+                                          />
                                         ) : (
-                                          <ChevronRight style={{ fontSize: 14 }} />
+                                          <ChevronRight
+                                            style={{ fontSize: 14 }}
+                                          />
                                         )}
                                       </span>
-                                      <VerticalIcon style={{ fontSize: 14 }} className="text-amber-500 flex-shrink-0" />
-                                      <span className="truncate font-semibold">{vert.name}</span>
+                                      <VerticalIcon
+                                        style={{ fontSize: 14 }}
+                                        className="text-amber-500 flex-shrink-0"
+                                      />
+                                      <span className="truncate font-semibold">
+                                        {vert.name}
+                                      </span>
                                     </button>
 
                                     {isVertExpanded && (
@@ -610,14 +709,22 @@ export default function OrgExplorer() {
                                         {/* Vertical Manager */}
                                         {vert.manager && (
                                           <button
-                                            onClick={() => setSelectedEmployeeId(vert.manager.id)}
+                                            onClick={() =>
+                                              setSelectedEmployeeId(
+                                                vert.manager.id,
+                                              )
+                                            }
                                             className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold transition-all ${
-                                              selectedEmployeeId === vert.manager.id
-                                                ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                                : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400'
+                                              selectedEmployeeId ===
+                                              vert.manager.id
+                                                ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                                                : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400"
                                             }`}
                                           >
-                                            <PersonIcon style={{ fontSize: 14 }} className="text-amber-600 flex-shrink-0" />
+                                            <PersonIcon
+                                              style={{ fontSize: 14 }}
+                                              className="text-amber-600 flex-shrink-0"
+                                            />
                                             <span className="truncate font-semibold">
                                               [Manager] {vert.manager.name}
                                             </span>
@@ -626,23 +733,38 @@ export default function OrgExplorer() {
 
                                         {/* Teams */}
                                         {vert.teams?.map((team) => {
-                                          const teamNodeId = `team-${team.id}`
-                                          const isTeamExpanded = !!expandedNodes[teamNodeId]
+                                          const teamNodeId = `team-${team.id}`;
+                                          const isTeamExpanded =
+                                            !!expandedNodes[teamNodeId];
                                           return (
-                                            <div key={team.id} className="space-y-1">
+                                            <div
+                                              key={team.id}
+                                              className="space-y-1"
+                                            >
                                               <button
-                                                onClick={() => toggleNode(teamNodeId)}
+                                                onClick={() =>
+                                                  toggleNode(teamNodeId)
+                                                }
                                                 className="w-full flex items-center gap-2 p-1.5 rounded-lg text-left text-xs font-bold hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400"
                                               >
                                                 <span className="flex-shrink-0">
                                                   {isTeamExpanded ? (
-                                                    <ExpandMore style={{ fontSize: 12 }} />
+                                                    <ExpandMore
+                                                      style={{ fontSize: 12 }}
+                                                    />
                                                   ) : (
-                                                    <ChevronRight style={{ fontSize: 12 }} />
+                                                    <ChevronRight
+                                                      style={{ fontSize: 12 }}
+                                                    />
                                                   )}
                                                 </span>
-                                                <TeamIcon style={{ fontSize: 14 }} className="text-emerald-500 flex-shrink-0" />
-                                                <span className="truncate font-semibold">{team.name}</span>
+                                                <TeamIcon
+                                                  style={{ fontSize: 14 }}
+                                                  className="text-emerald-500 flex-shrink-0"
+                                                />
+                                                <span className="truncate font-semibold">
+                                                  {team.name}
+                                                </span>
                                               </button>
 
                                               {isTeamExpanded && (
@@ -650,16 +772,25 @@ export default function OrgExplorer() {
                                                   {/* Team Manager */}
                                                   {team.manager && (
                                                     <button
-                                                      onClick={() => setSelectedEmployeeId(team.manager.id)}
+                                                      onClick={() =>
+                                                        setSelectedEmployeeId(
+                                                          team.manager.id,
+                                                        )
+                                                      }
                                                       className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold transition-all ${
-                                                        selectedEmployeeId === team.manager.id
-                                                          ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400'
+                                                        selectedEmployeeId ===
+                                                        team.manager.id
+                                                          ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                                                          : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400"
                                                       }`}
                                                     >
-                                                      <PersonIcon style={{ fontSize: 14 }} className="text-green-500 flex-shrink-0" />
+                                                      <PersonIcon
+                                                        style={{ fontSize: 14 }}
+                                                        className="text-green-500 flex-shrink-0"
+                                                      />
                                                       <span className="truncate font-semibold">
-                                                        [Lead] {team.manager.name}
+                                                        [Lead]{" "}
+                                                        {team.manager.name}
                                                       </span>
                                                     </button>
                                                   )}
@@ -668,15 +799,25 @@ export default function OrgExplorer() {
                                                   {team.members?.map((mem) => (
                                                     <button
                                                       key={mem.id}
-                                                      onClick={() => setSelectedEmployeeId(mem.id)}
+                                                      onClick={() =>
+                                                        setSelectedEmployeeId(
+                                                          mem.id,
+                                                        )
+                                                      }
                                                       className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-medium transition-all ${
-                                                        selectedEmployeeId === mem.id
-                                                          ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                                                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-500 dark:text-neutral-400'
+                                                        selectedEmployeeId ===
+                                                        mem.id
+                                                          ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                                                          : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-500 dark:text-neutral-400"
                                                       }`}
                                                     >
-                                                      <PersonIcon style={{ fontSize: 14 }} className="text-neutral-400 flex-shrink-0" />
-                                                      <span className="truncate">{mem.name}</span>
+                                                      <PersonIcon
+                                                        style={{ fontSize: 14 }}
+                                                        className="text-neutral-400 flex-shrink-0"
+                                                      />
+                                                      <span className="truncate">
+                                                        {mem.name}
+                                                      </span>
                                                       <span className="ml-auto text-[8px] bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-neutral-400 flex-shrink-0">
                                                         L{mem.roleLevel}
                                                       </span>
@@ -685,18 +826,18 @@ export default function OrgExplorer() {
                                                 </div>
                                               )}
                                             </div>
-                                          )
+                                          );
                                         })}
                                       </div>
                                     )}
                                   </div>
-                                )
+                                );
                               })}
                             </motion.div>
                           )}
                         </AnimatePresence>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               )}
@@ -706,7 +847,9 @@ export default function OrgExplorer() {
             <div className="xl:col-span-7 space-y-6">
               {detailsLoading ? (
                 <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm">
-                  <p className="text-sm text-neutral-400">Fetching detailed organizational profile data...</p>
+                  <p className="text-sm text-neutral-400">
+                    Fetching detailed organizational profile data...
+                  </p>
                 </div>
               ) : employeeDetails ? (
                 <div className="space-y-6">
@@ -720,30 +863,41 @@ export default function OrgExplorer() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-lg font-bold text-neutral-800 dark:text-white">
-                          {employeeDetails.employee.firstName} {employeeDetails.employee.lastName}
+                          {employeeDetails.employee.firstName}{" "}
+                          {employeeDetails.employee.lastName}
                         </h2>
                         <span className="badge badge-primary text-xs">
-                          {employeeDetails.employee.designation || 'Staff'}
+                          {employeeDetails.employee.designation || "Staff"}
                         </span>
                         <span className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded-full font-bold">
-                          Level {employeeDetails.employee.level ?? employeeDetails.employee.role?.level}
+                          Level{" "}
+                          {employeeDetails.employee.level ??
+                            employeeDetails.employee.role?.level}
                         </span>
                       </div>
-                      <p className="text-sm text-neutral-400 mt-1">{employeeDetails.employee.email}</p>
+                      <p className="text-sm text-neutral-400 mt-1">
+                        {employeeDetails.employee.email}
+                      </p>
                       <p className="text-xs text-neutral-400 mt-0.5">
-                        Code: {employeeDetails.employee.employeeCode || 'N/A'} • Status:{' '}
+                        Code: {employeeDetails.employee.employeeCode || "N/A"} •
+                        Status:{" "}
                         <span
                           className={`font-semibold ${
-                            employeeDetails.employee.isActive ? 'text-emerald-500' : 'text-red-500'
+                            employeeDetails.employee.isActive
+                              ? "text-emerald-500"
+                              : "text-red-500"
                           }`}
                         >
-                          {employeeDetails.employee.isActive ? 'Active' : 'Inactive'}
+                          {employeeDetails.employee.isActive
+                            ? "Active"
+                            : "Inactive"}
                         </span>
                       </p>
                     </div>
 
                     <div className="flex-shrink-0 self-stretch sm:self-auto flex items-end sm:items-center justify-end">
-                      {activePerspective?.perspectiveTargetId === employeeDetails.employee.id ? (
+                      {activePerspective?.perspectiveTargetId ===
+                      employeeDetails.employee.id ? (
                         <button
                           onClick={handleExitImpersonation}
                           className="w-full sm:w-auto flex items-center gap-1.5 btn-primary bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2"
@@ -770,10 +924,14 @@ export default function OrgExplorer() {
                         Reporting Hierarchy
                       </h3>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-neutral-400">Reporting Manager</p>
+                        <p className="text-[10px] uppercase font-bold text-neutral-400">
+                          Reporting Manager
+                        </p>
                         {employeeDetails.manager ? (
                           <button
-                            onClick={() => setSelectedEmployeeId(employeeDetails.manager.id)}
+                            onClick={() =>
+                              setSelectedEmployeeId(employeeDetails.manager.id)
+                            }
                             className="mt-1.5 flex items-center gap-3 w-full p-2.5 rounded-xl border border-neutral-100 dark:border-gray-850 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-left transition-all"
                           >
                             <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -789,13 +947,16 @@ export default function OrgExplorer() {
                             </div>
                           </button>
                         ) : (
-                          <p className="text-xs text-neutral-400 mt-1 italic">No reporting manager assigned (Top Level).</p>
+                          <p className="text-xs text-neutral-400 mt-1 italic">
+                            No reporting manager assigned (Top Level).
+                          </p>
                         )}
                       </div>
 
                       <div>
                         <p className="text-[10px] uppercase font-bold text-neutral-400">
-                          Direct Reports ({employeeDetails.directReports.length})
+                          Direct Reports ({employeeDetails.directReports.length}
+                          )
                         </p>
                         <div className="mt-2 space-y-1 max-h-40 overflow-y-auto pr-1">
                           {employeeDetails.directReports.map((report) => (
@@ -805,14 +966,18 @@ export default function OrgExplorer() {
                               className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400"
                             >
                               <ChevronRight style={{ fontSize: 14 }} />
-                              <span className="truncate">{report.firstName} {report.lastName}</span>
+                              <span className="truncate">
+                                {report.firstName} {report.lastName}
+                              </span>
                               <span className="ml-auto text-[9px] text-neutral-400 truncate">
                                 {report.designation}
                               </span>
                             </button>
                           ))}
                           {employeeDetails.directReports.length === 0 && (
-                            <p className="text-xs text-neutral-400 mt-1 italic">No subordinates report to this user.</p>
+                            <p className="text-xs text-neutral-400 mt-1 italic">
+                              No subordinates report to this user.
+                            </p>
                           )}
                         </div>
                       </div>
@@ -825,35 +990,58 @@ export default function OrgExplorer() {
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl text-center">
-                          <p className="text-[10px] uppercase font-bold text-neutral-400">KPI Target Score</p>
-                          <p className="text-xl font-bold text-primary-500 mt-1">{employeeDetails.performanceScore}%</p>
-                          <p className="text-[9px] text-neutral-400 mt-0.5">avg monthly achievement</p>
+                          <p className="text-[10px] uppercase font-bold text-neutral-400">
+                            KPI Target Score
+                          </p>
+                          <p className="text-xl font-bold text-primary-500 mt-1">
+                            {employeeDetails.performanceScore}%
+                          </p>
+                          <p className="text-[9px] text-neutral-400 mt-0.5">
+                            avg monthly achievement
+                          </p>
                         </div>
                         <div className="p-3 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl text-center">
-                          <p className="text-[10px] uppercase font-bold text-neutral-400">Tasks Completed</p>
-                          <p className="text-xl font-bold text-emerald-500 mt-1">
-                            {employeeDetails.tasks.filter((t) => t.status === 'completed').length} /{' '}
-                            {employeeDetails.tasks.length}
+                          <p className="text-[10px] uppercase font-bold text-neutral-400">
+                            Tasks Completed
                           </p>
-                          <p className="text-[9px] text-neutral-400 mt-0.5">assigned task ratio</p>
+                          <p className="text-xl font-bold text-emerald-500 mt-1">
+                            {
+                              employeeDetails.tasks.filter(
+                                (t) => t.status === "completed",
+                              ).length
+                            }{" "}
+                            / {employeeDetails.tasks.length}
+                          </p>
+                          <p className="text-[9px] text-neutral-400 mt-0.5">
+                            assigned task ratio
+                          </p>
                         </div>
                       </div>
 
                       {/* Mock Attendance widget */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <p className="text-[10px] uppercase font-bold text-neutral-400">Attendance Checker</p>
+                          <p className="text-[10px] uppercase font-bold text-neutral-400">
+                            Attendance Checker
+                          </p>
                           <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
                             {employeeDetails.attendanceRate}% Present
                           </span>
                         </div>
                         <div className="flex gap-2.5">
                           {employeeDetails.attendanceGrid.map((day, idx) => (
-                            <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 p-2 bg-neutral-50 dark:bg-neutral-800/45 rounded-lg border border-neutral-100 dark:border-gray-850">
-                              <span className="text-[9px] font-bold text-neutral-400">{day.day}</span>
+                            <div
+                              key={idx}
+                              className="flex-1 flex flex-col items-center gap-1.5 p-2 bg-neutral-50 dark:bg-neutral-800/45 rounded-lg border border-neutral-100 dark:border-gray-850"
+                            >
+                              <span className="text-[9px] font-bold text-neutral-400">
+                                {day.day}
+                              </span>
                               <div
                                 className={`w-3.5 h-3.5 rounded-full ${
-                                  day.status === 'present' ? 'bg-emerald-500' : 'bg-red-500'
+                                  day.status === "present"
+                                    ? "bg-emerald-500"
+                                    : "bg-red-500"
                                 }`}
                               />
                             </div>
@@ -880,18 +1068,21 @@ export default function OrgExplorer() {
                         </thead>
                         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                           {employeeDetails.tasks.map((task) => (
-                            <tr key={task.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                            <tr
+                              key={task.id}
+                              className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                            >
                               <td className="py-2.5 font-semibold text-neutral-700 dark:text-neutral-200">
                                 {task.title}
                               </td>
                               <td className="py-2.5">
                                 <span
                                   className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                    task.priority === 'high'
-                                      ? 'bg-red-100 dark:bg-red-950/20 text-red-600 dark:text-red-400'
-                                      : task.priority === 'medium'
-                                      ? 'bg-amber-100 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400'
-                                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'
+                                    task.priority === "high"
+                                      ? "bg-red-100 dark:bg-red-950/20 text-red-600 dark:text-red-400"
+                                      : task.priority === "medium"
+                                        ? "bg-amber-100 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400"
+                                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
                                   }`}
                                 >
                                   {task.priority}
@@ -900,10 +1091,12 @@ export default function OrgExplorer() {
                               <td className="py-2.5">
                                 <span
                                   className={`flex items-center gap-1 font-semibold ${
-                                    task.status === 'completed' ? 'text-emerald-500' : 'text-amber-500'
+                                    task.status === "completed"
+                                      ? "text-emerald-500"
+                                      : "text-amber-500"
                                   }`}
                                 >
-                                  {task.status === 'completed' ? (
+                                  {task.status === "completed" ? (
                                     <CheckIcon style={{ fontSize: 14 }} />
                                   ) : (
                                     <PendingIcon style={{ fontSize: 14 }} />
@@ -912,13 +1105,18 @@ export default function OrgExplorer() {
                                 </span>
                               </td>
                               <td className="py-2.5 text-neutral-400">
-                                {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No Due Date'}
+                                {task.dueDate
+                                  ? new Date(task.dueDate).toLocaleDateString()
+                                  : "No Due Date"}
                               </td>
                             </tr>
                           ))}
                           {employeeDetails.tasks.length === 0 && (
                             <tr>
-                              <td colSpan={4} className="text-center py-4 text-neutral-400 italic">
+                              <td
+                                colSpan={4}
+                                className="text-center py-4 text-neutral-400 italic"
+                              >
                                 No assigned tasks.
                               </td>
                             </tr>
@@ -945,29 +1143,38 @@ export default function OrgExplorer() {
                               {new Date(act.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <p className="text-[11px] text-neutral-400">{act.description || 'No description provided.'}</p>
+                          <p className="text-[11px] text-neutral-400">
+                            {act.description || "No description provided."}
+                          </p>
                         </div>
                       ))}
                       {employeeDetails.activities.length === 0 && (
-                        <p className="text-xs text-neutral-400 italic">No recent system activities recorded.</p>
+                        <p className="text-xs text-neutral-400 italic">
+                          No recent system activities recorded.
+                        </p>
                       )}
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm">
-                  <p className="text-sm text-neutral-400">Select an employee from the hierarchy list to view detail profiles.</p>
+                  <p className="text-sm text-neutral-400">
+                    Select an employee from the hierarchy list to view detail
+                    profiles.
+                  </p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {activeTab === 'analytics' && (
+        {activeTab === "analytics" && (
           <div className="space-y-6">
             {analyticsLoading ? (
               <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm">
-                <p className="text-sm text-neutral-400">Retrieving system-wide analytics data...</p>
+                <p className="text-sm text-neutral-400">
+                  Retrieving system-wide analytics data...
+                </p>
               </div>
             ) : analytics ? (
               <>
@@ -975,7 +1182,9 @@ export default function OrgExplorer() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Businesses</p>
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                        Total Businesses
+                      </p>
                       <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
                         {analytics.totalBusinesses}
                       </h4>
@@ -987,7 +1196,9 @@ export default function OrgExplorer() {
 
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Verticals / Teams</p>
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                        Total Verticals / Teams
+                      </p>
                       <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
                         {analytics.totalVerticals} / {analytics.totalTeams}
                       </h4>
@@ -999,9 +1210,14 @@ export default function OrgExplorer() {
 
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Employees</p>
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                        Total Employees
+                      </p>
                       <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
-                        {analytics.totalEmployees} <span className="text-xs text-neutral-400">({analytics.totalActiveUsers} Active)</span>
+                        {analytics.totalEmployees}{" "}
+                        <span className="text-xs text-neutral-400">
+                          ({analytics.totalActiveUsers} Active)
+                        </span>
                       </h4>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
@@ -1011,7 +1227,9 @@ export default function OrgExplorer() {
 
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Estimated Revenue</p>
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                        Estimated Revenue
+                      </p>
                       <h4 className="text-2xl font-bold text-neutral-800 dark:text-white mt-1">
                         ${analytics.totalRevenue.toLocaleString()}
                       </h4>
@@ -1031,16 +1249,50 @@ export default function OrgExplorer() {
                     </h3>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={analytics.departmentPerformance} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-neutral-800" />
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} domain={[0, 100]} />
-                          <ChartTooltip
-                            contentStyle={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: '12px' }}
-                            labelStyle={{ fontWeight: 'bold' }}
+                        <BarChart
+                          data={analytics.departmentPerformance}
+                          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                            stroke="#e2e8f0"
+                            className="dark:stroke-neutral-800"
                           />
-                          <Bar dataKey="taskCompletionRate" name="Task Completion Rate %" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={32} />
-                          <Bar dataKey="performanceScore" name="Performance Score %" fill="#10b981" radius={[4, 4, 0, 0]} barSize={32} />
+                          <XAxis
+                            dataKey="name"
+                            stroke="#94a3b8"
+                            fontSize={11}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            stroke="#94a3b8"
+                            fontSize={11}
+                            tickLine={false}
+                            domain={[0, 100]}
+                          />
+                          <ChartTooltip
+                            contentStyle={{
+                              background: "#fff",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "12px",
+                            }}
+                            labelStyle={{ fontWeight: "bold" }}
+                          />
+                          <Bar
+                            dataKey="taskCompletionRate"
+                            name="Task Completion Rate %"
+                            fill="#3b82f6"
+                            radius={[4, 4, 0, 0]}
+                            barSize={32}
+                          />
+                          <Bar
+                            dataKey="performanceScore"
+                            name="Performance Score %"
+                            fill="#10b981"
+                            radius={[4, 4, 0, 0]}
+                            barSize={32}
+                          />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -1054,15 +1306,40 @@ export default function OrgExplorer() {
                       </h3>
                       <div className="flex justify-center mb-6">
                         <div className="relative w-32 h-32 flex items-center justify-center">
-                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="40" stroke="#f1f5f9" strokeWidth="8" fill="transparent" className="dark:stroke-neutral-800" />
-                            <circle cx="50" cy="50" r="40" stroke="#8b5cf6" strokeWidth="8" fill="transparent" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * analytics.kpiSummary) / 100} strokeLinecap="round" />
+                          <svg
+                            className="w-full h-full transform -rotate-90"
+                            viewBox="0 0 100 100"
+                          >
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              stroke="#f1f5f9"
+                              strokeWidth="8"
+                              fill="transparent"
+                              className="dark:stroke-neutral-800"
+                            />
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              stroke="#8b5cf6"
+                              strokeWidth="8"
+                              fill="transparent"
+                              strokeDasharray="251.2"
+                              strokeDashoffset={
+                                251.2 - (251.2 * analytics.kpiSummary) / 100
+                              }
+                              strokeLinecap="round"
+                            />
                           </svg>
                           <div className="absolute flex flex-col items-center">
                             <span className="text-2xl font-bold text-neutral-800 dark:text-white">
                               {analytics.kpiSummary}%
                             </span>
-                            <span className="text-[10px] font-bold text-neutral-400 uppercase">Average KPI</span>
+                            <span className="text-[10px] font-bold text-neutral-400 uppercase">
+                              Average KPI
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1071,7 +1348,11 @@ export default function OrgExplorer() {
                     <div className="grid grid-cols-2 gap-3 mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
                       <div className="text-center">
                         <p className="text-[10px] uppercase font-bold text-neutral-400 flex items-center justify-center gap-1">
-                          <PendingIcon className="text-amber-500" style={{ fontSize: 14 }} /> Pending Tasks
+                          <PendingIcon
+                            className="text-amber-500"
+                            style={{ fontSize: 14 }}
+                          />{" "}
+                          Pending Tasks
                         </p>
                         <p className="text-lg font-bold text-neutral-700 dark:text-slate-350 mt-1">
                           {analytics.pendingTasks}
@@ -1079,7 +1360,11 @@ export default function OrgExplorer() {
                       </div>
                       <div className="text-center">
                         <p className="text-[10px] uppercase font-bold text-neutral-400 flex items-center justify-center gap-1">
-                          <RuleIcon className="text-purple-500" style={{ fontSize: 14 }} /> Pending Approvals
+                          <RuleIcon
+                            className="text-purple-500"
+                            style={{ fontSize: 14 }}
+                          />{" "}
+                          Pending Approvals
                         </p>
                         <p className="text-lg font-bold text-neutral-700 dark:text-slate-350 mt-1">
                           {analytics.pendingApprovals}
@@ -1107,7 +1392,10 @@ export default function OrgExplorer() {
                       </thead>
                       <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                         {analytics.departmentPerformance.map((dept, i) => (
-                          <tr key={i} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                          <tr
+                            key={i}
+                            className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                          >
                             <td className="py-3 font-semibold text-slate-750 dark:text-neutral-200">
                               {dept.name}
                             </td>
@@ -1133,61 +1421,63 @@ export default function OrgExplorer() {
                 </div>
               </>
             ) : (
-              <p className="text-center text-xs text-neutral-400 py-6">Failed to load analytics.</p>
+              <p className="text-center text-xs text-neutral-400 py-6">
+                Failed to load analytics.
+              </p>
             )}
           </div>
         )}
 
-        {activeTab === 'control' && (
+        {activeTab === "control" && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {/* Control Sidebar Tabs */}
             <div className="xl:col-span-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-sm flex flex-row xl:flex-col gap-1 overflow-x-auto">
               <button
-                onClick={() => setActiveConfigTab('users')}
+                onClick={() => setActiveConfigTab("users")}
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
-                  activeConfigTab === 'users'
-                    ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                  activeConfigTab === "users"
+                    ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                 }`}
               >
                 <PersonIcon style={{ fontSize: 16 }} /> User Configurations
               </button>
               <button
-                onClick={() => setActiveConfigTab('businesses')}
+                onClick={() => setActiveConfigTab("businesses")}
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
-                  activeConfigTab === 'businesses'
-                    ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                  activeConfigTab === "businesses"
+                    ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                 }`}
               >
                 <BusinessIcon style={{ fontSize: 16 }} /> Businesses
               </button>
               <button
-                onClick={() => setActiveConfigTab('verticals')}
+                onClick={() => setActiveConfigTab("verticals")}
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
-                  activeConfigTab === 'verticals'
-                    ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                  activeConfigTab === "verticals"
+                    ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                 }`}
               >
                 <VerticalIcon style={{ fontSize: 16 }} /> Verticals
               </button>
               <button
-                onClick={() => setActiveConfigTab('teams')}
+                onClick={() => setActiveConfigTab("teams")}
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
-                  activeConfigTab === 'teams'
-                    ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                  activeConfigTab === "teams"
+                    ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                 }`}
               >
                 <TeamIcon style={{ fontSize: 16 }} /> Teams
               </button>
               <button
-                onClick={() => setActiveConfigTab('audit')}
+                onClick={() => setActiveConfigTab("audit")}
                 className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
-                  activeConfigTab === 'audit'
-                    ? 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                  activeConfigTab === "audit"
+                    ? "bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                 }`}
               >
                 <AssessmentIcon style={{ fontSize: 16 }} /> Audit Trail Logs
@@ -1197,13 +1487,17 @@ export default function OrgExplorer() {
             {/* Control Panel view */}
             <div className="xl:col-span-9 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm">
               {configLoading ? (
-                <p className="text-center text-xs text-neutral-400 py-12">Refreshing panel data configurations...</p>
+                <p className="text-center text-xs text-neutral-400 py-12">
+                  Refreshing panel data configurations...
+                </p>
               ) : (
                 <>
-                  {activeConfigTab === 'users' && (
+                  {activeConfigTab === "users" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">User Administration</h3>
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">
+                          User Administration
+                        </h3>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
@@ -1218,37 +1512,48 @@ export default function OrgExplorer() {
                           </thead>
                           <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.users.map((u) => (
-                              <tr key={u.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                              <tr
+                                key={u.id}
+                                className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                              >
                                 <td className="py-2.5">
                                   <p className="font-semibold text-neutral-800 dark:text-neutral-200">
                                     {u.firstName} {u.lastName}
                                   </p>
-                                  <p className="text-[10px] text-neutral-400">{u.email}</p>
+                                  <p className="text-[10px] text-neutral-400">
+                                    {u.email}
+                                  </p>
                                 </td>
                                 <td className="py-2.5">
                                   <p className="font-semibold text-neutral-700 dark:text-slate-350">
-                                    {u.designation || 'Staff'}
+                                    {u.designation || "Staff"}
                                   </p>
-                                  <p className="text-[10px] text-neutral-400">Level {u.level ?? u.role?.level}</p>
+                                  <p className="text-[10px] text-neutral-400">
+                                    Level {u.level ?? u.role?.level}
+                                  </p>
                                 </td>
                                 <td className="py-2.5">
-                                  <p className="font-medium text-neutral-600 dark:text-neutral-400">{u.business?.name}</p>
-                                  <p className="text-[10px] text-neutral-400">{u.team?.name || 'No Team'}</p>
+                                  <p className="font-medium text-neutral-600 dark:text-neutral-400">
+                                    {u.business?.name}
+                                  </p>
+                                  <p className="text-[10px] text-neutral-400">
+                                    {u.team?.name || "No Team"}
+                                  </p>
                                 </td>
                                 <td className="py-2.5">
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                       u.isActive
-                                        ? 'bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600'
-                                        : 'bg-red-100 dark:bg-red-950/20 text-red-650'
+                                        ? "bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600"
+                                        : "bg-red-100 dark:bg-red-950/20 text-red-650"
                                     }`}
                                   >
-                                    {u.isActive ? 'Active' : 'Inactive'}
+                                    {u.isActive ? "Active" : "Inactive"}
                                   </span>
                                 </td>
                                 <td className="py-2.5 text-right">
                                   <button
-                                    onClick={() => openEditModal('user', u)}
+                                    onClick={() => openEditModal("user", u)}
                                     className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
@@ -1262,12 +1567,14 @@ export default function OrgExplorer() {
                     </div>
                   )}
 
-                  {activeConfigTab === 'businesses' && (
+                  {activeConfigTab === "businesses" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">Businesses</h3>
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">
+                          Businesses
+                        </h3>
                         <button
-                          onClick={() => openCreateModal('business')}
+                          onClick={() => openCreateModal("business")}
                           className="btn-primary flex items-center gap-1 text-xs px-3 py-1.5"
                         >
                           <AddIcon style={{ fontSize: 16 }} /> Create Business
@@ -1285,23 +1592,30 @@ export default function OrgExplorer() {
                           </thead>
                           <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.businesses.map((b) => (
-                              <tr key={b.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
-                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">{b.name}</td>
-                                <td className="py-2.5 text-neutral-400 font-mono">{b.code}</td>
+                              <tr
+                                key={b.id}
+                                className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                              >
+                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">
+                                  {b.name}
+                                </td>
+                                <td className="py-2.5 text-neutral-400 font-mono">
+                                  {b.code}
+                                </td>
                                 <td className="py-2.5">
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                       b.isActive
-                                        ? 'bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600'
-                                        : 'bg-red-100 dark:bg-red-950/20 text-red-650'
+                                        ? "bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600"
+                                        : "bg-red-100 dark:bg-red-950/20 text-red-650"
                                     }`}
                                   >
-                                    {b.isActive ? 'Active' : 'Inactive'}
+                                    {b.isActive ? "Active" : "Inactive"}
                                   </span>
                                 </td>
                                 <td className="py-2.5 text-right">
                                   <button
-                                    onClick={() => openEditModal('business', b)}
+                                    onClick={() => openEditModal("business", b)}
                                     className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
@@ -1315,12 +1629,14 @@ export default function OrgExplorer() {
                     </div>
                   )}
 
-                  {activeConfigTab === 'verticals' && (
+                  {activeConfigTab === "verticals" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">Verticals</h3>
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">
+                          Verticals
+                        </h3>
                         <button
-                          onClick={() => openCreateModal('vertical')}
+                          onClick={() => openCreateModal("vertical")}
                           className="btn-primary flex items-center gap-1 text-xs px-3 py-1.5"
                         >
                           <AddIcon style={{ fontSize: 16 }} /> Create Vertical
@@ -1339,9 +1655,16 @@ export default function OrgExplorer() {
                           </thead>
                           <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.verticals.map((v) => (
-                              <tr key={v.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
-                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">{v.name}</td>
-                                <td className="py-2.5 text-neutral-400 font-mono">{v.code}</td>
+                              <tr
+                                key={v.id}
+                                className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                              >
+                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">
+                                  {v.name}
+                                </td>
+                                <td className="py-2.5 text-neutral-400 font-mono">
+                                  {v.code}
+                                </td>
                                 <td className="py-2.5 font-medium text-neutral-700 dark:text-neutral-300">
                                   {v.business?.name}
                                 </td>
@@ -1349,16 +1672,16 @@ export default function OrgExplorer() {
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                       v.isActive
-                                        ? 'bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600'
-                                        : 'bg-red-100 dark:bg-red-950/20 text-red-650'
+                                        ? "bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600"
+                                        : "bg-red-100 dark:bg-red-950/20 text-red-650"
                                     }`}
                                   >
-                                    {v.isActive ? 'Active' : 'Inactive'}
+                                    {v.isActive ? "Active" : "Inactive"}
                                   </span>
                                 </td>
                                 <td className="py-2.5 text-right">
                                   <button
-                                    onClick={() => openEditModal('vertical', v)}
+                                    onClick={() => openEditModal("vertical", v)}
                                     className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
@@ -1372,12 +1695,14 @@ export default function OrgExplorer() {
                     </div>
                   )}
 
-                  {activeConfigTab === 'teams' && (
+                  {activeConfigTab === "teams" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">Teams</h3>
+                        <h3 className="text-sm font-bold text-neutral-800 dark:text-white">
+                          Teams
+                        </h3>
                         <button
-                          onClick={() => openCreateModal('team')}
+                          onClick={() => openCreateModal("team")}
                           className="btn-primary flex items-center gap-1 text-xs px-3 py-1.5"
                         >
                           <AddIcon style={{ fontSize: 16 }} /> Create Team
@@ -1396,26 +1721,34 @@ export default function OrgExplorer() {
                           </thead>
                           <tbody className="divide-y divide-neutral-100 dark:divide-gray-850">
                             {configLists.teams.map((t) => (
-                              <tr key={t.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
-                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">{t.name}</td>
-                                <td className="py-2.5 text-neutral-400 font-mono">{t.code}</td>
+                              <tr
+                                key={t.id}
+                                className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                              >
+                                <td className="py-2.5 font-semibold text-neutral-800 dark:text-neutral-200">
+                                  {t.name}
+                                </td>
+                                <td className="py-2.5 text-neutral-400 font-mono">
+                                  {t.code}
+                                </td>
                                 <td className="py-2.5 font-medium text-neutral-700 dark:text-neutral-300">
-                                  {t.business?.name} / {t.vertical?.name || 'No Vertical'}
+                                  {t.business?.name} /{" "}
+                                  {t.vertical?.name || "No Vertical"}
                                 </td>
                                 <td className="py-2.5">
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                       t.isActive
-                                        ? 'bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600'
-                                        : 'bg-red-100 dark:bg-red-950/20 text-red-650'
+                                        ? "bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600"
+                                        : "bg-red-100 dark:bg-red-950/20 text-red-650"
                                     }`}
                                   >
-                                    {t.isActive ? 'Active' : 'Inactive'}
+                                    {t.isActive ? "Active" : "Inactive"}
                                   </span>
                                 </td>
                                 <td className="py-2.5 text-right">
                                   <button
-                                    onClick={() => openEditModal('team', t)}
+                                    onClick={() => openEditModal("team", t)}
                                     className="p-1 text-neutral-400 hover:text-primary-500 rounded"
                                   >
                                     <EditIcon style={{ fontSize: 16 }} />
@@ -1429,7 +1762,7 @@ export default function OrgExplorer() {
                     </div>
                   )}
 
-                  {activeConfigTab === 'audit' && (
+                  {activeConfigTab === "audit" && (
                     <div className="space-y-4">
                       <h3 className="text-sm font-bold text-neutral-800 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-3">
                         System Audit Trail Logs
@@ -1446,13 +1779,18 @@ export default function OrgExplorer() {
                           </thead>
                           <tbody className="divide-y divide-neutral-100 dark:divide-gray-850 text-neutral-700 dark:text-slate-350">
                             {auditLogs.map((log, i) => (
-                              <tr key={i} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
-                                <td className="py-2 font-semibold">{log.action}</td>
+                              <tr
+                                key={i}
+                                className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                              >
+                                <td className="py-2 font-semibold">
+                                  {log.action}
+                                </td>
                                 <td className="py-2">
-                                  {log.entityType} ({log.entityId || 'N/A'})
+                                  {log.entityType} ({log.entityId || "N/A"})
                                 </td>
                                 <td className="py-2 font-mono text-[10px]">
-                                  {log.ipAddress || '127.0.0.1'}
+                                  {log.ipAddress || "127.0.0.1"}
                                 </td>
                                 <td className="py-2 text-[10px] text-neutral-400">
                                   {new Date(log.createdAt).toLocaleString()}
@@ -1461,7 +1799,10 @@ export default function OrgExplorer() {
                             ))}
                             {auditLogs.length === 0 && (
                               <tr>
-                                <td colSpan={4} className="text-center py-6 text-neutral-400 italic">
+                                <td
+                                  colSpan={4}
+                                  className="text-center py-6 text-neutral-400 italic"
+                                >
                                   No audit trail events captured.
                                 </td>
                               </tr>
@@ -1501,44 +1842,66 @@ export default function OrgExplorer() {
               </div>
 
               <form onSubmit={handleCrudSubmit} className="space-y-4">
-                {crudError && <div className="text-xs bg-red-500/10 text-red-500 p-2.5 rounded-xl">{crudError}</div>}
+                {crudError && (
+                  <div className="text-xs bg-red-500/10 text-red-500 p-2.5 rounded-xl">
+                    {crudError}
+                  </div>
+                )}
 
                 {/* Form fields depending on crudType */}
-                {(crudType === 'business' || crudType === 'vertical' || crudType === 'team') && (
+                {(crudType === "business" ||
+                  crudType === "vertical" ||
+                  crudType === "team") && (
                   <>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Name</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        Name
+                      </label>
                       <input
                         type="text"
                         required
-                        value={crudForm.name || ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, name: e.target.value })}
+                        value={crudForm.name || ""}
+                        onChange={(e) =>
+                          setCrudForm({ ...crudForm, name: e.target.value })
+                        }
                         className="input-field py-2 text-sm w-full"
                         placeholder="e.g. Sales Division"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Code</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        Code
+                      </label>
                       <input
                         type="text"
                         required
-                        value={crudForm.code || ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, code: e.target.value })}
+                        value={crudForm.code || ""}
+                        onChange={(e) =>
+                          setCrudForm({ ...crudForm, code: e.target.value })
+                        }
                         className="input-field py-2 text-sm w-full"
                         placeholder="e.g. sales-div"
                       />
                     </div>
 
-                    {crudMode === 'edit' && (
+                    {crudMode === "edit" && (
                       <div className="flex items-center gap-2 mt-2">
                         <input
                           type="checkbox"
                           id="isActive"
                           checked={crudForm.isActive !== false}
-                          onChange={(e) => setCrudForm({ ...crudForm, isActive: e.target.checked })}
+                          onChange={(e) =>
+                            setCrudForm({
+                              ...crudForm,
+                              isActive: e.target.checked,
+                            })
+                          }
                           className="w-4 h-4 rounded text-primary-500 border-neutral-300 dark:border-neutral-800"
                         />
-                        <label htmlFor="isActive" className="text-xs font-semibold text-neutral-700 dark:text-slate-350">
+                        <label
+                          htmlFor="isActive"
+                          className="text-xs font-semibold text-neutral-700 dark:text-slate-350"
+                        >
                           Active Status
                         </label>
                       </div>
@@ -1546,13 +1909,17 @@ export default function OrgExplorer() {
                   </>
                 )}
 
-                {crudType === 'vertical' && crudMode === 'create' && (
+                {crudType === "vertical" && crudMode === "create" && (
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Business Unit</label>
+                    <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                      Business Unit
+                    </label>
                     <select
                       required
-                      value={crudForm.businessId || ''}
-                      onChange={(e) => setCrudForm({ ...crudForm, businessId: e.target.value })}
+                      value={crudForm.businessId || ""}
+                      onChange={(e) =>
+                        setCrudForm({ ...crudForm, businessId: e.target.value })
+                      }
                       className="input-field py-2 text-sm w-full"
                     >
                       <option value="">Select Business</option>
@@ -1565,15 +1932,22 @@ export default function OrgExplorer() {
                   </div>
                 )}
 
-                {crudType === 'team' && (
+                {crudType === "team" && (
                   <>
-                    {crudMode === 'create' && (
+                    {crudMode === "create" && (
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Business Unit</label>
+                        <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                          Business Unit
+                        </label>
                         <select
                           required
-                          value={crudForm.businessId || ''}
-                          onChange={(e) => setCrudForm({ ...crudForm, businessId: e.target.value })}
+                          value={crudForm.businessId || ""}
+                          onChange={(e) =>
+                            setCrudForm({
+                              ...crudForm,
+                              businessId: e.target.value,
+                            })
+                          }
                           className="input-field py-2 text-sm w-full"
                         >
                           <option value="">Select Business</option>
@@ -1586,15 +1960,26 @@ export default function OrgExplorer() {
                       </div>
                     )}
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Vertical Assignment</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        Vertical Assignment
+                      </label>
                       <select
-                        value={crudForm.verticalId || ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, verticalId: e.target.value })}
+                        value={crudForm.verticalId || ""}
+                        onChange={(e) =>
+                          setCrudForm({
+                            ...crudForm,
+                            verticalId: e.target.value,
+                          })
+                        }
                         className="input-field py-2 text-sm w-full"
                       >
                         <option value="">No Vertical</option>
                         {configLists.verticals
-                          .filter((v) => !crudForm.businessId || v.businessId === crudForm.businessId)
+                          .filter(
+                            (v) =>
+                              !crudForm.businessId ||
+                              v.businessId === crudForm.businessId,
+                          )
                           .map((v) => (
                             <option key={v.id} value={v.id}>
                               {v.name} ({v.business?.name})
@@ -1605,28 +1990,46 @@ export default function OrgExplorer() {
                   </>
                 )}
 
-                {crudType === 'user' && (
+                {crudType === "user" && (
                   <>
                     <div>
                       <p className="text-xs text-slate-450">
-                        Configuring User Profile for: <strong>{crudForm.firstName} {crudForm.lastName}</strong> ({crudForm.email})
+                        Configuring User Profile for:{" "}
+                        <strong>
+                          {crudForm.firstName} {crudForm.lastName}
+                        </strong>{" "}
+                        ({crudForm.email})
                       </p>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Designation</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        Designation
+                      </label>
                       <input
                         type="text"
-                        value={crudForm.designation || ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, designation: e.target.value })}
+                        value={crudForm.designation || ""}
+                        onChange={(e) =>
+                          setCrudForm({
+                            ...crudForm,
+                            designation: e.target.value,
+                          })
+                        }
                         className="input-field py-2 text-sm w-full"
                         placeholder="e.g. Sales Executive"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Level</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        Level
+                      </label>
                       <select
-                        value={crudForm.level ?? ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, level: Number(e.target.value) })}
+                        value={crudForm.level ?? ""}
+                        onChange={(e) =>
+                          setCrudForm({
+                            ...crudForm,
+                            level: Number(e.target.value),
+                          })
+                        }
                         className="input-field py-2 text-sm w-full"
                       >
                         <option value="5">Level 5 (Super Admin)</option>
@@ -1638,10 +2041,17 @@ export default function OrgExplorer() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Business Unit</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        Business Unit
+                      </label>
                       <select
-                        value={crudForm.businessId || ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, businessId: e.target.value })}
+                        value={crudForm.businessId || ""}
+                        onChange={(e) =>
+                          setCrudForm({
+                            ...crudForm,
+                            businessId: e.target.value,
+                          })
+                        }
                         className="input-field py-2 text-sm w-full"
                       >
                         {configLists.businesses.map((b) => (
@@ -1652,10 +2062,17 @@ export default function OrgExplorer() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">Team Unit</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        Team Unit
+                      </label>
                       <select
-                        value={crudForm.teamId || ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, teamId: e.target.value || null })}
+                        value={crudForm.teamId || ""}
+                        onChange={(e) =>
+                          setCrudForm({
+                            ...crudForm,
+                            teamId: e.target.value || null,
+                          })
+                        }
                         className="input-field py-2 text-sm w-full"
                       >
                         <option value="">No Assigned Team</option>
@@ -1669,10 +2086,14 @@ export default function OrgExplorer() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">System Role</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-450 block mb-1">
+                        System Role
+                      </label>
                       <select
-                        value={crudForm.roleId || ''}
-                        onChange={(e) => setCrudForm({ ...crudForm, roleId: e.target.value })}
+                        value={crudForm.roleId || ""}
+                        onChange={(e) =>
+                          setCrudForm({ ...crudForm, roleId: e.target.value })
+                        }
                         className="input-field py-2 text-sm w-full"
                       >
                         {configLists.roles.map((r) => (
@@ -1687,10 +2108,18 @@ export default function OrgExplorer() {
                         type="checkbox"
                         id="userIsActive"
                         checked={crudForm.isActive !== false}
-                        onChange={(e) => setCrudForm({ ...crudForm, isActive: e.target.checked })}
+                        onChange={(e) =>
+                          setCrudForm({
+                            ...crudForm,
+                            isActive: e.target.checked,
+                          })
+                        }
                         className="w-4 h-4 rounded text-primary-500 border-neutral-300 dark:border-neutral-800"
                       />
-                      <label htmlFor="userIsActive" className="text-xs font-semibold text-neutral-700 dark:text-slate-355">
+                      <label
+                        htmlFor="userIsActive"
+                        className="text-xs font-semibold text-neutral-700 dark:text-slate-355"
+                      >
                         Active Account
                       </label>
                     </div>
@@ -1710,7 +2139,7 @@ export default function OrgExplorer() {
                     disabled={crudSubmitting}
                     className="btn-primary text-xs px-4 py-2 bg-primary-600 text-white rounded-lg shadow-sm"
                   >
-                    {crudSubmitting ? 'Submitting...' : 'Save Configurations'}
+                    {crudSubmitting ? "Submitting..." : "Save Configurations"}
                   </button>
                 </div>
               </form>
@@ -1719,5 +2148,5 @@ export default function OrgExplorer() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
