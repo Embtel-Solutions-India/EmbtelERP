@@ -304,18 +304,16 @@ workspaceRouter.get(
 workspaceRouter.get(
   "/activities",
   asyncHandler(async (req, res) => {
-    const { employeeIds, businessIds } = await resolveAggregationScope(
+    const { employeeIds } = await resolveAggregationScope(
       req.scope!,
       req.currentPerspective ?? null,
     );
 
+    // Hierarchy-scoped by actor: executive/intern see their own activity,
+    // managers/heads see their whole subtree (visibleEmployees already covers it),
+    // owner/super-admin see the org. No business-wide fallback.
     const activities = await prisma.activity.findMany({
-      where: {
-        OR: [
-          ...(employeeIds.length ? [{ actorId: { in: employeeIds } }] : []),
-          ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
-        ],
-      },
+      where: { actorId: { in: employeeIds.length ? employeeIds : ["__none__"] } },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {

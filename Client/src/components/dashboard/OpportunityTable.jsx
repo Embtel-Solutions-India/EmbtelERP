@@ -31,8 +31,33 @@ function ProbabilityBar({ value }) {
   )
 }
 
+const PROBABILITY_BY_STATUS = {
+  NEW: 10, CONTACTED: 25, CONSULTATION_SCHEDULED: 40, DOCUMENTS_REQUESTED: 55, QUALIFIED: 75,
+}
+const STAGE_LABEL = {
+  NEW: 'New', CONTACTED: 'Contacted', CONSULTATION_SCHEDULED: 'Consultation',
+  DOCUMENTS_REQUESTED: 'Documents', QUALIFIED: 'Qualified',
+}
+const ACTIVE_STATUSES = ['NEW', 'CONTACTED', 'CONSULTATION_SCHEDULED', 'DOCUMENTS_REQUESTED', 'QUALIFIED']
+
 export default function OpportunityTable() {
-  const { opportunities } = useSelector((s) => s.dashboard)
+  // Real, hierarchy-scoped pipeline from sales leads (exec = own, head = team —
+  // enforced by the /sales/leads scope). Probability is derived deterministically
+  // from the lead's pipeline stage (not fabricated).
+  const { list: leads } = useSelector((s) => s.leads)
+  const opportunities = [...(leads || [])]
+    .filter((l) => ACTIVE_STATUSES.includes(l.status))
+    .sort((a, b) => Number(b.estimatedValue || 0) - Number(a.estimatedValue || 0))
+    .slice(0, 6)
+    .map((l) => ({
+      id: l.id,
+      name: l.name,
+      company: l.company || l.email || '',
+      value: Number(l.estimatedValue || 0),
+      probability: PROBABILITY_BY_STATUS[l.status] ?? 30,
+      closingDate: l.convertedAt || null,
+      stage: STAGE_LABEL[l.status] || l.status,
+    }))
 
   return (
     <SectionCard
@@ -51,6 +76,9 @@ export default function OpportunityTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
+            {opportunities.length === 0 && (
+              <tr><td colSpan={6} className="text-center py-8 text-sm text-neutral-400">No active opportunities in your pipeline.</td></tr>
+            )}
             {opportunities.map((opp, i) => (
               <motion.tr
                 key={opp.id}
@@ -70,7 +98,7 @@ export default function OpportunityTable() {
                   <ProbabilityBar value={opp.probability} />
                 </td>
                 <td className="px-5 py-3">
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(opp.closingDate)}</span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{opp.closingDate ? formatDate(opp.closingDate) : '—'}</span>
                 </td>
                 <td className="px-5 py-3">
                   <span className={STAGE_COLORS[opp.stage] || 'badge-primary'}>{opp.stage}</span>

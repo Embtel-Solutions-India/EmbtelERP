@@ -1,7 +1,7 @@
 import { useAutoRefresh } from '../../../hooks/useAutoRefresh'
 import { useDispatch } from 'react-redux'
 import {
-  fetchWorkspaceLeads, fetchSalesTeamLeaderboard, fetchWorkspaceFollowUps, fetchSalesTeamStats
+  fetchWorkspaceLeads, fetchSalesTeamLeaderboard, fetchWorkspaceFollowUps, fetchSalesTeamStats, fetchWorkspaceActivities
 } from '../../../redux/slices/workspaceSlice'
 import { fetchRoleWorkspace, fetchDashboardTeam, fetchDashboardOverview, fetchDashboardPerformance } from '../../../redux/slices/dashboardSlice'
 import { fetchLeads } from '../../../redux/slices/leadSlice'
@@ -20,6 +20,7 @@ export default function SalesHeadDashboard() {
     dispatch(fetchWorkspaceLeads())
     dispatch(fetchSalesTeamLeaderboard())
     dispatch(fetchWorkspaceFollowUps())
+    dispatch(fetchWorkspaceActivities())
     dispatch(fetchSalesTeamStats())
     dispatch(fetchRoleWorkspace())
     dispatch(fetchDashboardTeam())

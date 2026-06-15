@@ -1,6 +1,6 @@
 import { useAutoRefresh } from '../../../hooks/useAutoRefresh'
 import { useDispatch } from 'react-redux'
-import { fetchWorkspaceLeads, fetchWorkspaceFollowUps, fetchWorkspacePipeline } from '../../../redux/slices/workspaceSlice'
+import { fetchWorkspaceLeads, fetchWorkspaceFollowUps, fetchWorkspacePipeline, fetchWorkspaceActivities } from '../../../redux/slices/workspaceSlice'
 import { fetchRoleWorkspace, fetchDashboardOverview, fetchDashboardPerformance } from '../../../redux/slices/dashboardSlice'
 import { fetchLeads } from '../../../redux/slices/leadSlice'
 import { fetchTasks } from '../../../redux/slices/taskSlice'
@@ -18,6 +18,7 @@ export default function SalesExecutiveDashboard() {
     dispatch(fetchWorkspaceLeads())
     dispatch(fetchWorkspaceFollowUps())
     dispatch(fetchWorkspacePipeline())
+    dispatch(fetchWorkspaceActivities())
     dispatch(fetchRoleWorkspace())
     dispatch(fetchTasks())
     dispatch(fetchSalesTasks())

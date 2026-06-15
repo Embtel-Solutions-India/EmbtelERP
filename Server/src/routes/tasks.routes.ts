@@ -15,11 +15,15 @@ tasksRouter.get(
   "/",
   asyncHandler(async (req, res) => {
     const scope = req.scope!;
+    // Hierarchy-scoped: a user sees tasks assigned to or created by anyone in
+    // their visible-employee set — executive/intern = their own, manager/head =
+    // their whole subtree, owner/super-admin = the org. (Previously business-wide,
+    // which let executives see every task in the business.)
     const tasks = await prisma.task.findMany({
       where: {
         OR: [
           { assigneeId: { in: scope.visibleEmployees } },
-          { businessId: { in: scope.visibleBusinesses } }
+          { createdById: { in: scope.visibleEmployees } },
         ]
       },
       include: {
