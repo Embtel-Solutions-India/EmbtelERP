@@ -76,9 +76,14 @@ export async function createEmployee(
   const fullName = `${input.firstName} ${input.lastName}`.trim();
   const level = role?.level ?? null;
 
+  // `password` is not a column on Employee — only its bcrypt hash is persisted.
+  // Strip it before the spread, otherwise Prisma rejects the unknown argument
+  // and the create throws (500).
+  const { password, ...employeeData } = input;
+
   const employee = await prisma.employee.create({
     data: {
-      ...input,
+      ...employeeData,
       departmentId: input.departmentId ?? null,
       teamId: input.teamId ?? null,
       managerId: input.managerId ?? null,
