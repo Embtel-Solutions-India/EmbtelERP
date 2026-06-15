@@ -20,11 +20,22 @@ export const createITTaskSchema = z.object({
   priority:    itPrioritySchema.optional(),
   storyPoints: z.coerce.number().int().min(0).max(100).nullable().optional(),
   assigneeId:  z.string().min(1).nullable().optional(),
+  projectId:   z.string().min(1).nullable().optional(),
   prdRef:      z.string().nullable().optional(),
   dueDate:     nullableDate,
 });
 
 export const updateITTaskSchema = createITTaskSchema.partial();
+
+// Assign an existing task to a member (manager/TL action).
+export const assignITTaskSchema = z.object({
+  assigneeId: z.string().min(1, "Assignee is required"),
+});
+
+// Self-task CRUD: same shape as a task, but assignee/assigner are forced by the
+// service (always the caller / null), so they are not accepted from the body.
+export const createSelfTaskSchema = createITTaskSchema.omit({ assigneeId: true });
+export const updateSelfTaskSchema = createSelfTaskSchema.partial();
 
 export const createEodSchema = z.object({
   reportDate: z.coerce.date(),
