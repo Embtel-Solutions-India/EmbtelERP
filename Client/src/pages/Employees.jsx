@@ -89,6 +89,12 @@ export default function Employees() {
     }
   }
 
+  // Reactivate a deactivated account — PATCH isActive back to true (no destructive
+  // endpoint needed). The employee can log in again once active.
+  const handleActivate = (id) => {
+    dispatch(updateEmployeeAsync({ id, isActive: true }))
+  }
+
   const formFields = [
     { name: 'firstName', label: 'First Name', required: true },
     { name: 'lastName', label: 'Last Name', required: true },
@@ -250,10 +256,16 @@ export default function Employees() {
                             <Edit style={{ fontSize: 16 }} />
                           </button>
                         </Tooltip>
-                        {emp.isActive && (
+                        {emp.isActive ? (
                           <Tooltip title="Deactivate">
                             <button onClick={() => handleDeactivate(emp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 dark:hover:bg-neutral-700 transition-colors">
                               <Block style={{ fontSize: 16 }} />
+                            </button>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Reactivate">
+                            <button onClick={() => handleActivate(emp.id)} className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 dark:hover:bg-neutral-700 transition-colors">
+                              <CheckCircle style={{ fontSize: 16 }} />
                             </button>
                           </Tooltip>
                         )}
