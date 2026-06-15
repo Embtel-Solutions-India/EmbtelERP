@@ -19,3 +19,22 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+
+// Fail fast in production on insecure defaults: the Zod defaults exist only so
+// local dev boots without a full .env, but they must never reach production.
+if (env.NODE_ENV === "production") {
+  const WEAK_SECRETS = ["change-me-in-production", "change-me-in-production-refresh"];
+  if (
+    WEAK_SECRETS.includes(env.JWT_ACCESS_SECRET) ||
+    WEAK_SECRETS.includes(env.JWT_REFRESH_SECRET)
+  ) {
+    throw new Error(
+      "JWT_ACCESS_SECRET / JWT_REFRESH_SECRET must be set to strong, non-default values in production",
+    );
+  }
+  if (env.CORS_ORIGIN === "*") {
+    throw new Error(
+      "CORS_ORIGIN must be an explicit origin allowlist (not '*') in production",
+    );
+  }
+}

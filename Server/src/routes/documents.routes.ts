@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { attachScope } from "../middleware/scope.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const documentsRouter = Router();
 documentsRouter.use(authenticate, attachScope);
@@ -46,6 +47,10 @@ documentsRouter.post(
       return;
     }
 
+    if (!req.scope!.visibleBusinesses.includes(targetBusinessId)) {
+      throw new ApiError(403, "Business not in your scope");
+    }
+
     const doc = await prisma.document.create({
       data: {
         title: title || "Untitled Document",
@@ -67,6 +72,11 @@ documentsRouter.patch(
   "/:id",
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);
+    const existing = await prisma.document.findUnique({ where: { id } });
+    if (!existing) throw new ApiError(404, "Document not found");
+    if (!req.scope!.visibleBusinesses.includes(existing.businessId)) {
+      throw new ApiError(403, "Document not in your scope");
+    }
     const { title, kind, storageUrl } = req.body;
     const doc = await prisma.document.update({
       where: { id },
@@ -88,6 +98,11 @@ documentsRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);
+    const existing = await prisma.document.findUnique({ where: { id } });
+    if (!existing) throw new ApiError(404, "Document not found");
+    if (!req.scope!.visibleBusinesses.includes(existing.businessId)) {
+      throw new ApiError(403, "Document not in your scope");
+    }
     await prisma.document.delete({
       where: { id },
     });

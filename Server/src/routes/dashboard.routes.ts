@@ -114,9 +114,12 @@ dashboardRouter.get(
   })
 );
 
-// POST /dashboard/layout/:role - Save layout configuration for a role
+// POST /dashboard/layout/:role - Save layout configuration for a role.
+// Dashboard configs are global (keyed by role string) and affect every user in
+// that role, so editing them is restricted to Super Admins.
 dashboardRouter.post(
   "/layout/:role",
+  requireRole(ROLE_LEVEL.SUPER_ADMIN),
   asyncHandler(async (req, res) => {
     const role = String(req.params.role);
     const { widgets } = req.body;

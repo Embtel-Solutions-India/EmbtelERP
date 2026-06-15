@@ -25,9 +25,15 @@ export function createApp() {
   const app = express();
 
   app.use(helmet());
+  // Honour CORS_ORIGIN as a comma-separated allowlist. "*" reflects any origin
+  // (dev convenience only) — production rejects "*" at config load (see env.ts).
+  const corsOrigin =
+    env.CORS_ORIGIN === "*"
+      ? true
+      : env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean);
   app.use(
     cors({
-      origin: true,
+      origin: corsOrigin,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     }),

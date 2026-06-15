@@ -76,7 +76,6 @@ export function getHomePath(userOrLevel) {
 
   // 1. Exact role enum match
   if (user?.role && ROLE_DASHBOARD_MAP[user.role]) {
-    console.log('[Auth] role:', user.role, '→', ROLE_DASHBOARD_MAP[user.role])
     return ROLE_DASHBOARD_MAP[user.role]
   }
 
@@ -85,7 +84,6 @@ export function getHomePath(userOrLevel) {
   if (designation) {
     for (const [keywords, route] of DESIGNATION_ROUTE_MAP) {
       if (keywords.some(k => designation.includes(k))) {
-        console.log('[Auth] designation:', user.designation, '→', route)
         return route
       }
     }
@@ -102,7 +100,6 @@ export function getHomePath(userOrLevel) {
     0: '/sales-intern/dashboard',
   }
   const route = levelRoutes[level] ?? '/sales/dashboard'
-  console.log('[Auth] level:', level, '→', route)
   return route
 }
 

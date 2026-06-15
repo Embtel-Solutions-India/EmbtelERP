@@ -4,6 +4,7 @@ import { attachScope } from "../middleware/scope.middleware.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { prisma } from "../config/prisma.js";
 import { recordAudit } from "../services/activity-writer.service.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const DONE_STATUSES = ["completed", "done", "COMPLETED"];
 
@@ -35,10 +36,22 @@ tasksRouter.patch(
   "/:id",
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);
+    const scope = req.scope!;
+    const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing) throw new ApiError(404, "Task not found");
+    if (!scope.visibleBusinesses.includes(existing.businessId)) {
+      throw new ApiError(403, "Task not in your scope");
+    }
     const {
       title, description, status, priority, dueDate, assigneeId,
       leadId, taskType, dueTime, taskResult, nextFollowUpDate, outcomeNotes,
     } = req.body;
+    if (
+      assigneeId !== undefined && assigneeId !== null &&
+      !scope.visibleEmployees.includes(assigneeId)
+    ) {
+      throw new ApiError(403, "Assignee not in your scope");
+    }
     const data: any = {};
     if (title !== undefined) data.title = title;
     if (description !== undefined) data.description = description;
@@ -52,8 +65,6 @@ tasksRouter.patch(
     if (taskResult !== undefined) data.taskResult = taskResult;
     if (nextFollowUpDate !== undefined) data.nextFollowUpDate = nextFollowUpDate ? new Date(nextFollowUpDate) : null;
     if (outcomeNotes !== undefined) data.outcomeNotes = outcomeNotes;
-
-    const existing = await prisma.task.findUnique({ where: { id } });
 
     const task = await prisma.task.update({
       where: { id },
@@ -101,6 +112,13 @@ tasksRouter.post(
       return;
     }
 
+    if (
+      assigneeId !== undefined && assigneeId !== null &&
+      !req.scope!.visibleEmployees.includes(assigneeId)
+    ) {
+      throw new ApiError(403, "Assignee not in your scope");
+    }
+
     const task = await prisma.task.create({
       data: {
         businessId: employee.businessId,
@@ -144,6 +162,10 @@ tasksRouter.delete(
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);
     const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing) throw new ApiError(404, "Task not found");
+    if (!req.scope!.visibleBusinesses.includes(existing.businessId)) {
+      throw new ApiError(403, "Task not in your scope");
+    }
     await prisma.task.delete({
       where: { id },
     });
