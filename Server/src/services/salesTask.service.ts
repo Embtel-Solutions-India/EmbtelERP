@@ -223,7 +223,15 @@ export async function updateSalesTask(ctx: SalesTaskContext, id: string, input: 
   ) {
     throw new ApiError(403, "You can only update your own tasks");
   }
-  if (access.roleLevel < 2 && "assigneeId" in input) {
+  // Block reassignment for non-managers — but only when the assignee is actually
+  // changing. Editing one's own task re-sends the (unchanged) assigneeId, which
+  // must not be treated as a reassignment.
+  if (
+    access.roleLevel < 2 &&
+    "assigneeId" in input &&
+    input.assigneeId != null &&
+    String(input.assigneeId) !== existing.assigneeId
+  ) {
     throw new ApiError(403, "Only managers can reassign tasks");
   }
   // Reassignment is restricted to the caller's direct reports.

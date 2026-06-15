@@ -47,32 +47,58 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function PerformanceChart({ data: apiData }) {
-  const { monthlyRevenue, weeklyData } = useSelector((s) => s.dashboard);
+  const performance = useSelector((s) => s.dashboard.performance) || [];
   const [chartTab, setChartTab] = useState("Revenue");
   const [period, setPeriod] = useState("Monthly");
 
-  // Use API data if provided, otherwise fall back to Redux store
-  const chartData =
-    apiData && apiData.length > 0
-      ? apiData.map((d) => ({
-          month: d.period
-            ? new Date(d.period + "-01").toLocaleString("default", {
-                month: "short",
-              })
-            : "",
-          revenue: d.revenue,
-          target: d.target,
-          leads: d.leads,
-          won: d.conversions,
-          calls: d.tasksCompleted,
-          emails: d.employeeProductivity,
-          meetings: d.tasksCreated,
-        }))
-      : period === "Weekly"
-        ? weeklyData
-        : monthlyRevenue;
+  // Real, hierarchy-scoped performance series from the backend: head sees the
+  // aggregate of their whole reporting subtree; executive/intern see only their
+  // own — enforced server-side via the request scope (scope.visibleEmployees).
+  const source = apiData && apiData.length > 0 ? apiData : performance;
+  const monthName = (per) => {
+    if (!per) return "";
+    const d = new Date(per + "-01");
+    return isNaN(d.getTime()) ? per : d.toLocaleString("default", { month: "short" });
+  };
+  const toRow = (p, label) => ({
+    label, month: label, day: label,
+    revenue: Number(p.revenue) || 0,
+    target: Number(p.target) || 0,
+    leads: Number(p.leads) || 0,
+    won: Number(p.conversions) || 0,
+    calls: Number(p.tasksCompleted) || 0,
+    emails: Number(p.employeeProductivity) || 0,
+    meetings: Number(p.tasksCreated) || 0,
+  });
 
-  const data = chartData;
+  let data;
+  if (period === "Quarterly") {
+    const qmap = new Map();
+    source.forEach((p) => {
+      const y = String(p.period).slice(0, 4);
+      const m = Number(String(p.period).slice(5, 7)) || 1;
+      const key = `${y} Q${Math.floor((m - 1) / 3) + 1}`;
+      const e = qmap.get(key) || { label: key, month: key, day: key, revenue: 0, target: 0, leads: 0, won: 0, calls: 0, meetings: 0, emails: 0 };
+      e.revenue += Number(p.revenue) || 0;
+      e.target += Number(p.target) || 0;
+      e.leads += Number(p.leads) || 0;
+      e.won += Number(p.conversions) || 0;
+      e.calls += Number(p.tasksCompleted) || 0;
+      e.meetings += Number(p.tasksCreated) || 0;
+      qmap.set(key, e);
+    });
+    data = [...qmap.values()].map((e) => ({ ...e, emails: e.meetings > 0 ? Math.round((e.calls / e.meetings) * 100) : 0 }));
+  } else if (period === "Weekly") {
+    // Backend granularity is monthly — show the most recent months.
+    data = source.slice(-6).map((p) => toRow(p, monthName(p.period)));
+  } else {
+    data = source.map((p) => toRow(p, monthName(p.period)));
+  }
+
+  // Render whenever the backend returned real periods (values may be 0 — that is
+  // honest live data); only show the empty state when there is no series at all.
+  const hasData = data.length > 0;
+
   const isDark = document.documentElement.classList.contains("dark");
   const axisColor = isDark ? "#6b7280" : "#94a3b8";
   const gridColor = isDark ? "#1f2937" : "#f1f5f9";
@@ -124,6 +150,7 @@ export default function PerformanceChart({ data: apiData }) {
         transition={{ duration: 0.3 }}
         className="flex-1 min-h-0"
       >
+        {hasData ? (
         <ResponsiveContainer width="100%" height="100%">
           {chartTab === "Revenue" ? (
             <AreaChart
@@ -201,7 +228,7 @@ export default function PerformanceChart({ data: apiData }) {
             </BarChart>
           ) : (
             <BarChart
-              data={weeklyData}
+              data={data}
               margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
               barSize={12}
               barGap={2}
@@ -226,6 +253,12 @@ export default function PerformanceChart({ data: apiData }) {
             </BarChart>
           )}
         </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-center text-neutral-400 gap-1">
+            <p className="text-sm">No performance data yet</p>
+            <p className="text-xs">Metrics appear as KPIs, revenue and tasks are recorded.</p>
+          </div>
+        )}
       </motion.div>
     </SectionCard>
   );

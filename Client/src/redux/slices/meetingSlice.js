@@ -1,5 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 
+// No demo/dummy data — meetings are real calendar events of type MEETING,
+// sourced live from the calendar slice by the widget (hierarchy/personal scoped).
 const meetingSlice = createSlice({
   name: 'meetings',
   initialState: {

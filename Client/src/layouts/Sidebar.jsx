@@ -663,7 +663,7 @@ export default function Sidebar({ open, mobileOpen }) {
             />
           ))}
         </div>
-      )} */}
+      )} 
 
       {/* Organization Explorer — Super Admin only */}
       {/* {isSuperAdmin && <SuperAdminOrgTree collapsed={isCollapsed} />} */}
