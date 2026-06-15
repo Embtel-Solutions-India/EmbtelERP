@@ -1,26 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { motion } from 'framer-motion'
-import { Add, CheckCircle, RadioButtonUnchecked, DeleteOutline, AccessTime } from '@mui/icons-material'
-import { FaExclamationTriangle, FaCalendarDay, FaArrowRight, FaCheckCircle } from 'react-icons/fa'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Add, Edit, Delete, CheckCircle } from '@mui/icons-material'
+import { Tooltip } from '@mui/material'
+import PageHeader from '../../../components/common/PageHeader'
+import SchemaForm from '../../../components/common/SchemaForm'
 import {
-  fetchMarketingTasks, createMarketingTask, toggleMarketingTask, deleteMarketingTask,
+  fetchMarketingTasks, createMarketingTask, updateMarketingTask, deleteMarketingTask,
 } from '../redux/marketingTaskSlice'
 import { marketingTaskService } from '../../../services/marketingTaskService'
-import PageHeader from '../../../components/common/PageHeader'
-import ActionFormModal from '../../../components/common/ActionFormModal'
+import { campaignService } from '../../../services/campaignService'
+import {
+  buildTaskFormSections, taskFormSchema, taskDefaultValues, buildTaskInitialValues, toTaskPayload,
+  TASK_STATUS_LABELS, TASK_STATUS_COLORS, TASK_PRIORITY_LABELS, TASK_PRIORITY_COLORS,
+} from '../tasks/marketingTaskFormConfig'
 import { formatDate } from '../../../utils'
-
-const PRIORITY_MAP = {
-  urgent: 'badge-purple', high: 'badge-error', medium: 'badge-warning', low: 'badge-info',
-}
-
-const GROUPS = [
-  { key: 'overdue',  label: 'Overdue',  Icon: FaExclamationTriangle, color: 'text-red-600 dark:text-red-400'     },
-  { key: 'today',    label: 'Today',    Icon: FaCalendarDay,         color: 'text-amber-600 dark:text-amber-400'  },
-  { key: 'upcoming', label: 'Upcoming', Icon: FaArrowRight,          color: 'text-primary-600 dark:text-primary-400'},
-  { key: 'done',     label: 'Done',     Icon: FaCheckCircle,         color: 'text-emerald-600 dark:text-emerald-400'},
-]
 
 const TABS = [
   { id: 'mine', label: 'My Tasks' },
@@ -29,11 +23,13 @@ const TABS = [
 
 export default function MarketingTasks() {
   const dispatch = useDispatch()
-  const { list: tasks, loading } = useSelector((s) => s.marketingTasks)
+  const { list: tasks, loading, error } = useSelector((s) => s.marketingTasks)
   const { user } = useSelector((s) => s.auth)
   const activePerspective = useSelector((s) => s.perspective?.current)
-  const [isTaskFormOpen, setTaskFormOpen] = useState(false)
+  const [isFormOpen, setFormOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
   const [assignableUsers, setAssignableUsers] = useState([])
+  const [campaigns, setCampaigns] = useState([])
   const [activeTab, setActiveTab] = useState('mine')
 
   const myId = user?.id
@@ -44,6 +40,16 @@ export default function MarketingTasks() {
     dispatch(fetchMarketingTasks())
   }, [dispatch, activePerspective])
 
+  // Campaigns drive the "Related Campaign" picker (marketing's analog of a lead).
+  useEffect(() => {
+    let active = true
+    campaignService.getAll()
+      .then((res) => { if (active) setCampaigns(res.data || []) })
+      .catch(() => { if (active) setCampaigns([]) })
+    return () => { active = false }
+  }, [activePerspective])
+
+  // Team members the manager can assign to (drives the "Assign To" picker).
   useEffect(() => {
     if (!canAssign) { setAssignableUsers([]); return }
     let active = true
@@ -53,6 +59,24 @@ export default function MarketingTasks() {
     return () => { active = false }
   }, [canAssign, activePerspective])
 
+  const campaignOptions = useMemo(
+    () => campaigns.map((c) => ({ value: c.id, label: c.name })),
+    [campaigns],
+  )
+
+  const assigneeOptions = useMemo(
+    () => assignableUsers.map((u) => ({
+      value: u.id,
+      label: `${u.firstName} ${u.lastName}${u.designation ? ` (${u.designation})` : ''}`.trim(),
+    })),
+    [assignableUsers],
+  )
+
+  const formSections = useMemo(
+    () => buildTaskFormSections(canAssign ? assigneeOptions : []),
+    [canAssign, assigneeOptions],
+  )
+
   // My Tasks = assigned to me; Assigned Tasks = I assigned to a team member.
   const visibleTasks = useMemo(() => {
     if (!canAssign || activeTab === 'mine') {
@@ -61,72 +85,44 @@ export default function MarketingTasks() {
     return tasks.filter((t) => t.createdById === myId && t.assigneeId !== myId)
   }, [tasks, activeTab, canAssign, myId])
 
-  const now = new Date()
-  const groups = {
-    overdue:  visibleTasks.filter(t => t.status === 'overdue' || (t.status !== 'done' && new Date(t.dueDate) < now && new Date(t.dueDate).toDateString() !== now.toDateString())),
-    today:    visibleTasks.filter(t => {
-      if (t.status === 'done') return false
-      const due = new Date(t.dueDate)
-      if (due < now && due.toDateString() !== now.toDateString()) return false // It is overdue
-      return due.toDateString() === now.toDateString()
-    }),
-    upcoming: visibleTasks.filter(t => {
-      if (t.status === 'done') return false
-      const due = new Date(t.dueDate)
-      if (due < now) return false
-      return due.toDateString() !== now.toDateString()
-    }),
-    done: visibleTasks.filter(t => t.status === 'done'),
-  }
+  const initialValues = useMemo(
+    () => (editingTask ? buildTaskInitialValues(editingTask) : { ...taskDefaultValues }),
+    [editingTask],
+  )
 
-  const assigneeField = canAssign
-    ? [{
-        name: 'assignee',
-        label: 'Assign Task To',
-        type: 'select',
-        options: [
-          { value: '', label: 'Myself' },
-          ...assignableUsers.map((u) => ({
-            value: u.id,
-            label: `${u.firstName} ${u.lastName}${u.designation ? ` (${u.designation})` : ''}`.trim(),
-          })),
-        ],
-        fullWidth: true,
-        helperText: 'You can assign tasks to your team members.',
-      }]
-    : [{
-        name: 'assignee',
-        label: 'Assign Task To',
-        type: 'select',
-        options: [{ value: '', label: 'Myself' }],
-        disabled: true,
-        fullWidth: true,
-        helperText: 'Only managers can assign tasks to other team members.',
-      }]
-
-  const handleCreateTask = (values) => {
-    const payload = {
+  const handleSubmit = async (values) => {
+    const payload = toTaskPayload(values, {
+      canAssign,
+      mode: editingTask ? 'edit' : 'create',
       businessId: user?.businessId,
-      title: values.title,
-      priority: values.priority,
-      status: 'TODO',
-      dueDate: values.dueDate ? new Date(values.dueDate).toISOString() : null,
-      description: values.description || null,
+    })
+    if (editingTask) {
+      await dispatch(updateMarketingTask({ id: editingTask.id, ...payload }))
+    } else {
+      await dispatch(createMarketingTask(payload))
     }
-    if (values.assignee) payload.assignedToId = values.assignee
-    dispatch(createMarketingTask(payload))
-    setTaskFormOpen(false)
+    setFormOpen(false)
+    setEditingTask(null)
   }
+
+  const handleComplete = (task) => dispatch(updateMarketingTask({ id: task.id, status: 'COMPLETED' }))
+  const handleDelete = (id) => { if (window.confirm('Delete this task?')) dispatch(deleteMarketingTask(id)) }
 
   return (
-    <div className="space-y-6 max-w-[900px] mx-auto">
+    <div className="space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Marketing Tasks"
-        subtitle={`${visibleTasks.filter(t => t.status !== 'done').length} active marketing tasks`}
+        subtitle={`${visibleTasks.length} marketing tasks`}
         breadcrumbs={['Dashboard', 'Tasks']}
-        actions={<button onClick={() => setTaskFormOpen(true)} className="btn-primary text-sm flex items-center gap-2"><Add fontSize="small" /> Create Task</button>}
+        actions={
+          <button onClick={() => { setEditingTask(null); setFormOpen(true) }} className="btn-primary text-sm flex items-center gap-2">
+            <Add fontSize="small" /> Add Task
+          </button>
+        }
       />
 
+      {/* My Tasks / Assigned Tasks toggle — only managers assign, so the second
+          tab is hidden for executives and interns. */}
       {canAssign && (
         <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-700 rounded-xl p-1 max-w-xs">
           {TABS.map((tab) => (
@@ -145,98 +141,84 @@ export default function MarketingTasks() {
         </div>
       )}
 
-      <ActionFormModal
-        open={isTaskFormOpen}
-        title="Create Marketing Task"
-        subtitle="Add an actionable item to your marketing workflow"
-        fields={[
-          { name: 'title', label: 'Task Title', required: true, fullWidth: true },
-          {
-            name: 'priority',
-            label: 'Priority',
-            type: 'select',
-            options: ['urgent', 'high', 'medium', 'low'].map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) })),
-          },
-          { name: 'dueDate', label: 'Due Date', type: 'datetime-local', required: true },
-          { name: 'description', label: 'Description (Optional)', type: 'textarea', fullWidth: true },
-          ...assigneeField,
-        ]}
-        initialValues={{ title: '', priority: 'medium', dueDate: '', description: '', assignee: '' }}
-        submitLabel="Create Task"
-        onClose={() => setTaskFormOpen(false)}
-        onSubmit={handleCreateTask}
+      <SchemaForm
+        open={isFormOpen}
+        title={editingTask ? 'Update Task' : 'Add Task'}
+        subtitle={editingTask ? 'Update marketing task details' : 'Create a marketing task'}
+        sections={formSections}
+        schema={taskFormSchema}
+        defaultValues={initialValues}
+        mode={editingTask ? 'edit' : 'create'}
+        submitLabel={editingTask ? 'Save Changes' : 'Add Task'}
+        leadOptions={campaignOptions}
+        onClose={() => { setFormOpen(false); setEditingTask(null) }}
+        onSubmit={handleSubmit}
       />
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: 'Total',   value: visibleTasks.length,    color: 'text-primary-600', bg: 'bg-primary-50 dark:bg-primary-900/20' },
-          { label: 'Overdue', value: groups.overdue.length,  color: 'text-red-600',     bg: 'bg-red-50 dark:bg-red-900/20'         },
-          { label: 'Today',   value: groups.today.length,    color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-900/20'     },
-          { label: 'Done',    value: groups.done.length,     color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-        ].map(s => (
-          <div key={s.label} className={`card p-4 text-center ${s.bg}`}>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">{s.label}</p>
-          </div>
-        ))}
-      </div>
 
       {loading && visibleTasks.length === 0 ? (
         <div className="card p-10 text-center text-sm text-neutral-500">Loading tasks…</div>
+      ) : error ? (
+        <div className="card p-10 text-center text-sm text-red-500">Failed to load tasks: {String(error)}</div>
+      ) : visibleTasks.length === 0 ? (
+        <div className="card p-10 text-center">
+          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+            {canAssign && activeTab === 'assigned' ? 'No tasks assigned to your team yet' : 'No tasks yet'}
+          </p>
+          <p className="mt-1 text-xs text-neutral-400">
+            {canAssign && activeTab === 'assigned'
+              ? 'Assign a task to one of your team members to see it here.'
+              : 'Create a marketing task to keep your work moving.'}
+          </p>
+        </div>
       ) : (
-        <div className="space-y-8">
-          {GROUPS.map(({ key, label, Icon, color }) => (
-            <div key={key}>
-              <div className="flex items-center gap-2 mb-3">
-                <Icon className={color} size={16} />
-                <h3 className={`font-bold text-base ${color}`}>{label}</h3>
-                <span className="badge badge-primary">{groups[key].length}</span>
-              </div>
-              {groups[key].length === 0 ? (
-                <p className="text-sm text-neutral-400 dark:text-neutral-500 italic ml-6">No {label.toLowerCase()} tasks</p>
-              ) : (
-                <div className="space-y-2">
-                  {groups[key].map((task, i) => (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className={`card p-4 flex items-start gap-3 ${task.status === 'done' ? 'opacity-60' : ''}`}
-                    >
-                      <button
-                        onClick={() => dispatch(toggleMarketingTask(task))}
-                        className={task.status === 'done' ? 'text-emerald-500 mt-0.5' : 'text-neutral-300 hover:text-primary-500 mt-0.5'}
-                      >
-                        {task.status === 'done' ? <CheckCircle /> : <RadioButtonUnchecked />}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-semibold ${task.status === 'done' ? 'line-through text-neutral-400' : 'text-neutral-800 dark:text-neutral-100'}`}>
-                          {task.title}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          {task.lead && <span className="text-xs text-neutral-400">— {task.lead}</span>}
-                          <span className="flex items-center gap-1 text-xs text-neutral-400">
-                            <AccessTime style={{ fontSize: 12 }} /> {formatDate(task.dueDate)}
-                          </span>
-                          {canAssign && activeTab === 'assigned' && (
-                            <span className="text-xs text-neutral-400">→ {task.assignee}</span>
-                          )}
-                          {task.category && <span className="badge badge-info text-xs capitalize">{task.category}</span>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`${PRIORITY_MAP[task.priority] || 'badge-info'}`}>{task.priority}</span>
-                        <button onClick={() => dispatch(deleteMarketingTask(task.id))} className="text-neutral-300 hover:text-red-500 transition-colors">
-                          <DeleteOutline fontSize="small" />
-                        </button>
-                      </div>
-                    </motion.div>
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700/50">
+                  {['Title', 'Campaign', 'Due', 'Priority', 'Status', 'Actions'].map((h) => (
+                    <th key={h} className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider px-5 py-3 whitespace-nowrap">{h}</th>
                   ))}
-                </div>
-              )}
-            </div>
-          ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-50 dark:divide-neutral-700/50">
+                <AnimatePresence>
+                  {visibleTasks.map((t, i) => (
+                    <motion.tr key={t.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors group">
+                      <td className="px-5 py-3 text-sm font-semibold text-neutral-800 dark:text-neutral-100">{t.title}</td>
+                      <td className="px-5 py-3 text-xs text-neutral-500">{t.lead || '—'}</td>
+                      <td className="px-5 py-3 text-xs text-neutral-500 whitespace-nowrap">{t.dueDate ? formatDate(t.dueDate) : '—'}</td>
+                      <td className="px-5 py-3"><span className={TASK_PRIORITY_COLORS[t.priority] || 'badge-neutral'}>{TASK_PRIORITY_LABELS[t.priority] || t.priority}</span></td>
+                      <td className="px-5 py-3"><span className={TASK_STATUS_COLORS[t.rawStatus] || 'badge-neutral'}>{TASK_STATUS_LABELS[t.rawStatus] || t.rawStatus}</span></td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!['COMPLETED', 'CANCELLED'].includes(t.rawStatus) && (
+                            <Tooltip title="Mark complete">
+                              <button onClick={() => handleComplete(t)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-neutral-700 transition-colors">
+                                <CheckCircle style={{ fontSize: 15 }} />
+                              </button>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="Edit">
+                            <button onClick={() => { setEditingTask(t); setFormOpen(true) }} className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-neutral-700 transition-colors">
+                              <Edit style={{ fontSize: 15 }} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-neutral-700 transition-colors">
+                              <Delete style={{ fontSize: 15 }} />
+                            </button>
+                          </Tooltip>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -20,6 +20,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    // An expired/invalid token leaves a stale `crm_token` in localStorage, which
+    // makes the app boot as "authenticated" yet 401 on every request. Clear the
+    // session and bounce to login instead of leaving a broken dashboard.
+    if (error.response?.status === 401) {
+      localStorage.removeItem('crm_token')
+      localStorage.removeItem('crm_user')
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login')
+      }
+    }
     const message = error.response?.data?.message || error.message || 'Request failed'
     return Promise.reject(new Error(message))
   }

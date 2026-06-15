@@ -15,11 +15,13 @@ function mapTask(t) {
   return {
     id: t.id,
     title: t.title,
+    description: t.description ?? null,
     priority: (t.priority || 'medium').toLowerCase(),
     status,
     rawStatus: t.status,
     dueDate: t.dueDate,
     lead: t.campaign?.name ?? null,
+    campaignId: t.campaignId ?? null,
     category: t.campaign ? 'campaign' : null,
     assignee: t.assignedTo ? `${t.assignedTo.firstName} ${t.assignedTo.lastName}`.trim() : 'Unassigned',
     assigneeId: t.assignedToId ?? null,
