@@ -8,6 +8,9 @@ import {
   createITTaskSchema,
   updateITTaskSchema,
   createEodSchema,
+  assignITTaskSchema,
+  createSelfTaskSchema,
+  updateSelfTaskSchema,
 } from "../validations/it.validation.js";
 import {
   overview,
@@ -16,6 +19,13 @@ import {
   updateTask,
   createEod,
   listEod,
+  projects,
+  teamLoad,
+  assignTask,
+  myTasks,
+  createSelfTask,
+  updateSelfTask,
+  deleteSelfTask,
 } from "../controllers/it.controller.js";
 
 export const itRouter = Router();
@@ -26,8 +36,18 @@ export const itRouter = Router();
 itRouter.use(authenticate, attachScope, requireRole(ROLE_LEVEL.EXECUTIVE));
 
 itRouter.get(  "/overview",        asyncHandler(overview));
+itRouter.get(  "/projects",        asyncHandler(projects));
+itRouter.get(  "/team-load",       asyncHandler(teamLoad));
 itRouter.get(  "/sprint",          asyncHandler(sprint));
 itRouter.post( "/sprint/tasks",    validateBody(createITTaskSchema), asyncHandler(createTask));
 itRouter.patch("/sprint/tasks/:id", validateBody(updateITTaskSchema), asyncHandler(updateTask));
+itRouter.post( "/sprint/tasks/:id/assign", validateBody(assignITTaskSchema), asyncHandler(assignTask));
+
+// My tasks + owner-private self-task CRUD.
+itRouter.get(   "/my-tasks",       asyncHandler(myTasks));
+itRouter.post(  "/my-tasks",       validateBody(createSelfTaskSchema), asyncHandler(createSelfTask));
+itRouter.patch( "/my-tasks/:id",   validateBody(updateSelfTaskSchema), asyncHandler(updateSelfTask));
+itRouter.delete("/my-tasks/:id",   asyncHandler(deleteSelfTask));
+
 itRouter.get(  "/eod",             asyncHandler(listEod));
 itRouter.post( "/eod",             validateBody(createEodSchema), asyncHandler(createEod));

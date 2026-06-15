@@ -15,8 +15,9 @@ function initials(person) {
   return (f + l).toUpperCase() || '?'
 }
 
-export default function ItTaskCard({ task, myId, onMove }) {
+export default function ItTaskCard({ task, myId, onMove, onAssign, members }) {
   const isMine = task.assignee?.id && task.assignee.id === myId
+  const canAssign = typeof onAssign === 'function' && Array.isArray(members) && members.length > 0
   return (
     <div className="rounded-xl border border-neutral-100 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-3 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors">
       {isMine && (
@@ -59,6 +60,20 @@ export default function ItTaskCard({ task, myId, onMove }) {
           <option value="">Move to…</option>
           {COLUMN_OPTIONS.filter((o) => o.value !== task.column).map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      )}
+
+      {canAssign && (
+        <select
+          value=""
+          onChange={(e) => { if (e.target.value) onAssign(e.target.value) }}
+          className="mt-2 w-full text-[11px] rounded-lg border border-neutral-200 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-700/50 text-neutral-500 dark:text-neutral-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          title="Assign to a team member"
+        >
+          <option value="">Assign to…</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>{m.name}</option>
           ))}
         </select>
       )}

@@ -230,6 +230,7 @@ model Organization {
   itSprints           ITSprint[]
   itSprintTasks       ITSprintTask[]
   itEodReports        ITEodReport[]
+  itProjects          ITProject[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 }
@@ -261,6 +262,7 @@ model Business {
   itSprints           ITSprint[]
   itSprintTasks       ITSprintTask[]
   itEodReports        ITEodReport[]
+  itProjects          ITProject[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 }
@@ -332,6 +334,7 @@ model Team {
   itSprints           ITSprint[]
   itSprintTasks       ITSprintTask[]
   itEodReports        ITEodReport[]
+  itProjects          ITProject[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -424,6 +427,7 @@ model Employee {
   marketingActivities        MarketingActivity[]     @relation("MarketingActivityActor")
   marketingKPIs              MarketingKPI[]          @relation("MarketingKPIEmployee")
   itTasksAssigned            ITSprintTask[]          @relation("ITTaskAssignee")
+  itTasksAssignedBy          ITSprintTask[]          @relation("ITTaskAssigner")
   itTasksCreated             ITSprintTask[]          @relation("ITTaskCreator")
   itEodReports               ITEodReport[]           @relation("ITEodAuthor")
   createdAt                  DateTime                @default(now())
@@ -1121,6 +1125,8 @@ model ITSprintTask {
   teamId         String
   assigneeId     String?
   createdById    String?
+  assignedById   String? // who assigned it; null = self-picked / self-created
+  projectId      String? // null = legacy / unassigned to a project
   title          String
   description    String?
   column         ITBoardColumn @default(BACKLOG)
@@ -1134,7 +1140,9 @@ model ITSprintTask {
   business       Business      @relation(fields: [businessId], references: [id])
   team           Team          @relation(fields: [teamId], references: [id])
   assignee       Employee?     @relation("ITTaskAssignee", fields: [assigneeId], references: [id])
+  assignedBy     Employee?     @relation("ITTaskAssigner", fields: [assignedById], references: [id])
   createdBy      Employee?     @relation("ITTaskCreator", fields: [createdById], references: [id])
+  project        ITProject?    @relation(fields: [projectId], references: [id])
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -1142,6 +1150,8 @@ model ITSprintTask {
   @@index([businessId])
   @@index([teamId])
   @@index([assigneeId])
+  @@index([assignedById])
+  @@index([projectId])
   @@index([column])
 }
 
@@ -1181,4 +1191,27 @@ model ITEodReport {
   @@index([businessId])
   @@index([employeeId])
   @@index([reportDate])
+}
+
+model ITProject {
+  id             String         @id @default(cuid())
+  organizationId String
+  businessId     String
+  teamId         String? // shared IT team; nullable for safety
+  name           String
+  code           String?
+  description    String?
+  color          String?
+  status         String         @default("ACTIVE") // ACTIVE | ARCHIVED
+  orderIndex     Int            @default(0)
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  business       Business       @relation(fields: [businessId], references: [id])
+  team           Team?          @relation(fields: [teamId], references: [id])
+  tasks          ITSprintTask[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([businessId])
+  @@index([teamId])
+  @@index([status])
 }

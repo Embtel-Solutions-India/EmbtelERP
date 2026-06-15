@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { moveItTask } from '../redux/itSlice'
+import { moveItTask, assignItTask, fetchItTeamLoad } from '../redux/itSlice'
 import ItTaskCard from './ItTaskCard'
 
 const COLUMN_LABELS = {
@@ -16,14 +17,19 @@ function fmtRange(start, end) {
   return `${new Date(start).toLocaleDateString('en-US', opts)} – ${new Date(end).toLocaleDateString('en-US', opts)}`
 }
 
-export default function ItSprintBoard() {
+export default function ItSprintBoard({ canAssign = false }) {
   const dispatch = useDispatch()
-  const { sprint: board, loadingSprint } = useSelector((s) => s.it)
+  const { sprint: board, loadingSprint, teamLoad } = useSelector((s) => s.it)
   const myId = useSelector((s) => s.auth.user?.id)
   const sprint = board?.sprint
   const columns = board?.columns ?? []
 
+  // Managers can reassign from the board; load the member list for the dropdown.
+  useEffect(() => { if (canAssign && teamLoad.length === 0) dispatch(fetchItTeamLoad()) }, [canAssign, teamLoad.length, dispatch])
+  const members = canAssign ? teamLoad.map((m) => ({ id: m.id, name: m.name })) : undefined
+
   const handleMove = (id, column) => dispatch(moveItTask({ id, column }))
+  const handleAssign = (id, assigneeId) => dispatch(assignItTask({ id, assigneeId }))
 
   if (loadingSprint && !sprint && columns.every((c) => c.tasks.length === 0)) {
     return (
@@ -76,7 +82,14 @@ export default function ItSprintBoard() {
             </div>
             <div className="space-y-2">
               {col.tasks.map((t) => (
-                <ItTaskCard key={t.id} task={t} myId={myId} onMove={(column) => handleMove(t.id, column)} />
+                <ItTaskCard
+                  key={t.id}
+                  task={t}
+                  myId={myId}
+                  onMove={(column) => handleMove(t.id, column)}
+                  onAssign={canAssign ? (assigneeId) => handleAssign(t.id, assigneeId) : undefined}
+                  members={members}
+                />
               ))}
             </div>
           </div>

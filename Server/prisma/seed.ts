@@ -28,6 +28,7 @@ async function main() {
   // IT development module graph (children before parents).
   await prisma.iTBurndownPoint.deleteMany();
   await prisma.iTSprintTask.deleteMany();
+  await prisma.iTProject.deleteMany();
   await prisma.iTEodReport.deleteMany();
   await prisma.iTSprint.deleteMany();
   await prisma.notification.deleteMany();
@@ -746,6 +747,70 @@ async function main() {
       level: 1,
     },
   });
+  const developer2 = await prisma.employee.create({
+    data: {
+      organizationId: organization.id,
+      businessId: bIT.id,
+      teamId: tIT.id,
+      verticalId: vIT.id,
+      roleId: roles[1].id,
+      managerId: devLead.id,
+      firstName: "Second",
+      lastName: "Developer",
+      email: "developer2@demo.com",
+      passwordHash,
+      designation: "Developer",
+      level: 1,
+    },
+  });
+  const devOps = await prisma.employee.create({
+    data: {
+      organizationId: organization.id,
+      businessId: bIT.id,
+      teamId: tIT.id,
+      verticalId: vIT.id,
+      roleId: roles[1].id,
+      managerId: devLead.id,
+      firstName: "IT",
+      lastName: "DevOps",
+      email: "devops@demo.com",
+      passwordHash,
+      designation: "DevOps Engineer",
+      level: 1,
+    },
+  });
+  const qaEngineer = await prisma.employee.create({
+    data: {
+      organizationId: organization.id,
+      businessId: bIT.id,
+      teamId: tIT.id,
+      verticalId: vIT.id,
+      roleId: roles[1].id,
+      managerId: devLead.id,
+      firstName: "IT",
+      lastName: "QA",
+      email: "qa@demo.com",
+      passwordHash,
+      designation: "QA Engineer",
+      level: 1,
+    },
+  });
+  const supportEng = await prisma.employee.create({
+    data: {
+      organizationId: organization.id,
+      businessId: bIT.id,
+      teamId: tIT.id,
+      verticalId: vIT.id,
+      roleId: roles[0].id,
+      managerId: devLead.id,
+      firstName: "IT",
+      lastName: "Support",
+      email: "it.support@demo.com",
+      passwordHash,
+      designation: "Support Engineer",
+      level: 0,
+    },
+  });
   const marketingLeadIT = await prisma.employee.create({
     data: {
       organizationId: organization.id,
@@ -812,6 +877,10 @@ async function main() {
     itHead,
     devLead,
     developer,
+    developer2,
+    devOps,
+    qaEngineer,
+    supportEng,
     marketingLeadIT,
     salesLeadIT,
   ];
@@ -925,39 +994,61 @@ async function main() {
     },
   });
 
-  // AK = developer, RS = devLead (mirrors the mockup's two assignees).
+  console.log("Seeding IT projects...");
+  // Parallel projects sharing the one IT team. Each task below is tagged with a
+  // project index (0/1/2) so every project gets its own filtered board view.
+  const erpPlatform = await prisma.iTProject.create({
+    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, name: "ERP Platform", code: "ERP", description: "Core ERP + CRM lead lifecycle and billing.", color: "#6366F1", orderIndex: 0 },
+  });
+  const mobileApp = await prisma.iTProject.create({
+    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, name: "Mobile App", code: "MOB", description: "Field/agent companion app.", color: "#10B981", orderIndex: 1 },
+  });
+  const clientPortal = await prisma.iTProject.create({
+    data: { organizationId: organization.id, businessId: bIT.id, teamId: tIT.id, name: "Client Portal", code: "PRT", description: "External client-facing portal.", color: "#F59E0B", orderIndex: 2 },
+  });
+  const projectIds = [erpPlatform.id, mobileApp.id, clientPortal.id];
+
+  // assigneeId = who works it. `self: true` marks an owner-private self-task
+  // (createdById = assigneeId, no assigner). Otherwise a task assigned to someone
+  // other than the TL is treated as TL-assigned (assignedById = devLead → "blue").
   const itTaskSeed: Array<{
     title: string;
     column: "BACKLOG" | "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
     priority: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
     storyPoints: number;
     assigneeId?: string;
+    createdById?: string;
+    self?: boolean;
+    project?: number;
     prdRef?: string;
     dueOffsetDays?: number;
   }> = [
     // Backlog (4)
-    { title: "OCR pipeline — Google Document AI", column: "BACKLOG", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id },
-    { title: "Dynamic sidebar DB config model", column: "BACKLOG", priority: "MEDIUM", storyPoints: 5 },
-    { title: "Global search endpoint (role-scoped)", column: "BACKLOG", priority: "LOW", storyPoints: 5 },
-    { title: "Credential vault — AES-256 encryption", column: "BACKLOG", priority: "HIGH", storyPoints: 6 },
+    { title: "OCR pipeline — Google Document AI", column: "BACKLOG", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id, project: 2 },
+    { title: "Dynamic sidebar DB config model", column: "BACKLOG", priority: "MEDIUM", storyPoints: 5, project: 0 },
+    { title: "Global search endpoint (role-scoped)", column: "BACKLOG", priority: "LOW", storyPoints: 5, assigneeId: developer2.id, project: 0 },
+    { title: "Credential vault — AES-256 encryption", column: "BACKLOG", priority: "HIGH", storyPoints: 6, assigneeId: devOps.id, project: 0 },
     // To do (3)
-    { title: "BillingRecord entity + migration", column: "TODO", priority: "MEDIUM", storyPoints: 5, assigneeId: devLead.id, prdRef: "BILL-002" },
-    { title: "Revenue visibility role gate (L3+)", column: "TODO", priority: "CRITICAL", storyPoints: 3, assigneeId: developer.id },
-    { title: "KPI condition tier formula", column: "TODO", priority: "MEDIUM", storyPoints: 3, assigneeId: devLead.id },
+    { title: "BillingRecord entity + migration", column: "TODO", priority: "MEDIUM", storyPoints: 5, assigneeId: devLead.id, prdRef: "BILL-002", project: 0 },
+    { title: "Revenue visibility role gate (L3+)", column: "TODO", priority: "CRITICAL", storyPoints: 3, assigneeId: developer.id, project: 0 },
+    { title: "KPI condition tier formula", column: "TODO", priority: "MEDIUM", storyPoints: 3, assigneeId: devLead.id, project: 0 },
     // In progress (3)
-    { title: "Twilio click-to-call integration", column: "IN_PROGRESS", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id, dueOffsetDays: 2 },
-    { title: "Marketing → Sales lead promotion endpoint", column: "IN_PROGRESS", priority: "CRITICAL", storyPoints: 5, assigneeId: devLead.id, prdRef: "MKT-001" },
-    { title: "AttendanceRecord model + clockIn/Out API", column: "IN_PROGRESS", priority: "MEDIUM", storyPoints: 5, prdRef: "HR-ATT-001" },
+    { title: "Twilio click-to-call integration", column: "IN_PROGRESS", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id, dueOffsetDays: 2, project: 1 },
+    { title: "Marketing → Sales lead promotion endpoint", column: "IN_PROGRESS", priority: "CRITICAL", storyPoints: 5, assigneeId: devLead.id, prdRef: "MKT-001", project: 0 },
+    { title: "AttendanceRecord model + clockIn/Out API", column: "IN_PROGRESS", priority: "MEDIUM", storyPoints: 5, assigneeId: qaEngineer.id, prdRef: "HR-ATT-001", project: 1 },
+    // Personal self-tasks (owner-private: visible only to developer + devLead)
+    { title: "Spike: evaluate OCR libraries (personal notes)", column: "IN_PROGRESS", priority: "LOW", storyPoints: 2, assigneeId: developer.id, createdById: developer.id, self: true, project: 2 },
+    { title: "Refactor my local API client helper", column: "TODO", priority: "LOW", storyPoints: 1, assigneeId: developer.id, createdById: developer.id, self: true, project: 0 },
     // Review (2)
-    { title: "Lead status machine — transition guard", column: "REVIEW", priority: "CRITICAL", storyPoints: 5, assigneeId: devLead.id },
-    { title: "TypeScript build errors — fix all type guards", column: "REVIEW", priority: "HIGH", storyPoints: 4, assigneeId: developer.id },
+    { title: "Lead status machine — transition guard", column: "REVIEW", priority: "CRITICAL", storyPoints: 5, assigneeId: devLead.id, project: 0 },
+    { title: "TypeScript build errors — fix all type guards", column: "REVIEW", priority: "HIGH", storyPoints: 4, assigneeId: developer.id, project: 0 },
     // Done (6) — story points sum to 34 (sprint velocity)
-    { title: "Lead source tracking FK on SalesLead", column: "DONE", priority: "MEDIUM", storyPoints: 3, assigneeId: devLead.id },
-    { title: "SMTP2GO email log entity", column: "DONE", priority: "MEDIUM", storyPoints: 5, assigneeId: developer.id },
-    { title: "Leave request model + TL approval flow", column: "DONE", priority: "HIGH", storyPoints: 5, assigneeId: devLead.id },
-    { title: "Org hierarchy tree endpoint", column: "DONE", priority: "MEDIUM", storyPoints: 5, assigneeId: developer.id },
-    { title: "JWT refresh token rotation", column: "DONE", priority: "HIGH", storyPoints: 8, assigneeId: devLead.id },
-    { title: "Audit log middleware", column: "DONE", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id },
+    { title: "Lead source tracking FK on SalesLead", column: "DONE", priority: "MEDIUM", storyPoints: 3, assigneeId: devLead.id, project: 0 },
+    { title: "SMTP2GO email log entity", column: "DONE", priority: "MEDIUM", storyPoints: 5, assigneeId: developer.id, project: 0 },
+    { title: "Leave request model + TL approval flow", column: "DONE", priority: "HIGH", storyPoints: 5, assigneeId: developer2.id, project: 1 },
+    { title: "Org hierarchy tree endpoint", column: "DONE", priority: "MEDIUM", storyPoints: 5, assigneeId: developer.id, project: 0 },
+    { title: "JWT refresh token rotation", column: "DONE", priority: "HIGH", storyPoints: 8, assigneeId: devLead.id, project: 2 },
+    { title: "Audit log middleware", column: "DONE", priority: "MEDIUM", storyPoints: 8, assigneeId: developer.id, project: 0 },
   ];
   await prisma.iTSprintTask.createMany({
     data: itTaskSeed.map((t, i) => ({
@@ -966,7 +1057,11 @@ async function main() {
       businessId: bIT.id,
       teamId: tIT.id,
       assigneeId: t.assigneeId ?? null,
-      createdById: devLead.id,
+      createdById: t.createdById ?? devLead.id,
+      // Self-tasks have no assigner; otherwise a task handed to someone other
+      // than the TL is a TL assignment (shows "blue" for the assignee).
+      assignedById: t.self ? null : (t.assigneeId && t.assigneeId !== devLead.id ? devLead.id : null),
+      projectId: t.project != null ? projectIds[t.project] : null,
       title: t.title,
       column: t.column,
       priority: t.priority,
@@ -976,6 +1071,30 @@ async function main() {
       orderIndex: i,
     })),
   });
+
+  // Example in-app notification: TL assigned a task to the second developer.
+  const assignedTask = await prisma.iTSprintTask.findFirst({
+    where: { sprintId: itSprint.id, assigneeId: developer2.id, assignedById: { not: null } },
+    select: { id: true, title: true, projectId: true, column: true, priority: true },
+  });
+  if (assignedTask) {
+    await prisma.notification.create({
+      data: {
+        businessId: bIT.id,
+        actorId: devLead.id,
+        recipientId: developer2.id,
+        type: "IT_TASK_ASSIGNED",
+        payload: {
+          taskId: assignedTask.id,
+          title: assignedTask.title,
+          projectId: assignedTask.projectId,
+          column: assignedTask.column,
+          priority: assignedTask.priority,
+        },
+        isRead: false,
+      },
+    });
+  }
 
   // Burndown: ideal linear 40→0 over 15 day-marks; actual logged for elapsed days.
   const ideal = [40, 37, 34, 31, 28, 25, 22, 19, 16, 13, 10, 7, 4, 2, 0];

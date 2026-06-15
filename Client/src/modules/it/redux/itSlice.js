@@ -21,8 +21,32 @@ export const fetchItOverview = createAsyncThunk(
 
 export const fetchItSprint = createAsyncThunk(
   'it/fetchSprint',
+  async (projectId, { rejectWithValue }) => {
+    try { return (await itService.getSprint(projectId || undefined)).data }
+    catch (err) { return rejectWithValue(err.message) }
+  },
+)
+
+export const fetchItProjects = createAsyncThunk(
+  'it/fetchProjects',
   async (_, { rejectWithValue }) => {
-    try { return (await itService.getSprint()).data }
+    try { return (await itService.getProjects()).data }
+    catch (err) { return rejectWithValue(err.message) }
+  },
+)
+
+export const fetchItTeamLoad = createAsyncThunk(
+  'it/fetchTeamLoad',
+  async (_, { rejectWithValue }) => {
+    try { return (await itService.getTeamLoad()).data }
+    catch (err) { return rejectWithValue(err.message) }
+  },
+)
+
+export const fetchItMyTasks = createAsyncThunk(
+  'it/fetchMyTasks',
+  async (filter, { rejectWithValue }) => {
+    try { return (await itService.getMyTasks(filter)).data }
     catch (err) { return rejectWithValue(err.message) }
   },
 )
@@ -50,12 +74,57 @@ export const addItTask = createAsyncThunk(
 
 export const moveItTask = createAsyncThunk(
   'it/moveTask',
-  async ({ id, ...body }, { rejectWithValue, dispatch }) => {
+  async ({ id, ...body }, { rejectWithValue, dispatch, getState }) => {
     try {
       const task = (await itService.moveTask(id, body)).data
-      dispatch(fetchItSprint())
+      dispatch(fetchItSprint(getState().it.activeProjectId))
       dispatch(fetchItOverview())
       return task
+    } catch (err) { return rejectWithValue(err.message) }
+  },
+)
+
+export const assignItTask = createAsyncThunk(
+  'it/assignTask',
+  async ({ id, assigneeId }, { rejectWithValue, dispatch, getState }) => {
+    try {
+      const task = (await itService.assignTask(id, assigneeId)).data
+      dispatch(fetchItSprint(getState().it.activeProjectId))
+      dispatch(fetchItTeamLoad())
+      return task
+    } catch (err) { return rejectWithValue(err.message) }
+  },
+)
+
+export const addItSelfTask = createAsyncThunk(
+  'it/addSelfTask',
+  async (body, { rejectWithValue, dispatch }) => {
+    try {
+      const task = (await itService.addSelfTask(body)).data
+      dispatch(fetchItMyTasks('all'))
+      return task
+    } catch (err) { return rejectWithValue(err.message) }
+  },
+)
+
+export const updateItSelfTask = createAsyncThunk(
+  'it/updateSelfTask',
+  async ({ id, ...body }, { rejectWithValue, dispatch }) => {
+    try {
+      const task = (await itService.updateSelfTask(id, body)).data
+      dispatch(fetchItMyTasks('all'))
+      return task
+    } catch (err) { return rejectWithValue(err.message) }
+  },
+)
+
+export const deleteItSelfTask = createAsyncThunk(
+  'it/deleteSelfTask',
+  async (id, { rejectWithValue, dispatch }) => {
+    try {
+      await itService.deleteSelfTask(id)
+      dispatch(fetchItMyTasks('all'))
+      return id
     } catch (err) { return rejectWithValue(err.message) }
   },
 )
@@ -77,13 +146,22 @@ const itSlice = createSlice({
     overview: null,
     sprint: { sprint: null, columns: EMPTY_COLUMNS },
     eod: [],
+    projects: [],
+    activeProjectId: null,
+    teamLoad: [],
+    myTasks: [],
     loadingOverview: false,
     loadingSprint: false,
     loadingEod: false,
+    loadingProjects: false,
+    loadingTeamLoad: false,
+    loadingMyTasks: false,
     submitting: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    setActiveProject: (s, a) => { s.activeProjectId = a.payload || null },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchItOverview.pending, (s) => { s.loadingOverview = true; s.error = null })
@@ -104,7 +182,20 @@ const itSlice = createSlice({
       .addCase(submitItEod.pending, (s) => { s.submitting = true })
       .addCase(submitItEod.fulfilled, (s) => { s.submitting = false })
       .addCase(submitItEod.rejected, (s, a) => { s.submitting = false; s.error = a.payload })
+
+      .addCase(fetchItProjects.pending, (s) => { s.loadingProjects = true })
+      .addCase(fetchItProjects.fulfilled, (s, a) => { s.loadingProjects = false; s.projects = a.payload || [] })
+      .addCase(fetchItProjects.rejected, (s, a) => { s.loadingProjects = false; s.error = a.payload })
+
+      .addCase(fetchItTeamLoad.pending, (s) => { s.loadingTeamLoad = true })
+      .addCase(fetchItTeamLoad.fulfilled, (s, a) => { s.loadingTeamLoad = false; s.teamLoad = a.payload || [] })
+      .addCase(fetchItTeamLoad.rejected, (s, a) => { s.loadingTeamLoad = false; s.error = a.payload })
+
+      .addCase(fetchItMyTasks.pending, (s) => { s.loadingMyTasks = true })
+      .addCase(fetchItMyTasks.fulfilled, (s, a) => { s.loadingMyTasks = false; s.myTasks = a.payload || [] })
+      .addCase(fetchItMyTasks.rejected, (s, a) => { s.loadingMyTasks = false; s.error = a.payload })
   },
 })
 
+export const { setActiveProject } = itSlice.actions
 export default itSlice.reducer
