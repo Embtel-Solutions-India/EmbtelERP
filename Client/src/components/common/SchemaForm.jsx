@@ -6,7 +6,7 @@ import { Close, Save, Search } from '@mui/icons-material'
 
 // Searchable single-select used for the "Related Lead" field. Stores the option
 // value (lead id) while letting the user type to filter by label.
-function LeadSelect({ value, onChange, options = [], placeholder = 'Search…' }) {
+function LeadSelect({ value, onChange, options = [], placeholder = 'Search…', emptyLabel = '— No lead —' }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const boxRef = useRef(null)
@@ -41,7 +41,7 @@ function LeadSelect({ value, onChange, options = [], placeholder = 'Search…' }
         <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-600 dark:bg-neutral-800">
           <button type="button" onClick={() => { onChange(''); setOpen(false) }}
             className="block w-full px-4 py-2 text-left text-sm text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700">
-            — No lead —
+            {emptyLabel}
           </button>
           {filtered.map((o) => (
             <button key={o.value} type="button"
@@ -120,7 +120,8 @@ export default function SchemaForm({
               render={({ field: f }) => (
                 <LeadSelect value={f.value} onChange={f.onChange}
                   options={searchOptionsByField[field.name] ?? leadOptions}
-                  placeholder={field.placeholder || 'Search…'} />
+                  placeholder={field.placeholder || 'Search…'}
+                  emptyLabel={field.emptyLabel} />
               )} />
           )
         case 'number':

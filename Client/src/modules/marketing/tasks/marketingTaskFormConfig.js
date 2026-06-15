@@ -34,7 +34,7 @@ export const taskFormSections = [
   {
     title: 'Task Information',
     fields: [
-      { name: 'campaignId', label: 'Related Campaign', type: 'lead-select', placeholder: 'Search campaigns…' },
+      { name: 'campaignId', label: 'Related Campaign', type: 'lead-select', placeholder: 'Search campaigns…', emptyLabel: '— No campaign —' },
       { name: 'title', label: 'Task Title', type: 'text', required: true, fullWidth: true },
       { name: 'priority', label: 'Priority', type: 'select', options: TASK_PRIORITIES },
       { name: 'status', label: 'Status', type: 'select', options: TASK_STATUSES },
