@@ -32,7 +32,7 @@ async function resolveAccess(ctx: SalesLeadContext): Promise<SalesAccess> {
 
   // Fast path (the common case — acting as self): the JWT already carries the
   // role level and organisation, and `attachScope` has already computed the
-  // visibility set (org-wide for level >= 4). Avoid re-querying the DB here —
+  // visibility set (org-wide for level >= 5). Avoid re-querying the DB here —
   // every avoided round-trip is ~0.6–1.5s on a remote pooled connection.
   if (effectiveId === viewerId && ctx.viewer.organizationId) {
     return {
@@ -71,8 +71,8 @@ function baseWhere(access: SalesAccess) {
 }
 
 function teamOrEmployeeFilter(access: SalesAccess): Record<string, unknown> {
-  // Heads+ (level >= 3): see all leads in their org scope — no extra filter needed.
-  if (access.roleLevel >= 3) return {};
+  // Heads+ (level >= 4): see all leads in their org scope — no extra filter needed.
+  if (access.roleLevel >= 4) return {};
 
   // Managers (level 2): see leads owned by anyone in their team/employee scope.
   if (access.roleLevel >= 2) {
@@ -478,10 +478,10 @@ export async function createSalesLead(ctx: SalesLeadContext, input: Partial<Crea
   if (!access.scope.visibleBusinesses.includes(String(input.businessId))) {
     throw new ApiError(403, "Business is outside the active perspective scope");
   }
-  if (input.teamId && access.roleLevel < 3 && !access.scope.visibleTeams.includes(String(input.teamId))) {
+  if (input.teamId && access.roleLevel < 4 && !access.scope.visibleTeams.includes(String(input.teamId))) {
     throw new ApiError(403, "Team is outside the active perspective scope");
   }
-  if (input.assignedToId && access.roleLevel < 4 && !access.scope.visibleEmployees.includes(String(input.assignedToId))) {
+  if (input.assignedToId && access.roleLevel < 5 && !access.scope.visibleEmployees.includes(String(input.assignedToId))) {
     throw new ApiError(403, "Assignee is outside the active perspective scope");
   }
 

@@ -182,7 +182,7 @@ export default function HRPerformance() {
       </SectionCard>
 
       {/* Cross-business performance — locked for non-HR Heads */}
-      {roleLevel < 3 && (
+      {roleLevel < 4 && (
         <div className="relative">
           <SectionCard
             title="Business Unit Performance Comparison"

@@ -244,9 +244,9 @@ export default function OrgExplorer() {
   // Perspective switch handler
   const handleViewAs = (employee) => {
     const targetType =
-      employee.level === 3
+      employee.level === 4
         ? "HEAD"
-        : employee.level === 2
+        : employee.level === 2 || employee.level === 3
           ? "MANAGER"
           : employee.level === 0
             ? "INTERN"

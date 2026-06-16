@@ -96,13 +96,13 @@ async function getITBusinessId(): Promise<string | null> {
 
 /**
  * Backend isolation gate: the IT dashboard is restricted to IT's own staff
- * (members of the IT business) plus level 4/5 oversight (Business Owner /
+ * (members of the IT business) plus level 5/6 oversight (Business Owner /
  * Super Admin). Every other department is denied — the route guard mirrors this
  * on the client, but this is the authoritative server-side check.
  */
 async function assertITAccess(ctx: ITContext): Promise<void> {
   const level = ctx.viewer.employeeLevel ?? ctx.viewer.roleLevel ?? 0;
-  if (level >= 4) return;
+  if (level >= 5) return;
   const itBusinessId = await getITBusinessId();
   if (itBusinessId && ctx.viewer.businessId === itBusinessId) return;
   throw new ApiError(403, "IT dashboard is restricted to the IT team");

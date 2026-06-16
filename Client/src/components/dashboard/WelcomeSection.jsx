@@ -108,15 +108,15 @@ const TARGET_LABELS = {
 function detectRole(user) {
   const d = (user?.designation || '').toLowerCase()
   const level = Number(user?.employeeLevel ?? user?.roleLevel ?? 1)
-  if (level >= 5 || d.includes('super admin')) return 'super_admin'
-  if (level >= 4 || d.includes('business owner')) return 'business_owner'
+  if (level >= 6 || d.includes('super admin')) return 'super_admin'
+  if (level >= 5 || d.includes('business owner')) return 'business_owner'
   if (d.includes('immigration')) return 'immigration_head'
-  if (d.includes('evaluation') && (d.includes('head') || level >= 3)) return 'evaluation_head'
+  if (d.includes('evaluation') && (d.includes('head') || level >= 4)) return 'evaluation_head'
   if (d.includes('hr') || d.includes('human resource')) return 'hr_manager'
   if (d.includes('documentation') || d.includes('production')) {
     return level >= 2 ? 'documentation_manager' : 'documentation_executive'
   }
-  if (d.includes('vertical manager') || (level >= 3)) return 'vertical_manager'
+  if (d.includes('vertical manager') || (level === 3)) return 'vertical_manager'
   if (d.includes('sales') && (d.includes('head') || d.includes('manager') || level >= 2)) return 'sales_head'
   if (d.includes('marketing') && (d.includes('manager') || level >= 2)) return 'marketing_manager'
   if (d.includes('marketing') && level <= 0) return 'marketing_intern'

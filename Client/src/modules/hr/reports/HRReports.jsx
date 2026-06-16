@@ -133,7 +133,7 @@ export default function HRReports() {
 
       {/* Cross-org financial report — locked for non-Heads */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {roleLevel < 3 ? (
+        {roleLevel < 4 ? (
           <div className="relative">
             <SectionCard title="Department Budget vs Headcount" subtitle="Cost-per-employee ratios across business units">
               <div style={{ height: 240 }} className="opacity-25 select-none blur-sm flex items-end justify-between p-4 gap-4">
@@ -173,7 +173,7 @@ export default function HRReports() {
           </SectionCard>
         )}
 
-        {roleLevel < 4 ? (
+        {roleLevel < 5 ? (
           <div className="relative">
             <SectionCard title="Business Owner P&L vs Workforce Cost" subtitle="Annual net return on workforce investment">
               <div style={{ height: 240 }} className="opacity-25 select-none blur-sm flex items-center justify-center">

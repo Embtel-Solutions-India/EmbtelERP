@@ -182,9 +182,9 @@ export type AssignableEmployee = {
  * reporting subtree at the tier directly below them. Mirrors the proven Sales
  * Targets rule so task & target assignment stay consistent:
  *   • level < 2 (Exec/Intern)      → nobody
- *   • level 2 + no team (Vertical Manager) → department Heads (level 2 w/ a team)
- *   • level 2 + a team (Sales/Marketing Head) → Executives & Interns (level ≤ 1)
- *   • level ≥ 3 (Business Head+)   → anyone in their subtree
+ *   • level 2 (Team Head: Sales/Marketing/Doc Head) → Executives & Interns (level ≤ 1)
+ *   • level 3 (Vertical Manager)   → Team Heads (level 2 w/ a team)
+ *   • level ≥ 4 (Business Head+)   → anyone in their subtree
  * Used by both the assignee picker and the server-side assignment guard.
  */
 export async function getAssignableSubordinates(
@@ -210,12 +210,12 @@ export async function getAssignableSubordinates(
     orderBy: { firstName: "asc" },
   });
 
-  const isVerticalManager = level === 2 && !assigner.teamId;
+  const isVerticalManager = level === 3;
   const filtered = candidates.filter((e) => {
     const lvl = e.level ?? e.role.level;
-    if (level >= 3) return true;                       // business head+: whole subtree
-    if (isVerticalManager) return lvl === 2 && !!e.teamId; // VM → department heads
-    return lvl <= 1;                                   // head → execs & interns
+    if (level >= 4) return true;                        // business head+: whole subtree
+    if (isVerticalManager) return lvl === 2 && !!e.teamId; // VM → team heads
+    return lvl <= 1;                                   // team head → execs & interns
   });
 
   return filtered.map((e) => ({
@@ -432,7 +432,7 @@ export async function getFullOrganizationTree(): Promise<OrganizationTree> {
 
   const businessNodes: BusinessTreeNode[] = businesses.map((business) => {
     // Find the head of this business (employee with level 3 who reports to business owner)
-    const head = business.employees.find((e) => e.level === 3);
+    const head = business.employees.find((e) => e.level === 4);
 
     const verticalNodes: VerticalTreeNode[] = business.verticals.map(
       (vertical) => {
@@ -775,7 +775,7 @@ export async function getBusinessHierarchyTree(
 
   if (!business) return null;
 
-  const head = business.employees.find((e) => e.level === 3);
+  const head = business.employees.find((e) => e.level === 4);
 
   const verticalNodes: VerticalTreeNode[] = business.verticals.map(
     (vertical) => {

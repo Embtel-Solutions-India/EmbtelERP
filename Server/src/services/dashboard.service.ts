@@ -434,12 +434,12 @@ function determineAggregationLevel(
   type: string,
   viewerRoleLevel: number,
 ): AggregationLevel {
-  if (viewerRoleLevel >= 5) return "ALL";
+  if (viewerRoleLevel >= 6) return "ALL";
   switch (type) {
     case "ORGANIZATION":
       return "ALL";
     case "BUSINESS":
-      return viewerRoleLevel >= 4 ? "BUSINESS_OWNER" : "BUSINESS";
+      return viewerRoleLevel >= 5 ? "BUSINESS_OWNER" : "BUSINESS";
     case "BUSINESS_OWNER":
       return "BUSINESS_OWNER";
     case "HEAD":
@@ -1165,7 +1165,7 @@ export async function getRoleWorkspace(
   const roleLevel = viewer.roleLevel ?? employee?.role.level ?? 0;
   const designation = (employee?.designation ?? employee?.role.name ?? "").toLowerCase();
   const isAdminWorkspace =
-    roleLevel >= 5 || hasDesignation(designation, "super admin", "admin", "it head");
+    roleLevel >= 6 || hasDesignation(designation, "super admin", "admin", "it head");
 
   // Shared marketing scope filter for tasks and leads (both use assignedToId).
   const marketingScopeOr = [
@@ -1259,7 +1259,7 @@ export async function getRoleWorkspace(
   const budgetUsage =
     budget.allocated > 0 ? Math.round((budget.spent / budget.allocated) * 100) : 0;
 
-  if (roleLevel >= 5 || hasDesignation(designation, "super admin", "admin", "it head")) {
+  if (roleLevel >= 6 || hasDesignation(designation, "super admin", "admin", "it head")) {
     return {
       roleKey: "super_admin",
       title: "System Administration Workspace",
@@ -1279,7 +1279,7 @@ export async function getRoleWorkspace(
     };
   }
 
-  if (roleLevel >= 4 || hasDesignation(designation, "owner", "business head", "immigration head")) {
+  if (roleLevel >= 5 || hasDesignation(designation, "owner", "business head", "immigration head")) {
     return {
       roleKey: "business_owner",
       title: "Business Owner Workspace",

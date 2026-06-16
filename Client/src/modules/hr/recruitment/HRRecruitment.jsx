@@ -126,7 +126,7 @@ export default function HRRecruitment() {
       </div>
 
       {/* Cross-business pipeline — locked for non-HR Heads */}
-      {roleLevel < 3 ? (
+      {roleLevel < 4 ? (
         <div className="relative">
           <SectionCard
             title="Cross-Business Hiring Overview"

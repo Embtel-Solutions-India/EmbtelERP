@@ -261,8 +261,8 @@ function NavItem({ item, collapsed }) {
 }
 
 function roleLevelToType(level) {
-  if (level === 3) return "HEAD";
-  if (level === 2) return "MANAGER";
+  if (level === 4) return "HEAD";
+  if (level === 2 || level === 3) return "MANAGER";
   if (level === 1) return "EMPLOYEE";
   if (level === 0) return "INTERN";
   return "EMPLOYEE";
@@ -478,9 +478,9 @@ export default function Sidebar({ open, mobileOpen }) {
   const items = resolveMenu(activeModule, level, designation);
   const platformLabel = moduleLabelMap[activeModule] || "Sales Platform";
   const isViewingOther = activePerspective !== null;
-  // Organization Explorer tree is Super-Admin-only (level 5 / "super admin").
+  // Organization Explorer tree is Super-Admin-only (level 6 / "super admin").
   const isSuperAdmin =
-    level >= 5 || designation.toLowerCase().includes("super admin");
+    level >= 6 || designation.toLowerCase().includes("super admin");
 
   useEffect(() => {
     dispatch(fetchPerspectives());

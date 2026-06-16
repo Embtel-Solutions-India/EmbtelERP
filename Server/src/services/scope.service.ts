@@ -182,10 +182,10 @@ async function computeDataScope(
 
       // Defense-in-depth: re-assert authorization
       const viewerRoleLevelB = viewer.level ?? viewer.role?.level ?? 0;
-      if (viewerRoleLevelB < 4 && business.id !== viewer.businessId) {
+      if (viewerRoleLevelB < 5 && business.id !== viewer.businessId) {
         return getSelfScope(viewer as any);
       }
-      if (viewerRoleLevelB >= 4 && business.organizationId !== viewer.organizationId) {
+      if (viewerRoleLevelB >= 5 && business.organizationId !== viewer.organizationId) {
         return getSelfScope(viewer as any);
       }
 
@@ -288,7 +288,7 @@ async function buildScope(
 ): Promise<DataScope> {
   const viewerLevel = viewer.level ?? viewer.role?.level ?? 1;
 
-  if (viewerLevel >= 5) {
+  if (viewerLevel >= 6) {
     const [businesses, departments, teams, employees] = await Promise.all([
       prisma.business.findMany({ select: { id: true } }),
       prisma.department.findMany({ select: { id: true } }),
@@ -304,7 +304,7 @@ async function buildScope(
     };
   }
 
-  if (viewerLevel >= 4) {
+  if (viewerLevel >= 5) {
     const orgBusinesses = await prisma.business.findMany({
       where: { organizationId: viewer.organizationId },
       select: { id: true },
@@ -394,7 +394,7 @@ async function collectDepartmentIds(
   employeeIds: string[],
   viewerLevel: number,
 ): Promise<string[]> {
-  if (viewerLevel < 3) {
+  if (viewerLevel < 4) {
     return viewer.departmentId ? [viewer.departmentId] : [];
   }
 

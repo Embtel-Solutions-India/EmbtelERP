@@ -58,6 +58,7 @@ export async function login(email: string, password: string) {
       roleLevel: employee.role.level,
       employeeLevel: employee.level ?? employee.role.level,
       businessId: employee.businessId,
+      organizationId: employee.organizationId,
       designation: employee.designation,
       teamId: employee.teamId,
       verticalId: employee.verticalId,

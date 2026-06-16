@@ -43,9 +43,10 @@ const targetInclude = {
   assignedBy: { select: { id: true, firstName: true, lastName: true, designation: true } },
 } satisfies Prisma.SalesTargetInclude;
 
-function salesRoleOf(roleLevel: number, teamId: string | null): SalesRole {
-  if (roleLevel >= 3) return "HEAD_PLUS";
-  if (roleLevel === 2) return teamId ? "SALES_HEAD" : "VERTICAL_MANAGER";
+function salesRoleOf(roleLevel: number, _teamId: string | null): SalesRole {
+  if (roleLevel >= 4) return "HEAD_PLUS";
+  if (roleLevel === 3) return "VERTICAL_MANAGER";
+  if (roleLevel === 2) return "SALES_HEAD";
   if (roleLevel === 1) return "EXECUTIVE";
   return "INTERN";
 }

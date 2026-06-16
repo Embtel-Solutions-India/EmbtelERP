@@ -19,9 +19,10 @@ export interface ImmigrationTreeNode {
 /**
  * Returns the immigration structural tree scoped to the viewer's permissions.
  *
- * HEAD (level ≥ 3): all verticals → their departments (inferred via employees)
+ * HEAD (level ≥ 4): all verticals → their departments (inferred via employees)
  *                   → employees within each department.
- * MANAGER (level 2): only the viewer's own vertical (from scope.visibleTeams).
+ * Below Head (Vertical Manager level 3 and down): only the viewer's own
+ * vertical/teams (from scope.visibleTeams).
  */
 export async function getImmigrationTree(
   scope: DataScope,
@@ -30,9 +31,9 @@ export async function getImmigrationTree(
   const businessId = await getImmigrationBusinessId(scope);
   if (!businessId) return [];
 
-  // For level 2 (Vertical Manager), restrict to their visible teams/vertical
+  // Below Head (e.g. Vertical Manager), restrict to their visible teams/vertical
   const employeeWhere: Record<string, unknown> =
-    viewerLevel >= 3
+    viewerLevel >= 4
       ? { businessId, isActive: true }
       : {
           businessId,

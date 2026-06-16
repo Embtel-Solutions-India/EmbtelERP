@@ -92,9 +92,10 @@ export function getHomePath(userOrLevel) {
   // 3. Numeric level fallback
   const level = Number(user?.roleLevel ?? user?.employeeLevel ?? userOrLevel ?? 1)
   const levelRoutes = {
-    5: '/super-admin/dashboard',
-    4: '/owner/dashboard',
-    3: '/head/dashboard',
+    6: '/super-admin/dashboard',
+    5: '/owner/dashboard',
+    4: '/head/dashboard',
+    3: '/sales-manager/dashboard', // Vertical Manager — manager-style landing
     2: '/sales-manager/dashboard',
     1: '/sales/dashboard',
     0: '/sales-intern/dashboard',
@@ -108,10 +109,11 @@ export function getHomePath(userOrLevel) {
  */
 export function getRoleLabel(roleLevel) {
   switch (Number(roleLevel)) {
-    case 5:  return 'Super Admin'
-    case 4:  return 'Business Owner'
-    case 3:  return 'Business Head'
-    case 2:  return 'Manager'
+    case 6:  return 'Super Admin'
+    case 5:  return 'Business Owner'
+    case 4:  return 'General Manager'
+    case 3:  return 'Vertical Manager'
+    case 2:  return 'Team Lead'
     case 1:  return 'Executive'
     case 0:  return 'Intern'
     default: return 'User'

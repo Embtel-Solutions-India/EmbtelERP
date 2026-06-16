@@ -191,7 +191,7 @@ export async function validatePerspectiveAccess(
   }
 
   // Super admin (level 5) can access everything
-  if (viewer.role.level >= 5) {
+  if (viewer.role.level >= 6) {
     return true;
   }
 
@@ -199,7 +199,7 @@ export async function validatePerspectiveAccess(
   // provided the target is at or below their own role level.
   // They cannot access BUSINESS / VERTICAL / TEAM scopes outside their own business.
   if (
-    viewer.role.level < 4 &&
+    viewer.role.level < 5 &&
     (targetType === "EMPLOYEE" || targetType === "MANAGER" || targetType === "INTERN") &&
     (await isWorkforceManager({ businessId: viewer.businessId, roleLevel: viewer.role.level }))
   ) {
@@ -220,7 +220,7 @@ export async function validatePerspectiveAccess(
   switch (targetType) {
     case "ORGANIZATION": {
       // Only super admin can access organization level
-      if (viewer.role.level < 5) {
+      if (viewer.role.level < 6) {
         throw new ApiError(
           403,
           "Access denied: cannot view organization scope",
@@ -230,8 +230,8 @@ export async function validatePerspectiveAccess(
     }
 
     case "BUSINESS": {
-      // Business owner (level 4) can access their own business
-      if (viewer.role.level >= 4) {
+      // Business owner (level 5) can access their own business
+      if (viewer.role.level >= 5) {
         const business = await prisma.business.findUnique({
           where: { id: targetId },
           select: { organizationId: true },
@@ -258,8 +258,8 @@ export async function validatePerspectiveAccess(
       if (department.businessId !== viewer.businessId) {
         throw new ApiError(403, "Access denied: cross-business access");
       }
-      // L3+: full business access
-      if (viewer.role.level >= 3) return true;
+      // Head+: full business access
+      if (viewer.role.level >= 4) return true;
       // L0-L2: must belong to this department or have subordinates here
       if (viewer.departmentId === targetId) return true;
       const deptDescendants = await getDescendantIds(viewer.id);
@@ -344,11 +344,11 @@ export async function validatePerspectiveAccess(
     }
 
     case "BUSINESS_OWNER": {
-      // Only Business Owner (4) or Super Admin (5) may use this perspective type
-      if (viewer.role.level < 4) {
+      // Only Business Owner (5) or Super Admin (6) may use this perspective type
+      if (viewer.role.level < 5) {
         throw new ApiError(
           403,
-          "Access denied: Business Owner perspective requires level 4+",
+          "Access denied: Business Owner perspective requires level 5+",
         );
       }
       const business = await prisma.business.findUnique({
@@ -417,15 +417,15 @@ async function getViewerBusinessIds(viewer: {
   role: { level: number };
 }): Promise<string[]> {
   // Super admin (level 5) sees all businesses
-  if (viewer.role.level >= 5) {
+  if (viewer.role.level >= 6) {
     const businesses = await prisma.business.findMany({
       select: { id: true },
     });
     return businesses.map((b) => b.id);
   }
 
-  // Business owner (level 4) sees all businesses in their organization
-  if (viewer.role.level >= 4) {
+  // Business owner (level 5) sees all businesses in their organization
+  if (viewer.role.level >= 5) {
     const businesses = await prisma.business.findMany({
       where: { organizationId: viewer.organizationId },
       select: { id: true },
@@ -438,8 +438,8 @@ async function getViewerBusinessIds(viewer: {
 }
 
 function employeeNodeType(level: number | null): PerspectiveNode["type"] {
-  if (level === 3) return "HEAD";
-  if (level === 2) return "MANAGER";
+  if (level === 4) return "HEAD";
+  if (level === 2 || level === 3) return "MANAGER";
   if (level === 0) return "INTERN";
   return "EMPLOYEE";
 }
@@ -467,7 +467,7 @@ async function buildHierarchyTree(
     // Business owners see the business node as BUSINESS_OWNER so clicking it
     // switches to that role-scoped perspective; all others use BUSINESS.
     const businessNodeType: PerspectiveNode["type"] =
-      viewerLevel >= 4 ? "BUSINESS_OWNER" : "BUSINESS";
+      viewerLevel >= 5 ? "BUSINESS_OWNER" : "BUSINESS";
 
     const businessNode: PerspectiveNode = {
       id: business.id,
@@ -483,7 +483,7 @@ async function buildHierarchyTree(
         businessId: business.id,
         id: { in: visibleEmployeeIds },
         isActive: true,
-        level: 3,
+        level: 4,
         teamId: null,
       },
       select: {
@@ -827,7 +827,7 @@ async function validateScopeBoundaries(
   const viewerLevel = viewer.role.level;
 
   // Super admin & Owner bypass
-  if (viewerLevel >= 4) return;
+  if (viewerLevel >= 5) return;
 
   if (
     targetType === "EMPLOYEE" ||
@@ -860,7 +860,7 @@ async function validateScopeBoundaries(
     }
 
     // L2 managers are further scoped by vertical and team membership
-    if (viewerLevel === 2) {
+    if (viewerLevel === 2 || viewerLevel === 3) {
       // viewer.verticalId != null (loose) catches both null and undefined
       if (viewer.verticalId != null && target.verticalId !== viewer.verticalId) {
         throw new ApiError(403, "Access denied: cannot access employees outside your vertical");
@@ -884,7 +884,7 @@ async function validateScopeBoundaries(
     }
 
     // L2 managers: further scoped by vertical and team
-    if (viewerLevel === 2) {
+    if (viewerLevel === 2 || viewerLevel === 3) {
       if (viewer.verticalId != null && target.verticalId !== viewer.verticalId) {
         throw new ApiError(403, "Access denied: cannot access teams outside your vertical");
       }
@@ -906,8 +906,8 @@ async function validateScopeBoundaries(
       throw new ApiError(403, "Access denied: cannot access verticals in other businesses");
     }
 
-    // L2 managers can only access their own vertical
-    if (viewerLevel === 2 && viewer.verticalId != null && target.id !== viewer.verticalId) {
+    // Team Heads / Vertical Managers can only access their own vertical
+    if ((viewerLevel === 2 || viewerLevel === 3) && viewer.verticalId != null && target.id !== viewer.verticalId) {
       throw new ApiError(403, "Access denied: cannot access other verticals");
     }
   }
