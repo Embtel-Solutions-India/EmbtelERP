@@ -486,12 +486,10 @@ async function getTaskStats(
     ] as object[],
   };
 
-  const [total, completed, pending, overdue] = await Promise.all([
-    prisma.task.count({ where }),
-    prisma.task.count({ where: { ...where, status: "completed" } }),
-    prisma.task.count({
-      where: { ...where, status: { notIn: ["completed", "cancelled"] } },
-    }),
+  // total/completed/pending all come from one status breakdown; overdue needs a
+  // dueDate filter so it stays a separate count. Two round-trips instead of four.
+  const [byStatus, overdue] = await Promise.all([
+    prisma.task.groupBy({ by: ["status"], where, _count: { _all: true } }),
     prisma.task.count({
       where: {
         ...where,
@@ -500,6 +498,16 @@ async function getTaskStats(
       },
     }),
   ]);
+
+  let total = 0;
+  let completed = 0;
+  let pending = 0;
+  for (const row of byStatus) {
+    const count = row._count._all;
+    total += count;
+    if (row.status === "completed") completed += count;
+    if (!["completed", "cancelled"].includes(row.status)) pending += count;
+  }
 
   return { total, completed, pending, overdue };
 }
@@ -521,40 +529,45 @@ async function getMarketingKpiStats(
     return { targetAchievement: 0, leadsGenerated: 0, conversions: 0 };
   }
 
-  const kpis = await prisma.marketingKPI.findMany({
-    where: {
-      OR: [
-        ...(businessIds.length > 0
-          ? [{ businessId: { in: businessIds } }]
-          : []),
-        ...(teamIds.length > 0 ? [{ teamId: { in: teamIds } }] : []),
-        ...(employeeIds.length > 0
-          ? [{ employeeId: { in: employeeIds } }]
-          : []),
-      ] as object[],
-    },
-    select: { value: true, target: true, metricType: true },
-  });
+  const scopeOr = [
+    ...(businessIds.length > 0 ? [{ businessId: { in: businessIds } }] : []),
+    ...(teamIds.length > 0 ? [{ teamId: { in: teamIds } }] : []),
+    ...(employeeIds.length > 0 ? [{ employeeId: { in: employeeIds } }] : []),
+  ] as object[];
 
-  let targetAchievement = 0;
+  // Metric sums are aggregated in the DB; targetAchievement is a per-row ratio
+  // average, so only the rows that contribute (target > 0) are fetched.
+  const [byMetric, targetRows] = await Promise.all([
+    prisma.marketingKPI.groupBy({
+      by: ["metricType"],
+      where: { OR: scopeOr },
+      _sum: { value: true },
+    }),
+    prisma.marketingKPI.findMany({
+      where: { OR: scopeOr, target: { gt: 0 } },
+      select: { value: true, target: true },
+    }),
+  ]);
+
   let leadsGenerated = 0;
   let conversions = 0;
-
-  for (const kpi of kpis) {
-    if (kpi.metricType === "LEADS_GENERATED") {
-      leadsGenerated += Number(kpi.value);
+  for (const row of byMetric) {
+    if (row.metricType === "LEADS_GENERATED") {
+      leadsGenerated = Number(row._sum.value ?? 0);
     }
-    if (kpi.metricType === "CAMPAIGN_SUCCESS") {
-      conversions += Number(kpi.value);
-    }
-    if (kpi.target && Number(kpi.target) > 0) {
-      targetAchievement += (Number(kpi.value) / Number(kpi.target)) * 100;
+    if (row.metricType === "CAMPAIGN_SUCCESS") {
+      conversions = Number(row._sum.value ?? 0);
     }
   }
 
-  const count = kpis.filter((k) => k.target && Number(k.target) > 0).length;
+  let targetSum = 0;
+  for (const row of targetRows) {
+    targetSum += (Number(row.value) / Number(row.target)) * 100;
+  }
+
   return {
-    targetAchievement: count > 0 ? Math.round(targetAchievement / count) : 0,
+    targetAchievement:
+      targetRows.length > 0 ? Math.round(targetSum / targetRows.length) : 0,
     leadsGenerated,
     conversions,
   };
@@ -1096,30 +1109,32 @@ export async function getDashboardTeam(
     orderBy: { name: "asc" },
   });
 
-  const teamResults: DashboardTeam[] = [];
+  // Per-team stats run concurrently rather than awaiting each team in turn,
+  // so total latency is one round-trip's worth instead of N teams' worth.
+  const teamResults: DashboardTeam[] = await Promise.all(
+    teams.map(async (team) => {
+      const memberIds = team.employees.map((e) => e.id);
+      const [tStats, mStats] = await Promise.all([
+        getTaskStats(memberIds, []),
+        getMarketingKpiStats([], [team.id], []),
+      ]);
 
-  for (const team of teams) {
-    const memberIds = team.employees.map((e) => e.id);
-    const [tStats, mStats] = await Promise.all([
-      getTaskStats(memberIds, []),
-      getMarketingKpiStats([], [team.id], []),
-    ]);
-
-    teamResults.push({
-      id: team.id,
-      name: team.name,
-      memberCount: team._count.employees,
-      completedTasks: tStats.completed,
-      pendingTasks: tStats.pending,
-      overdueTasks: tStats.overdue,
-      completionRate:
-        tStats.total > 0
-          ? Math.round((tStats.completed / tStats.total) * 100)
-          : 0,
-      targetAchievement: mStats.targetAchievement,
-      ranking: 0,
-    });
-  }
+      return {
+        id: team.id,
+        name: team.name,
+        memberCount: team._count.employees,
+        completedTasks: tStats.completed,
+        pendingTasks: tStats.pending,
+        overdueTasks: tStats.overdue,
+        completionRate:
+          tStats.total > 0
+            ? Math.round((tStats.completed / tStats.total) * 100)
+            : 0,
+        targetAchievement: mStats.targetAchievement,
+        ranking: 0,
+      };
+    }),
+  );
 
   teamResults.sort((a, b) => b.completionRate - a.completionRate);
   teamResults.forEach((t, i) => {
@@ -1149,17 +1164,33 @@ export async function getRoleWorkspace(
 
   const roleLevel = viewer.roleLevel ?? employee?.role.level ?? 0;
   const designation = (employee?.designation ?? employee?.role.name ?? "").toLowerCase();
-  const taskStats = await getTaskStats(employeeIds, businessIds);
+  const isAdminWorkspace =
+    roleLevel >= 5 || hasDesignation(designation, "super admin", "admin", "it head");
 
+  // Shared marketing scope filter for tasks and leads (both use assignedToId).
+  const marketingScopeOr = [
+    ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
+    ...(teamIds.length ? [{ teamId: { in: teamIds } }] : []),
+    ...(employeeIds.length ? [{ assignedToId: { in: employeeIds } }] : []),
+  ];
+  const hasMarketingScope = marketingScopeOr.length > 0;
+
+  // Everything the workspace needs in a single parallel batch; counts and sums
+  // run in the DB instead of pulling whole tables back to aggregate in JS.
   const [
+    taskStats,
     employeeCount,
     documentCount,
     pendingDocuments,
-    marketingCampaigns,
-    marketingTasks,
-    marketingLeads,
+    campaignTotals,
+    activeMarketingCampaigns,
+    completedMarketingTasks,
+    pendingMarketingTasks,
+    leadValueAgg,
     notificationApprovals,
+    auditLogCount,
   ] = await Promise.all([
+    getTaskStats(employeeIds, businessIds),
     prisma.employee.count({ where: { id: { in: employeeIds } } }),
     businessIds.length
       ? prisma.document.count({ where: { businessId: { in: businessIds } } })
@@ -1173,35 +1204,36 @@ export async function getRoleWorkspace(
         })
       : Promise.resolve(0),
     businessIds.length
-      ? prisma.marketingCampaign.findMany({
+      ? prisma.marketingCampaign.aggregate({
           where: { businessId: { in: businessIds } },
-          select: { status: true, budget: true, budgetSpent: true },
+          _sum: { budget: true, budgetSpent: true },
         })
-      : Promise.resolve([]),
-    businessIds.length || employeeIds.length || teamIds.length
-      ? prisma.marketingTask.findMany({
+      : Promise.resolve(null),
+    businessIds.length
+      ? prisma.marketingCampaign.count({
+          where: { businessId: { in: businessIds }, status: "ACTIVE" },
+        })
+      : Promise.resolve(0),
+    hasMarketingScope
+      ? prisma.marketingTask.count({
+          where: { OR: marketingScopeOr, status: "COMPLETED" },
+        })
+      : Promise.resolve(0),
+    hasMarketingScope
+      ? prisma.marketingTask.count({
           where: {
-            OR: [
-              ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
-              ...(teamIds.length ? [{ teamId: { in: teamIds } }] : []),
-              ...(employeeIds.length ? [{ assignedToId: { in: employeeIds } }] : []),
-            ],
+            OR: marketingScopeOr,
+            status: { notIn: ["COMPLETED", "CANCELLED"] },
           },
-          select: { status: true, dueDate: true },
         })
-      : Promise.resolve([]),
-    businessIds.length || employeeIds.length || teamIds.length
-      ? prisma.marketingLead.findMany({
-          where: {
-            OR: [
-              ...(businessIds.length ? [{ businessId: { in: businessIds } }] : []),
-              ...(teamIds.length ? [{ teamId: { in: teamIds } }] : []),
-              ...(employeeIds.length ? [{ assignedToId: { in: employeeIds } }] : []),
-            ],
-          },
-          select: { status: true, estimatedValue: true },
+      : Promise.resolve(0),
+    hasMarketingScope
+      ? prisma.marketingLead.aggregate({
+          where: { OR: marketingScopeOr },
+          _count: true,
+          _sum: { estimatedValue: true },
         })
-      : Promise.resolve([]),
+      : Promise.resolve(null),
     businessIds.length || employeeIds.length
       ? prisma.notification.count({
           where: {
@@ -1213,28 +1245,17 @@ export async function getRoleWorkspace(
           },
         })
       : Promise.resolve(0),
+    isAdminWorkspace && businessIds.length
+      ? prisma.auditLog.count({ where: { businessId: { in: businessIds } } })
+      : Promise.resolve(0),
   ]);
 
-  const activeMarketingCampaigns = marketingCampaigns.filter(
-    (campaign) => campaign.status === "ACTIVE",
-  ).length;
-  const completedMarketingTasks = marketingTasks.filter(
-    (task) => task.status === "COMPLETED",
-  ).length;
-  const pendingMarketingTasks = marketingTasks.filter(
-    (task) => !["COMPLETED", "CANCELLED"].includes(task.status),
-  ).length;
-  const leadValue = marketingLeads.reduce(
-    (sum, lead) => sum + Number(lead.estimatedValue ?? 0),
-    0,
-  );
-  const budget = marketingCampaigns.reduce(
-    (acc, row) => ({
-      allocated: acc.allocated + Number(row.budget ?? 0),
-      spent: acc.spent + Number(row.budgetSpent ?? 0),
-    }),
-    { allocated: 0, spent: 0 },
-  );
+  const marketingLeadsCount = leadValueAgg?._count ?? 0;
+  const leadValue = Number(leadValueAgg?._sum.estimatedValue ?? 0);
+  const budget = {
+    allocated: Number(campaignTotals?._sum.budget ?? 0),
+    spent: Number(campaignTotals?._sum.budgetSpent ?? 0),
+  };
   const budgetUsage =
     budget.allocated > 0 ? Math.round((budget.spent / budget.allocated) * 100) : 0;
 
@@ -1245,7 +1266,7 @@ export async function getRoleWorkspace(
       focus: ["System health", "Users and roles", "Audit visibility"],
       widgets: [
         makeWidget("employees", "Active Users", employeeCount, "employees in scope", "primary"),
-        makeWidget("audit", "Audit Logs", await prisma.auditLog.count({ where: { businessId: { in: businessIds } } }), "recorded events", "neutral"),
+        makeWidget("audit", "Audit Logs", auditLogCount, "recorded events", "neutral"),
         makeWidget("approvals", "Unread Requests", notificationApprovals, "permission and system notices", "warning"),
         makeWidget("tasks", "Open Tasks", taskStats.pending, "operational follow-up", "danger"),
       ],
@@ -1330,7 +1351,7 @@ export async function getRoleWorkspace(
             : "Marketing Executive Workspace",
       focus: ["Campaign work", "Lead generation", "Content and activity tracking"],
       widgets: [
-        makeWidget("leads", "Leads Generated", marketingLeads.length, "marketing leads", "primary"),
+        makeWidget("leads", "Leads Generated", marketingLeadsCount, "marketing leads", "primary"),
         makeWidget("campaigns", "Active Campaigns", activeMarketingCampaigns, "currently active", "success"),
         makeWidget("tasks", "Content Tasks", pendingMarketingTasks, "open marketing tasks", "warning"),
         makeWidget("budget", "Budget Usage", budgetUsage, "spent %", budgetUsage > 90 ? "danger" : "neutral"),
@@ -1355,7 +1376,7 @@ export async function getRoleWorkspace(
           : "Sales Executive Workspace",
     focus: ["Follow-ups", "Pipeline movement", "Revenue impact"],
     widgets: [
-      makeWidget("assigned", "Assigned Leads", marketingLeads.length, "pipeline records", "primary"),
+      makeWidget("assigned", "Assigned Leads", marketingLeadsCount, "pipeline records", "primary"),
       makeWidget("followups", "Today's Follow Ups", taskStats.pending, "open tasks", "warning"),
       makeWidget("completed", "Completed Tasks", taskStats.completed + completedMarketingTasks, "closed work", "success"),
       makeWidget("revenue", "Revenue Impact", Math.round(leadValue), "estimated lead value", "success"),

@@ -28,9 +28,27 @@ export type CreateEmployeeInput = {
 };
 
 export async function listEmployees(scopeEmployeeIds: string[]) {
+  // Directory listing — select only the fields the Employee Directory and the
+  // assignee pickers actually render. Avoids shipping every employee column
+  // (incl. passwordHash) plus four full relation rows per employee.
   return prisma.employee.findMany({
     where: { id: { in: scopeEmployeeIds } },
-    include: { role: true, department: true, team: true, business: true },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      designation: true,
+      employeeCode: true,
+      isActive: true,
+      roleId: true,
+      businessId: true,
+      departmentId: true,
+      teamId: true,
+      role: { select: { name: true, level: true } },
+      business: { select: { name: true } },
+      team: { select: { name: true } },
+    },
     orderBy: { createdAt: "asc" },
   });
 }

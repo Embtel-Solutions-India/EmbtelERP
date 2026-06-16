@@ -260,12 +260,13 @@ export default function App() {
           {/* Visible to IT's own staff (by designation) + level 4/5 oversight.
               No allowedLevels for L1–L3 so other departments can't see IT. */}
           <Route element={<RoleRouteGuard allowedLevels={[4, 5]} allowedDesignations={['it head', 'development team lead', 'developer']} />}>
-            <Route path="it/dashboard"     element={<ItDashboard />} />
-            <Route path="it/tasks"         element={<ItDashboard />} />
-            <Route path="it/tickets"       element={<ItDashboard />} />
-            <Route path="it/credentials"   element={<ItDashboard />} />
-            <Route path="it/productivity"  element={<ItDashboard />} />
-            <Route path="it/code-reviews"  element={<ItDashboard />} />
+            <Route path="it/dashboard"     element={<ItDashboard view="overview" />} />
+            <Route path="it/board"         element={<ItDashboard view="board" />} />
+            <Route path="it/team-load"     element={<ItDashboard view="team" />} />
+            <Route path="it/tasks"         element={<ItDashboard view="mine" />} />
+            <Route path="it/assign"        element={<ItDashboard view="assign" />} />
+            <Route path="it/task-flow"     element={<ItDashboard view="flow" />} />
+            <Route path="it/eod"           element={<ItDashboard view="eod" />} />
           </Route>
 
           {/* ── Admin module ──────────────────────────────────────────────── */}

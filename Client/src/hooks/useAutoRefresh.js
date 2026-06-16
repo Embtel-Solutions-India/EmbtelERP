@@ -7,11 +7,16 @@ import { useEffect, useRef } from 'react'
  * the latest backend data after the user switches tabs, returns to the app, or
  * data changed elsewhere. Focus refetches are throttled to avoid request storms.
  *
+ * Each dashboard fires many fetch thunks per refresh, so the focus/visibility
+ * throttle defaults to 60s: returning to a tab within a minute reuses the data
+ * already loaded rather than re-firing every endpoint. Mount/deps changes still
+ * refresh immediately, so navigation always shows current data.
+ *
  * @param {() => void} refresh  re-dispatch the screen's fetch thunks
  * @param {Array} deps          deps that should force an immediate refresh
  * @param {{ minIntervalMs?: number }} [opts]
  */
-export function useAutoRefresh(refresh, deps = [], { minIntervalMs = 10000 } = {}) {
+export function useAutoRefresh(refresh, deps = [], { minIntervalMs = 60000 } = {}) {
   const refreshRef = useRef(refresh)
   refreshRef.current = refresh
   const lastRunRef = useRef(0)

@@ -12,82 +12,75 @@ import ItProjectSelector from '../widgets/ItProjectSelector'
 import ItTeamLoad from '../widgets/ItTeamLoad'
 import ItTaskFlow from '../widgets/ItTaskFlow'
 import ItMyTasks from '../widgets/ItMyTasks'
+import ItAssignTask from '../widgets/ItAssignTask'
 import ItEodForm from '../widgets/ItEodForm'
 import ItAddTaskPanel from '../widgets/ItAddTaskPanel'
 
-const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'sprint', label: 'Sprint board' },
-  { id: 'team', label: 'Team load' },
-  { id: 'mine', label: 'My tasks' },
-  { id: 'flow', label: 'Task flow' },
-  { id: 'eod', label: 'EOD report' },
-]
+// Per-view header copy. Each view is its own page (reached from the sidebar);
+// there is no internal tab bar anymore.
+const VIEW_META = {
+  overview: { title: 'IT Development', subtitle: 'Sprint health, burndown and recent activity', crumb: 'Overview' },
+  board:    { title: 'Sprint Board',   subtitle: 'Project boards for the development team', crumb: 'Board' },
+  team:     { title: 'Team Load',      subtitle: 'Workload across all active projects', crumb: 'Team load' },
+  mine:     { title: 'My Tasks',       subtitle: 'Tasks assigned to you and your own', crumb: 'My tasks' },
+  assign:   { title: 'Assign Task',    subtitle: 'Create and hand a task to a team member', crumb: 'Assign task' },
+  flow:     { title: 'Task Flow',      subtitle: 'How a task moves through the IT department', crumb: 'Task flow' },
+  eod:      { title: 'EOD Report',     subtitle: 'Submit and review end-of-day reports', crumb: 'EOD report' },
+}
 
-export default function ITDashboardEngine() {
+export default function ITDashboardEngine({ view = 'overview' }) {
   const dispatch = useDispatch()
-  const [tab, setTab] = useState('overview')
   const [panelOpen, setPanelOpen] = useState(false)
   // Managers (level ≥ 2) can reassign tasks from the board; the server enforces
   // the same rule, so this is purely to surface the control.
   const canAssign = useSelector((s) => Number(s.auth.user?.roleLevel ?? s.auth.user?.employeeLevel ?? 0) >= 2)
 
+  // Each view loads only the data it needs (most widgets self-fetch).
   useEffect(() => {
-    dispatch(fetchItOverview())
-    dispatch(fetchItSprint())
-  }, [dispatch])
+    if (view === 'overview') dispatch(fetchItOverview())
+    if (view === 'board') dispatch(fetchItSprint())
+  }, [dispatch, view])
+
+  const meta = VIEW_META[view] ?? VIEW_META.overview
+  const showAddTask = view === 'overview' || view === 'board'
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="IT Development"
-        subtitle="Sprint board, tasks and reporting for the development team"
-        breadcrumbs={['Dashboard', 'IT Development']}
+        title={meta.title}
+        subtitle={meta.subtitle}
+        breadcrumbs={['IT Development', meta.crumb]}
         actions={
-          <button onClick={() => setPanelOpen(true)} className="btn-primary text-sm flex items-center gap-2">
-            <Add fontSize="small" /> Add task
-          </button>
+          showAddTask ? (
+            <button onClick={() => setPanelOpen(true)} className="btn-primary text-sm flex items-center gap-2">
+              <Add fontSize="small" /> Add task
+            </button>
+          ) : null
         }
       />
 
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-700 rounded-xl p-1 max-w-2xl">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              tab === t.id
-                ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
-        {tab === 'overview' && (
+      <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+        {view === 'overview' && (
           <div className="space-y-6">
             <ItKpiSection />
             <ItBurndownChart />
             <ItRecentActivity />
           </div>
         )}
-        {tab === 'sprint' && (
+        {view === 'board' && (
           <div className="space-y-4">
             <ItProjectSelector />
             <ItSprintBoard canAssign={canAssign} />
           </div>
         )}
-        {tab === 'team' && <ItTeamLoad />}
-        {tab === 'mine' && <ItMyTasks />}
-        {tab === 'flow' && <ItTaskFlow />}
-        {tab === 'eod' && <ItEodForm />}
+        {view === 'team' && <ItTeamLoad />}
+        {view === 'mine' && <ItMyTasks />}
+        {view === 'assign' && <ItAssignTask />}
+        {view === 'flow' && <ItTaskFlow />}
+        {view === 'eod' && <ItEodForm />}
       </motion.div>
 
-      <ItAddTaskPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
+      {showAddTask && <ItAddTaskPanel open={panelOpen} onClose={() => setPanelOpen(false)} />}
     </div>
   )
 }

@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu as MenuIcon,
   Search as SearchIcon,
@@ -19,8 +19,8 @@ import {
   Close as CloseIcon,
   Home as HomeIcon,
   ChevronRight,
-} from '@mui/icons-material'
-import { Tooltip } from '@mui/material'
+} from "@mui/icons-material";
+import { Tooltip } from "@mui/material";
 import {
   FaUserPlus,
   FaCalendarAlt,
@@ -33,75 +33,103 @@ import {
   FaEnvelope,
   FaFileUpload,
   FaRocket,
-} from 'react-icons/fa'
-import { logout } from '../redux/slices/authSlice'
-import { toggleTheme } from '../redux/slices/themeSlice'
-import { markAllRead } from '../redux/slices/notificationSlice'
+} from "react-icons/fa";
+import { logout } from "../redux/slices/authSlice";
+import { toggleTheme } from "../redux/slices/themeSlice";
+import { markAllRead } from "../redux/slices/notificationSlice";
 import {
   resetPerspective,
   fetchPerspectives,
   fetchCurrentPerspective,
-} from '../redux/slices/perspectiveSlice'
-import { getInitials, timeAgo } from '../utils'
+} from "../redux/slices/perspectiveSlice";
+import { getInitials, timeAgo } from "../utils";
 
 const QUICK_ACTIONS = [
-  { label: 'Add Lead', path: '/sales/leads', Icon: FaUserPlus },
-  { label: 'Schedule Meeting', path: '/sales/meetings', Icon: FaCalendarAlt },
-  { label: 'Create Follow Up', path: '/sales/follow-ups', Icon: FaPhone },
-  { label: 'New Task', path: '/sales/tasks', Icon: FaTasks },
-]
+  { label: "Add Lead", path: "/sales/leads", Icon: FaUserPlus },
+  { label: "Schedule Meeting", path: "/sales/meetings", Icon: FaCalendarAlt },
+  { label: "Create Follow Up", path: "/sales/follow-ups", Icon: FaPhone },
+  { label: "New Task", path: "/sales/tasks", Icon: FaTasks },
+];
 
 const MARKETING_QUICK_ACTIONS = [
-  { label: 'Create Campaign', path: '/marketing/campaigns', Icon: FaBullhorn },
-  { label: 'Schedule Email', path: '/marketing/email-marketing', Icon: FaEnvelope },
-  { label: 'Upload Creative', path: '/marketing/assets', Icon: FaFileUpload },
-  { label: 'Create Marketing Task', path: '/marketing/tasks', Icon: FaTasks },
-  { label: 'Launch Campaign', path: '/marketing/campaigns', Icon: FaRocket },
-]
+  { label: "Create Campaign", path: "/marketing/campaigns", Icon: FaBullhorn },
+  {
+    label: "Schedule Email",
+    path: "/marketing/email-marketing",
+    Icon: FaEnvelope,
+  },
+  { label: "Upload Creative", path: "/marketing/assets", Icon: FaFileUpload },
+  { label: "Create Marketing Task", path: "/marketing/tasks", Icon: FaTasks },
+  { label: "Launch Campaign", path: "/marketing/campaigns", Icon: FaRocket },
+];
 
 const NOTIFICATION_ICON_MAP = {
-  lead:    { Icon: FaUserPlus,    bg: 'bg-indigo-100 dark:bg-indigo-900/30',   cls: 'text-indigo-600 dark:text-indigo-400' },
-  meeting: { Icon: FaCalendarAlt, bg: 'bg-cyan-100 dark:bg-cyan-900/30',       cls: 'text-cyan-600 dark:text-cyan-400' },
-  target:  { Icon: FaBullseye,    bg: 'bg-purple-100 dark:bg-purple-900/30',   cls: 'text-purple-600 dark:text-purple-400' },
-  client:  { Icon: FaCommentDots, bg: 'bg-emerald-100 dark:bg-emerald-900/30', cls: 'text-emerald-600 dark:text-emerald-400' },
-  system:  { Icon: FaCog,         bg: 'bg-neutral-100 dark:bg-neutral-700',    cls: 'text-neutral-500 dark:text-neutral-400' },
-}
+  lead: {
+    Icon: FaUserPlus,
+    bg: "bg-indigo-100 dark:bg-indigo-900/30",
+    cls: "text-indigo-600 dark:text-indigo-400",
+  },
+  meeting: {
+    Icon: FaCalendarAlt,
+    bg: "bg-cyan-100 dark:bg-cyan-900/30",
+    cls: "text-cyan-600 dark:text-cyan-400",
+  },
+  target: {
+    Icon: FaBullseye,
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+    cls: "text-purple-600 dark:text-purple-400",
+  },
+  client: {
+    Icon: FaCommentDots,
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+    cls: "text-emerald-600 dark:text-emerald-400",
+  },
+  system: {
+    Icon: FaCog,
+    bg: "bg-neutral-100 dark:bg-neutral-700",
+    cls: "text-neutral-500 dark:text-neutral-400",
+  },
+};
 
 export default function Navbar({ onToggleSidebar }) {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { isDark } = useSelector((s) => s.theme)
-  const { user } = useSelector((s) => s.auth)
-  const { list: notifications, unreadCount } = useSelector((s) => s.notifications)
-  const { current: activePerspective, currentInfo } = useSelector((s) => s.perspective)
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isDark } = useSelector((s) => s.theme);
+  const { user } = useSelector((s) => s.auth);
+  const { list: notifications, unreadCount } = useSelector(
+    (s) => s.notifications,
+  );
+  const { current: activePerspective, currentInfo } = useSelector(
+    (s) => s.perspective,
+  );
 
-  const [search, setSearch] = useState('')
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [showProfile, setShowProfile] = useState(false)
-  const [showQuickActions, setShowQuickActions] = useState(false)
+  const [search, setSearch] = useState("");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
-  const notifRef = useRef(null)
-  const profileRef = useRef(null)
-  const isViewingOther = activePerspective !== null
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+  const isViewingOther = activePerspective !== null;
 
   const dropdownClass =
-    'absolute right-0 top-full mt-2 bg-white dark:bg-neutral-800 rounded-2xl shadow-card-hover border border-neutral-200 dark:border-neutral-700 z-50 overflow-hidden'
+    "absolute right-0 top-full mt-2 bg-white dark:bg-neutral-800 rounded-2xl shadow-card-hover border border-neutral-200 dark:border-neutral-700 z-50 overflow-hidden";
 
   const iconBtnClass =
-    'w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center text-neutral-600 dark:text-neutral-400 transition-colors'
+    "w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center text-neutral-600 dark:text-neutral-400 transition-colors";
 
   const handleResetPerspective = () => {
     dispatch(resetPerspective()).then(() => {
-      dispatch(fetchPerspectives())
-      dispatch(fetchCurrentPerspective())
-    })
-  }
+      dispatch(fetchPerspectives());
+      dispatch(fetchCurrentPerspective());
+    });
+  };
 
   const handleLogout = () => {
-    dispatch(logout())
-    navigate('/login')
-  }
+    dispatch(logout());
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-2 px-4 md:px-6 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 h-[72px]">
@@ -125,12 +153,15 @@ export default function Navbar({ onToggleSidebar }) {
           </button>
           {currentInfo.breadcrumb.map((crumb, index) => (
             <span key={crumb.id} className="flex items-center gap-1">
-              <ChevronRight style={{ fontSize: 14 }} className="text-neutral-300 dark:text-neutral-600" />
+              <ChevronRight
+                style={{ fontSize: 14 }}
+                className="text-neutral-300 dark:text-neutral-600"
+              />
               <span
                 className={`text-xs font-medium ${
                   index === currentInfo.breadcrumb.length - 1
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-neutral-500 dark:text-neutral-400'
+                    ? "text-primary-700 dark:text-primary-300"
+                    : "text-neutral-500 dark:text-neutral-400"
                 }`}
               >
                 {crumb.label}
@@ -147,15 +178,21 @@ export default function Navbar({ onToggleSidebar }) {
           animate={{ scale: 1, opacity: 1 }}
           className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30"
         >
-          <VisibilityIcon style={{ fontSize: 13 }} className="text-amber-600 dark:text-amber-400" />
+          <VisibilityIcon
+            style={{ fontSize: 13 }}
+            className="text-amber-600 dark:text-amber-400"
+          />
           <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 max-w-32 truncate">
-            {currentInfo?.label || 'Perspective'}
+            {currentInfo?.label || "Perspective"}
           </span>
           <button
             onClick={handleResetPerspective}
             className="ml-0.5 w-4 h-4 rounded-full hover:bg-amber-200 dark:hover:bg-amber-800/40 flex items-center justify-center transition-colors"
           >
-            <CloseIcon style={{ fontSize: 10 }} className="text-amber-600 dark:text-amber-400" />
+            <CloseIcon
+              style={{ fontSize: 10 }}
+              className="text-amber-600 dark:text-amber-400"
+            />
           </button>
         </motion.div>
       )}
@@ -178,16 +215,18 @@ export default function Navbar({ onToggleSidebar }) {
       {/* Right actions */}
       <div className="ml-auto flex items-center gap-2">
         {/* Theme toggle */}
-        <Tooltip title={isDark ? 'Light mode' : 'Dark mode'}>
+        <Tooltip title={isDark ? "Light mode" : "Dark mode"}>
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => dispatch(toggleTheme())}
             className={iconBtnClass}
             aria-label="Toggle theme"
           >
-            {isDark
-              ? <LightMode style={{ fontSize: 18 }} />
-              : <DarkMode style={{ fontSize: 18 }} />}
+            {isDark ? (
+              <LightMode style={{ fontSize: 18 }} />
+            ) : (
+              <DarkMode style={{ fontSize: 18 }} />
+            )}
           </motion.button>
         </Tooltip>
 
@@ -209,9 +248,9 @@ export default function Navbar({ onToggleSidebar }) {
             <div className="relative">
               <button
                 onClick={() => {
-                  setShowNotifications(!showNotifications)
-                  setShowProfile(false)
-                  setShowQuickActions(false)
+                  setShowNotifications(!showNotifications);
+                  setShowProfile(false);
+                  setShowQuickActions(false);
                 }}
                 className={iconBtnClass}
                 aria-label="Notifications"
@@ -220,7 +259,7 @@ export default function Navbar({ onToggleSidebar }) {
               </button>
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none pointer-events-none">
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </div>
@@ -259,17 +298,23 @@ export default function Navbar({ onToggleSidebar }) {
                 {/* List */}
                 <div className="max-h-72 overflow-y-auto divide-y divide-neutral-50 dark:divide-neutral-700/60">
                   {notifications.slice(0, 6).map((n) => {
-                    const entry = NOTIFICATION_ICON_MAP[n.type] || NOTIFICATION_ICON_MAP.system
-                    const { Icon } = entry
+                    const entry =
+                      NOTIFICATION_ICON_MAP[n.type] ||
+                      NOTIFICATION_ICON_MAP.system;
+                    const { Icon } = entry;
                     return (
                       <div
                         key={n.id}
                         className={`px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-700/40 cursor-pointer transition-colors ${
-                          !n.read ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''
+                          !n.read
+                            ? "bg-primary-50/50 dark:bg-primary-900/10"
+                            : ""
                         }`}
                       >
                         <div className="flex gap-3 items-start">
-                          <div className={`flex-shrink-0 w-9 h-9 rounded-full ${entry.bg} flex items-center justify-center`}>
+                          <div
+                            className={`flex-shrink-0 w-9 h-9 rounded-full ${entry.bg} flex items-center justify-center`}
+                          >
                             <Icon className={entry.cls} size={14} />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -279,12 +324,16 @@ export default function Navbar({ onToggleSidebar }) {
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary-600 inline-block flex-shrink-0" />
                               )}
                             </p>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1">{n.message}</p>
-                            <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">{timeAgo(n.time)}</p>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1">
+                              {n.message}
+                            </p>
+                            <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
+                              {timeAgo(n.time)}
+                            </p>
                           </div>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
 
@@ -300,7 +349,7 @@ export default function Navbar({ onToggleSidebar }) {
         </div>
 
         {/* Quick Add */}
-        <div className="relative">
+        {/* <div className="relative">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => {
@@ -345,15 +394,15 @@ export default function Navbar({ onToggleSidebar }) {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </div> */}
 
         {/* Profile */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => {
-              setShowProfile(!showProfile)
-              setShowNotifications(false)
-              setShowQuickActions(false)
+              setShowProfile(!showProfile);
+              setShowNotifications(false);
+              setShowQuickActions(false);
             }}
             className="flex items-center gap-2.5 pl-1 pr-3 h-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
           >
@@ -361,9 +410,12 @@ export default function Navbar({ onToggleSidebar }) {
               {getInitials(user?.name)}
             </div>
             <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 hidden sm:block leading-none">
-              {user?.name?.split(' ')[0]}
+              {user?.name?.split(" ")[0]}
             </span>
-            <KeyboardArrowDown style={{ fontSize: 16 }} className="text-neutral-400 hidden sm:block" />
+            <KeyboardArrowDown
+              style={{ fontSize: 16 }}
+              className="text-neutral-400 hidden sm:block"
+            />
           </button>
 
           <AnimatePresence>
@@ -398,24 +450,36 @@ export default function Navbar({ onToggleSidebar }) {
                 {/* Profile menu items */}
                 <div className="py-1">
                   {(() => {
-                    const activeModule = location.pathname.split('/').filter(Boolean)[0] || 'sales'
+                    const activeModule =
+                      location.pathname.split("/").filter(Boolean)[0] ||
+                      "sales";
                     const profileItems = [
-                      { icon: <PersonIcon style={{ fontSize: 17 }} />, label: 'View Profile', path: `/${activeModule}/profile` },
-                      { icon: <SettingsIcon style={{ fontSize: 17 }} />, label: 'Settings', path: `/${activeModule}/settings` },
-                    ]
+                      {
+                        icon: <PersonIcon style={{ fontSize: 17 }} />,
+                        label: "View Profile",
+                        path: `/${activeModule}/profile`,
+                      },
+                      {
+                        icon: <SettingsIcon style={{ fontSize: 17 }} />,
+                        label: "Settings",
+                        path: `/${activeModule}/settings`,
+                      },
+                    ];
                     return profileItems.map((item) => (
                       <button
                         key={item.label}
                         onClick={() => {
-                          navigate(item.path)
-                          setShowProfile(false)
+                          navigate(item.path);
+                          setShowProfile(false);
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 text-left text-sm text-neutral-700 dark:text-neutral-300 transition-colors"
                       >
-                        <span className="text-neutral-400 dark:text-neutral-500">{item.icon}</span>
+                        <span className="text-neutral-400 dark:text-neutral-500">
+                          {item.icon}
+                        </span>
                         <span className="font-medium">{item.label}</span>
                       </button>
-                    ))
+                    ));
                   })()}
                 </div>
 
@@ -435,5 +499,5 @@ export default function Navbar({ onToggleSidebar }) {
         </div>
       </div>
     </header>
-  )
+  );
 }

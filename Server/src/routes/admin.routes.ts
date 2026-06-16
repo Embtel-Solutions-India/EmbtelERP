@@ -22,34 +22,46 @@ adminRouter.get(
       teamCount,
       employeeCount,
       activeEmployeeCount,
-      taskStats,
       kpis,
       campaignStats,
+      businesses,
+      employeeCountsByBusiness,
+      taskCountsByBusiness,
     ] = await Promise.all([
       prisma.business.count(),
       prisma.vertical.count(),
       prisma.team.count(),
       prisma.employee.count(),
       prisma.employee.count({ where: { isActive: true } }),
-      prisma.task.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-      }),
       prisma.marketingKPI.aggregate({
         _avg: { value: true },
       }),
       prisma.marketingCampaign.aggregate({
         _sum: { budgetSpent: true },
       }),
+      // Aggregate in the DB instead of loading every employee and task row.
+      prisma.business.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.employee.groupBy({
+        by: ["businessId"],
+        _count: { _all: true },
+      }),
+      prisma.task.groupBy({
+        by: ["businessId", "status"],
+        _count: { _all: true },
+      }),
     ]);
 
-    // calculate tasks stats
+    // Calculate global task stats. Task.businessId is non-nullable, so the
+    // per-business breakdown sums to the same totals as a global groupBy.
     let totalTasks = 0;
     let completedTasks = 0;
     let pendingTasks = 0;
     let reviewTasks = 0;
 
-    taskStats.forEach((stat) => {
+    taskCountsByBusiness.forEach((stat) => {
       const count = stat._count._all;
       totalTasks += count;
       const status = (stat.status || "").toLowerCase();
@@ -70,22 +82,37 @@ adminRouter.get(
     // Mock revenue or base it on campaign budgetSpent + some factor
     const totalRevenue = Number(campaignStats._sum.budgetSpent ?? 0) * 1.5 + 154200;
 
-    // Department / Business Performance
-    const businesses = await prisma.business.findMany({
-      include: {
-        employees: { select: { id: true } },
-        tasks: { select: { status: true } },
-      },
+    const employeeCountByBusiness = new Map(
+      employeeCountsByBusiness.map((e) => [e.businessId, e._count._all]),
+    );
+
+    const taskTotalsByBusiness = new Map<
+      string,
+      { total: number; completed: number }
+    >();
+    taskCountsByBusiness.forEach((row) => {
+      const count = row._count._all;
+      const entry = taskTotalsByBusiness.get(row.businessId) ?? {
+        total: 0,
+        completed: 0,
+      };
+      entry.total += count;
+      if ((row.status || "").toLowerCase() === "completed") {
+        entry.completed += count;
+      }
+      taskTotalsByBusiness.set(row.businessId, entry);
     });
 
     const departmentPerformance = businesses.map((b) => {
-      const bTasks = b.tasks;
-      const completed = bTasks.filter((t) => (t.status || "").toLowerCase() === "completed").length;
-      const rate = bTasks.length > 0 ? Math.round((completed / bTasks.length) * 100) : 80;
+      const totals = taskTotalsByBusiness.get(b.id) ?? { total: 0, completed: 0 };
+      const rate =
+        totals.total > 0
+          ? Math.round((totals.completed / totals.total) * 100)
+          : 80;
       return {
         id: b.id,
         name: b.name,
-        employeeCount: b.employees.length,
+        employeeCount: employeeCountByBusiness.get(b.id) ?? 0,
         taskCompletionRate: rate,
         performanceScore: Math.min(100, Math.round(rate * 1.1) || 85),
       };
@@ -129,7 +156,17 @@ adminRouter.get(
       prisma.role.findMany({ orderBy: { level: "asc" } }),
       prisma.permission.findMany({ orderBy: { code: "asc" } }),
       prisma.employee.findMany({
-        include: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          designation: true,
+          level: true,
+          isActive: true,
+          businessId: true,
+          teamId: true,
+          roleId: true,
           business: { select: { name: true } },
           team: { select: { name: true } },
           role: { select: { name: true, level: true } },
