@@ -150,6 +150,34 @@ enum SalesTaskStatus {
   CANCELLED
 }
 
+enum DocumentationTaskType {
+  DOCUMENT_COLLECTION
+  DOCUMENT_VERIFICATION
+  CASE_FILING
+  APPLICATION_REVIEW
+  CLIENT_FOLLOWUP
+  SUBMISSION
+  INTERNAL_DISCUSSION
+}
+
+enum DocumentationTaskResult {
+  IN_REVIEW
+  DOCUMENTS_RECEIVED
+  DOCUMENTS_PENDING
+  VERIFIED
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ON_HOLD
+}
+
+enum DocumentationTaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 enum SalesTargetCategory {
   LEAD
   ACTIVITY
@@ -219,6 +247,7 @@ model Organization {
   slug                String              @unique
   businesses          Business[]
   employees           Employee[]
+  documentationTasks  DocumentationTask[]
   marketingCampaigns  MarketingCampaign[]
   marketingTasks      MarketingTask[]
   marketingLeads      MarketingLead[]
@@ -249,6 +278,7 @@ model Business {
   notifications       Notification[]      @relation("NotificationBusiness")
   tasks               Task[]
   documents           Document[]
+  documentationTasks  DocumentationTask[]
   activities          Activity[]
   auditLogs           AuditLog[]
   marketingCampaigns  MarketingCampaign[]
@@ -304,6 +334,7 @@ model Vertical {
   salesLeads          SalesLead[]
   salesTasks          SalesTask[]
   salesTargets        SalesTarget[]
+  documentationTasks  DocumentationTask[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
@@ -322,6 +353,7 @@ model Team {
   department          Department?         @relation(fields: [departmentId], references: [id])
   vertical            Vertical?           @relation(fields: [verticalId], references: [id])
   employees           Employee[]
+  documentationTasks  DocumentationTask[]
   tasks               Task[]
   marketingCampaigns  MarketingCampaign[]
   marketingTasks      MarketingTask[]
@@ -419,6 +451,8 @@ model Employee {
   salesLeadsAssigned         SalesLead[]             @relation("SalesLeadAssignee")
   salesTasksCreated          SalesTask[]             @relation("SalesTaskCreator")
   salesTasksAssigned         SalesTask[]             @relation("SalesTaskAssignee")
+  documentationTasksCreated  DocumentationTask[]     @relation("DocumentationTaskCreator")
+  documentationTasksAssigned DocumentationTask[]     @relation("DocumentationTaskAssignee")
   salesTargetsAssigned       SalesTarget[]           @relation("SalesTargetAssignee")
   salesTargetsAssignedBy     SalesTarget[]           @relation("SalesTargetAssignedBy")
   salesTargetsCreated        SalesTarget[]           @relation("SalesTargetCreator")
@@ -860,6 +894,44 @@ model SalesLead {
   @@index([priorityLevel])
   @@index([leadScore])
   @@index([createdAt])
+}
+
+model DocumentationTask {
+  id               String                   @id @default(cuid())
+  taskCode         String                   @unique
+  organizationId   String
+  businessId       String
+  teamId           String?
+  verticalId       String?
+  assigneeId       String?
+  createdById      String?
+  title            String
+  taskType         DocumentationTaskType
+  description      String?
+  status           DocumentationTaskStatus  @default(TODO)
+  priority         PriorityLevel            @default(MEDIUM)
+  dueDate          DateTime?
+  result           DocumentationTaskResult?
+  nextFollowUpDate DateTime?
+  notes            String?
+  completedAt      DateTime?
+  organization     Organization             @relation(fields: [organizationId], references: [id])
+  business         Business                 @relation(fields: [businessId], references: [id])
+  team             Team?                    @relation(fields: [teamId], references: [id])
+  vertical         Vertical?                @relation(fields: [verticalId], references: [id])
+  assignee         Employee?                @relation("DocumentationTaskAssignee", fields: [assigneeId], references: [id])
+  createdBy        Employee?                @relation("DocumentationTaskCreator", fields: [createdById], references: [id])
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([organizationId])
+  @@index([businessId])
+  @@index([teamId])
+  @@index([verticalId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([nextFollowUpDate])
 }
 
 model SalesTask {

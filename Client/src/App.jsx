@@ -27,6 +27,7 @@ import CalendarPage from './pages/CalendarPage'
 import AuditLogs from './pages/AuditLogs'
 import SalesTeamPage from './modules/sales/team/pages/SalesTeamPage'
 import SalesTasks from './modules/sales/tasks/pages/SalesTasks'
+import DocumentationTasks from './modules/documentation/tasks/pages/DocumentationTasks'
 import TargetPerformance from './modules/sales/targets/pages/TargetPerformance'
 import EmployeesPage from './pages/Employees'
 import DocumentsPage from './modules/production/pages/DocumentsPage'
@@ -164,7 +165,7 @@ export default function App() {
           {/* ── Production (Documentation) module ───────────────────────── */}
           <Route element={<RoleRouteGuard allowedLevels={[0, 1, 2, 3, 4, 5, 6]} allowedDesignations={['documentation', 'owner', 'admin']} />}>
             <Route path="production/dashboard"      element={<ProductionDashboard />} />
-            <Route path="production/tasks"          element={<Tasks />} />
+            <Route path="production/tasks"          element={<DocumentationTasks />} />
             <Route path="production/profile"        element={<Profile />} />
             <Route path="production/documents"      element={<DocumentsPage />} />
             <Route path="production/cases"          element={<CasesPage />} />

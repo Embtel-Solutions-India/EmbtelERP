@@ -18,6 +18,7 @@ import { workspaceRouter } from "./routes/workspace.routes.js";
 import { documentsRouter } from "./routes/documents.routes.js";
 import { calendarRouter } from "./routes/calendar.routes.js";
 import { salesRouter }    from "./routes/salesLead.routes.js";
+import { documentationRouter } from "./routes/documentation.routes.js";
 import { immigrationRouter } from "./routes/immigration.routes.js";
 import { itRouter } from "./routes/it.routes.js";
 
@@ -59,6 +60,7 @@ export function createApp() {
   app.use("/documents", documentsRouter);
   app.use("/calendar", calendarRouter);
   app.use("/sales",        salesRouter);
+  app.use("/documentation", documentationRouter);
   app.use("/immigration",  immigrationRouter);
   app.use("/it",           itRouter);
 

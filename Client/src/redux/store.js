@@ -5,6 +5,7 @@ import leadReducer from './slices/leadSlice'
 import meetingReducer from './slices/meetingSlice'
 import taskReducer from './slices/taskSlice'
 import salesTaskReducer from './slices/salesTaskSlice'
+import documentationTaskReducer from './slices/documentationTaskSlice'
 import salesTargetReducer from './slices/salesTargetSlice'
 import notificationReducer from './slices/notificationSlice'
 import themeReducer        from './slices/themeSlice'
@@ -40,6 +41,7 @@ const appReducer = combineReducers({
   meetings: meetingReducer,
   tasks: taskReducer,
   salesTasks: salesTaskReducer,
+  documentationTasks: documentationTaskReducer,
   salesTargets: salesTargetReducer,
   notifications: notificationReducer,
   theme:         themeReducer,
