@@ -6,8 +6,10 @@ import { ApiError } from "../utils/ApiError.js";
 import { recordAudit } from "./activity-writer.service.js";
 
 export async function login(email: string, password: string) {
-  const employee = await prisma.employee.findUnique({
-    where: { email },
+  // Email is matched case-insensitively so "User@Example.com" logs in the same
+  // account as "user@example.com" regardless of how it was stored/typed.
+  const employee = await prisma.employee.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
     include: {
       role: {
         include: { permissions: { include: { permission: true } } },
