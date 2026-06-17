@@ -106,6 +106,9 @@ export default function OrgExplorer() {
   const [crudForm, setCrudForm] = useState({});
   const [crudError, setCrudError] = useState("");
   const [crudSubmitting, setCrudSubmitting] = useState(false);
+  // Guided cascade: after creating a parent, offer to add its child entity.
+  // { childType: "vertical" | "team", businessId, verticalId?, parentName }
+  const [cascade, setCascade] = useState(null);
 
   // Load initial data
   useEffect(() => {
@@ -241,9 +244,9 @@ export default function OrgExplorer() {
   // Perspective switch handler
   const handleViewAs = (employee) => {
     const targetType =
-      employee.level === 3
+      employee.level === 4
         ? "HEAD"
-        : employee.level === 2
+        : employee.level === 2 || employee.level === 3
           ? "MANAGER"
           : employee.level === 0
             ? "INTERN"
@@ -315,6 +318,72 @@ export default function OrgExplorer() {
     );
   });
 
+  // --- Auto-generated, locked codes for new org entities. -------------------
+  // Mirrors the seed convention: businesses use a kebab slug of the name
+  // (globally unique); verticals/teams use a short business prefix + kebab slug,
+  // unique within that business. Existing rows keep their hand-authored codes.
+  const slugify = (s) =>
+    (s || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const bizPrefix = (businessId) => {
+    const biz = configLists.businesses.find((b) => b.id === businessId);
+    const base = slugify(biz?.code || biz?.name || "");
+    return (base.split("-")[0] || "org").slice(0, 4);
+  };
+
+  // Append -2, -3… until `base` is unique among `taken` (case-insensitive).
+  const uniqueCode = (base, taken) => {
+    const safe = base || "code";
+    const set = new Set((taken || []).map((c) => (c || "").toLowerCase()));
+    if (!set.has(safe.toLowerCase())) return safe;
+    let n = 2;
+    while (set.has(`${safe}-${n}`.toLowerCase())) n++;
+    return `${safe}-${n}`;
+  };
+
+  // Code preview for the current create form (recomputed as name/parent change).
+  const generatedCode = (type, form) => {
+    const name = slugify(form.name);
+    if (!name) return "";
+    if (type === "business") {
+      return uniqueCode(
+        name,
+        configLists.businesses.map((b) => b.code),
+      );
+    }
+    if (!form.businessId) return "";
+    const base = `${bizPrefix(form.businessId)}-${name}`;
+    const siblings = (type === "vertical"
+      ? configLists.verticals
+      : configLists.teams
+    )
+      .filter((x) => x.businessId === form.businessId)
+      .map((x) => x.code);
+    return uniqueCode(base, siblings);
+  };
+
+  // Re-open the same modal to create the cascaded child with parents prefilled.
+  const startCascadeChild = () => {
+    if (!cascade) return;
+    setCrudType(cascade.childType);
+    setCrudMode("create");
+    setCrudError("");
+    setCrudForm({
+      businessId: cascade.businessId,
+      ...(cascade.verticalId ? { verticalId: cascade.verticalId } : {}),
+    });
+    setCascade(null);
+  };
+
+  const closeCrudModal = () => {
+    setCrudModalOpen(false);
+    setCascade(null);
+  };
+
   // CRUD Forms Submission
   const handleCrudSubmit = async (e) => {
     e.preventDefault();
@@ -347,10 +416,38 @@ export default function OrgExplorer() {
         method = "patch";
       }
 
-      await api[method](url, crudForm);
-      setCrudModalOpen(false);
-      loadConfigLists();
+      // On create, attach the auto-generated (locked) code for org entities.
+      const isOrgCreate =
+        crudMode === "create" &&
+        (crudType === "business" ||
+          crudType === "vertical" ||
+          crudType === "team");
+      const payload = isOrgCreate
+        ? { ...crudForm, code: generatedCode(crudType, crudForm) }
+        : crudForm;
+
+      const res = await api[method](url, payload);
+      const created = res?.data;
+      await loadConfigLists();
       loadExplorerTree();
+
+      // Guided cascade: after a parent is created, offer to add its child.
+      if (crudMode === "create" && crudType === "business" && created?.id) {
+        setCascade({
+          childType: "vertical",
+          businessId: created.id,
+          parentName: created.name,
+        });
+      } else if (crudMode === "create" && crudType === "vertical" && created?.id) {
+        setCascade({
+          childType: "team",
+          businessId: created.businessId,
+          verticalId: created.id,
+          parentName: created.name,
+        });
+      } else {
+        closeCrudModal();
+      }
     } catch (err) {
       setCrudError(
         err.response?.data?.message || err.message || "Operation failed",
@@ -365,6 +462,7 @@ export default function OrgExplorer() {
     setCrudMode("create");
     setCrudError("");
     setCrudForm({});
+    setCascade(null);
     setCrudModalOpen(true);
   };
 
@@ -373,6 +471,7 @@ export default function OrgExplorer() {
     setCrudMode("edit");
     setCrudError("");
     setCrudForm(data);
+    setCascade(null);
     setCrudModalOpen(true);
   };
 
@@ -1834,13 +1933,37 @@ export default function OrgExplorer() {
                   {crudMode} {crudType} Configuration
                 </h3>
                 <button
-                  onClick={() => setCrudModalOpen(false)}
+                  onClick={closeCrudModal}
                   className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-slate-450 rounded-lg"
                 >
                   <CancelIcon />
                 </button>
               </div>
 
+              {cascade ? (
+                <div className="space-y-4">
+                  <div className="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl">
+                    Created <strong>{cascade.parentName}</strong>. Add a{" "}
+                    {cascade.childType} to it now?
+                  </div>
+                  <div className="flex items-center gap-2 justify-end border-t border-neutral-100 dark:border-neutral-800 pt-3 mt-4">
+                    <button
+                      type="button"
+                      onClick={closeCrudModal}
+                      className="btn-secondary text-xs px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                    >
+                      Done
+                    </button>
+                    <button
+                      type="button"
+                      onClick={startCascadeChild}
+                      className="btn-primary text-xs px-4 py-2 bg-primary-600 text-white rounded-lg shadow-sm capitalize"
+                    >
+                      Add {cascade.childType}
+                    </button>
+                  </div>
+                </div>
+              ) : (
               <form onSubmit={handleCrudSubmit} className="space-y-4">
                 {crudError && (
                   <div className="text-xs bg-red-500/10 text-red-500 p-2.5 rounded-xl">
@@ -1875,13 +1998,31 @@ export default function OrgExplorer() {
                       <input
                         type="text"
                         required
-                        value={crudForm.code || ""}
+                        readOnly={crudMode === "create"}
+                        value={
+                          crudMode === "create"
+                            ? generatedCode(crudType, crudForm)
+                            : crudForm.code || ""
+                        }
                         onChange={(e) =>
                           setCrudForm({ ...crudForm, code: e.target.value })
                         }
-                        className="input-field py-2 text-sm w-full"
-                        placeholder="e.g. sales-div"
+                        className={`input-field py-2 text-sm w-full ${
+                          crudMode === "create"
+                            ? "opacity-70 cursor-not-allowed"
+                            : ""
+                        }`}
+                        placeholder={
+                          crudMode === "create"
+                            ? "auto-generated from name"
+                            : "e.g. sales-div"
+                        }
                       />
+                      {crudMode === "create" && (
+                        <p className="text-[10px] text-slate-450 mt-1">
+                          Code is generated automatically and must stay unique.
+                        </p>
+                      )}
                     </div>
 
                     {crudMode === "edit" && (
@@ -2129,7 +2270,7 @@ export default function OrgExplorer() {
                 <div className="flex items-center gap-2 justify-end border-t border-neutral-100 dark:border-neutral-800 pt-3 mt-4">
                   <button
                     type="button"
-                    onClick={() => setCrudModalOpen(false)}
+                    onClick={closeCrudModal}
                     className="btn-secondary text-xs px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
                   >
                     Cancel
@@ -2143,6 +2284,7 @@ export default function OrgExplorer() {
                   </button>
                 </div>
               </form>
+              )}
             </motion.div>
           </div>
         )}

@@ -1,13 +1,20 @@
 import type { NextFunction, Request, Response } from "express";
 import { ApiError } from "../utils/ApiError.js";
 
+// 0–6 hierarchy. `MANAGER` (2) is the Team Head tier (Sales Head / Marketing
+// Manager / Documentation Manager); the Vertical Manager sits one tier above it
+// at level 3. The `MANAGER` name is kept for the team-head floor so existing
+// `requireRole(ROLE_LEVEL.MANAGER)` call-sites keep their "team-head and above"
+// meaning.
 export const ROLE_LEVEL = {
   INTERN: 0,
   EXECUTIVE: 1,
   MANAGER: 2,
-  HEAD: 3,
-  BUSINESS_OWNER: 4,
-  SUPER_ADMIN: 5,
+  TEAM_HEAD: 2,
+  VERTICAL_MANAGER: 3,
+  HEAD: 4,
+  BUSINESS_OWNER: 5,
+  SUPER_ADMIN: 6,
 } as const;
 
 /** Reject requests whose roleLevel is below minLevel. */

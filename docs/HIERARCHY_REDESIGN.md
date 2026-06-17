@@ -9,34 +9,34 @@ This document outlines the required changes to implement the requested hierarchy
 ## 1. Hierarchy Tree Design
 
 ```
-Super Admin (Level 5)
-└── Business Owner (Level 4)
+Super Admin (Level 6)            — manages the system itself
+└── Business Owner (Level 5)     — dynamic business-analytics dashboard
     ├── Immigration Business
-    │   └── Head of Immigration (Level 3)
-    │       └── Vertical Manager (Level 2)
-    │           ├── Sales Head (Level 2)
+    │   └── General Manager (Level 4)
+    │       └── Vertical Manager (Level 3)
+    │           ├── Sales Head / Team Lead (Level 2)
     │           │   └── Sales Executive (Level 1)
     │           │       └── Sales Intern (Level 0)
-    │           ├── Marketing Manager (Level 2)
+    │           ├── Marketing Manager / Team Lead (Level 2)
     │           │   └── Marketing Executive (Level 1)
     │           │       └── Marketing Intern (Level 0)
-    │           └── Documentation Manager (Level 2)
+    │           └── Documentation Manager / Team Lead (Level 2)
     │               └── Documentation Executive (Level 1)
     │                   └── Documentation Intern (Level 0)
     ├── Credential Evaluation Business
-    │   └── Head of Evaluation (Level 3)
-    │       └── Vertical Manager (Level 2)
-    │           ├── Sales Head (Level 2)
-    │           ├── Marketing Manager (Level 2)
-    │           ├── Documentation Manager (Level 2)
+    │   └── General Manager (Level 4)
+    │       └── Vertical Manager (Level 3)
+    │           ├── Sales Head / Team Lead (Level 2)
+    │           ├── Marketing Manager / Team Lead (Level 2)
+    │           ├── Documentation Manager / Team Lead (Level 2)
     │           └── Professors (Level 1)
     ├── HR Department
-    │   └── HR Manager (Level 3)
+    │   └── General Manager / HR Manager (Level 4)
     │       └── HR Executive (Level 1)
     │           └── Recruitment Executive (Level 1)
     │               └── HR Intern (Level 0)
     └── IT Services & Inhouse Team
-        └── IT Head (Level 3)
+        └── General Manager / IT Head (Level 4)
             ├── Sales Team Lead (Level 2)
             ├── Marketing Team Lead (Level 2)
             └── Development Team Lead (Level 2)
@@ -176,14 +176,15 @@ The current seed already creates:
 
 ### 4.1 Role Levels (Already Correct)
 
-| Level | Role           | Employees                                                                                                            |
-| ----- | -------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 5     | Super Admin    | Super Admin                                                                                                          |
-| 4     | Business Owner | Business Owner                                                                                                       |
-| 3     | Head           | Head of Immigration, Head of Evaluation, HR Manager, IT Head                                                         |
-| 2     | Manager        | Vertical Manager, Sales Head, Marketing Manager, Documentation Manager, Professors, IT Leads                         |
-| 1     | Executive      | Sales Executives, Marketing Executives, Documentation Executives, HR Executive, Recruitment Executive, IT Executives |
-| 0     | Intern         | Sales Interns, Marketing Interns, Documentation Interns, HR Intern                                                   |
+| Level | Role             | Employees                                                                                                            |
+| ----- | ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 6     | Super Admin      | Super Admin — manages the system                                                                                    |
+| 5     | Business Owner   | Business Owner — dynamic business-analytics dashboard                                                                |
+| 4     | General Manager  | Head of Immigration, Head of Evaluation, HR Manager, IT Head                                                         |
+| 3     | Vertical Manager | Vertical Manager (one tier above the Team Leads; no team of their own)                                               |
+| 2     | Team Lead        | Sales Head, Marketing Manager, Documentation Manager, Professors-lead, IT Leads                                      |
+| 1     | Executive        | Sales Executives, Marketing Executives, Documentation Executives, HR Executive, Recruitment Executive, IT Executives |
+| 0     | Intern           | Sales Interns, Marketing Interns, Documentation Interns, HR Intern                                                   |
 
 ### 4.2 Permission Changes
 

@@ -181,7 +181,7 @@ export default function HRAttendance() {
       </SectionCard>
 
       {/* Cross-org attendance — locked for non-HR Heads */}
-      {roleLevel < 3 && (
+      {roleLevel < 4 && (
         <div className="relative">
           <SectionCard
             title="Cross-Business Attendance Analytics"

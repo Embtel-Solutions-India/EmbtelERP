@@ -214,18 +214,19 @@ export const verticalMenu = [
 ]
 
 // ─── IT DEVELOPMENT MODULE (isolated) ─────────────────────────────────────────
-// Mirrors the mockup: an IT-team nav group + a Reporting group. The non-Overview
-// items are stubs that point at the dashboard (their backends are not built yet).
+// Each item is its own page (route-driven views in ITDashboardEngine), mirroring
+// the reference's Board / Team load / Task flow / Assign task navigation.
 export const itMenu = [
-  { id: 'dashboard',    label: 'Overview',         icon: 'Dashboard',     path: '/it/dashboard'    },
-  { id: 'tasks',        label: 'My tasks',         icon: 'TaskAlt',       path: '/it/tasks'        },
-  { id: 'tickets',      label: 'Tickets',          icon: 'RequestQuote',  path: '/it/tickets'      },
-  { id: 'credentials',  label: 'Credential vault', icon: 'Settings',      path: '/it/credentials'  },
-  { id: 'productivity', label: 'Dev productivity', icon: 'TrendingUp',    path: '/it/productivity' },
-  { id: 'reviews',      label: 'Code reviews',     icon: 'Assessment',    path: '/it/code-reviews' },
-  { id: 'audit',        label: 'Audit Logs',       icon: 'Assessment',    path: '/audit'           },
-  { id: 'calendar',     label: 'Calendar',         icon: 'CalendarMonth', path: '/calendar'        },
-  { id: 'profile',      label: 'Profile',          icon: 'AccountCircle', path: '/it/dashboard'    },
+  { id: 'dashboard',  label: 'Overview',    icon: 'Dashboard',     path: '/it/dashboard'  },
+  { id: 'board',      label: 'Board',       icon: 'Leaderboard',   path: '/it/board'      },
+  { id: 'team-load',  label: 'Team load',   icon: 'People',        path: '/it/team-load'  },
+  { id: 'tasks',      label: 'My tasks',    icon: 'TaskAlt',       path: '/it/tasks'      },
+  { id: 'assign',     label: 'Assign task', icon: 'PersonAdd',     path: '/it/assign'     },
+  { id: 'task-flow',  label: 'Task flow',   icon: 'AccountTree',   path: '/it/task-flow'  },
+  { id: 'eod',        label: 'EOD report',  icon: 'Assessment',    path: '/it/eod'        },
+  { id: 'audit',      label: 'Audit Logs',  icon: 'Assessment',    path: '/audit'         },
+  { id: 'calendar',   label: 'Calendar',    icon: 'CalendarMonth', path: '/calendar'      },
+  { id: 'profile',    label: 'Profile',     icon: 'AccountCircle', path: '/it/dashboard'  },
 ]
 
 // ─── ADMIN MODULE ─────────────────────────────────────────────────────────────

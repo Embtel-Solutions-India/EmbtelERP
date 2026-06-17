@@ -38,8 +38,8 @@ export default function Employees() {
 
   const level = Number(user?.roleLevel ?? user?.employeeLevel ?? 0)
   const designation = (user?.designation || '').toLowerCase()
-  const canManage = level >= 3 || designation.includes('hr') || designation.includes('owner') || designation.includes('admin')
-  const isSuperAdmin = level >= 5 || designation.includes('super admin')
+  const canManage = level >= 4 || designation.includes('hr') || designation.includes('owner') || designation.includes('admin')
+  const isSuperAdmin = level >= 6 || designation.includes('super admin')
 
   const filteredEmployees = employees.filter((emp) => {
     const query = search.toLowerCase()
@@ -62,7 +62,7 @@ export default function Employees() {
       departmentId: values.departmentId || null,
       teamId: values.teamId || null,
       roleId: values.roleId,
-      reportsToId: values.reportsToId || null,
+      managerId: values.reportsToId || null,
     }
 
     if (editingEmployee) {
@@ -164,7 +164,7 @@ export default function Employees() {
           businessId: editingEmployee.businessId,
           departmentId: editingEmployee.departmentId || '',
           teamId: editingEmployee.teamId || '',
-          reportsToId: editingEmployee.reportsToId || '',
+          reportsToId: editingEmployee.managerId || '',
         } : {
           firstName: '',
           lastName: '',

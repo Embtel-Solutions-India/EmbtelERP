@@ -17,7 +17,7 @@ export function useImmigrationScope() {
 
   if (!current) {
     const level = user?.employeeLevel ?? user?.roleLevel ?? 0
-    if (level === 2 && user?.verticalId) {
+    if (level === 3 && user?.verticalId) {
       return { scopeType: 'VERTICAL', scopeId: user.verticalId }
     }
     return { scopeType: 'DIVISION', scopeId: null }

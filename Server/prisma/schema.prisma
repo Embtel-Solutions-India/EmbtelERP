@@ -344,6 +344,7 @@ model Team {
 model Role {
   id          String           @id @default(cuid())
   name        String
+  /// Hierarchy tier: 0 Intern · 1 Executive · 2 Team Lead · 3 Vertical Manager · 4 General Manager · 5 Business Owner · 6 Super Admin
   level       Int              @unique
   description String?
   isSystem    Boolean          @default(true)

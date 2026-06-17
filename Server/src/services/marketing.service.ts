@@ -95,7 +95,7 @@ async function resolveAccess(ctx: MarketingRequestContext): Promise<MarketingAcc
 
   const roleLevel = employee.level ?? employee.role.level;
   let scoped = ctx.scope;
-  if (roleLevel >= 4) {
+  if (roleLevel >= 5) {
     const [businesses, employees, teams, departments] = await Promise.all([
       prisma.business.findMany({
         where: { organizationId: employee.organizationId },
@@ -142,7 +142,7 @@ function teamOrEmployeeScope(
   access: MarketingAccess,
   kind: EntityKind,
 ): Record<string, unknown> {
-  if (access.roleLevel >= 3) {
+  if (access.roleLevel >= 4) {
     return {};
   }
 
@@ -192,7 +192,7 @@ function assertBusinessInScope(access: MarketingAccess, businessId: string) {
 }
 
 function assertTeamInScope(access: MarketingAccess, teamId?: string | null) {
-  if (!teamId || access.roleLevel >= 3) {
+  if (!teamId || access.roleLevel >= 4) {
     return;
   }
   if (!access.scope.visibleTeams.includes(teamId)) {
@@ -204,7 +204,7 @@ function assertEmployeeInScope(
   access: MarketingAccess,
   employeeId?: string | null,
 ) {
-  if (!employeeId || access.roleLevel >= 4) {
+  if (!employeeId || access.roleLevel >= 5) {
     return;
   }
   if (!access.scope.visibleEmployees.includes(employeeId)) {

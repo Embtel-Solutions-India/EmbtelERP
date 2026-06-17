@@ -35,7 +35,7 @@ async function resolveAccess(ctx: SalesTaskContext): Promise<SalesTaskAccess> {
   const effectiveId = ctx.effectiveUserId ?? viewerId;
 
   // Fast path (acting as self): derive role/org/business from the JWT and reuse
-  // the scope already computed by `attachScope` (org-wide for level >= 4),
+  // the scope already computed by `attachScope` (org-wide for level >= 5),
   // avoiding redundant DB round-trips on the read path.
   if (effectiveId === viewerId && ctx.viewer.organizationId && ctx.viewer.businessId) {
     return {
@@ -80,7 +80,7 @@ function baseWhere(access: SalesTaskAccess) {
 }
 
 function teamOrEmployeeFilter(access: SalesTaskAccess): Record<string, unknown> {
-  if (access.roleLevel >= 3) return {};
+  if (access.roleLevel >= 4) return {};
   if (access.roleLevel >= 2) {
     const or: Record<string, unknown>[] = [];
     if (access.scope.visibleTeams.length > 0)     or.push({ teamId: { in: access.scope.visibleTeams } });

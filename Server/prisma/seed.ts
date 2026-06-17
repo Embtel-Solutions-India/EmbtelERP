@@ -53,13 +53,15 @@ async function main() {
     },
   });
 
+  // 0–6 hierarchy; array index matches level so roles[n] reads naturally.
   const roles = await Promise.all([
     prisma.role.create({ data: { name: "Intern", level: 0 } }),
     prisma.role.create({ data: { name: "Executive", level: 1 } }),
-    prisma.role.create({ data: { name: "Manager", level: 2 } }),
-    prisma.role.create({ data: { name: "Head", level: 3 } }),
-    prisma.role.create({ data: { name: "Business Owner", level: 4 } }),
-    prisma.role.create({ data: { name: "Super Admin", level: 5 } }),
+    prisma.role.create({ data: { name: "Team Lead", level: 2 } }),
+    prisma.role.create({ data: { name: "Vertical Manager", level: 3 } }),
+    prisma.role.create({ data: { name: "General Manager", level: 4 } }),
+    prisma.role.create({ data: { name: "Business Owner", level: 5 } }),
+    prisma.role.create({ data: { name: "Super Admin", level: 6 } }),
   ]);
 
   // Canonical permission codes — every code here is enforced by at least one middleware or service check.
@@ -98,20 +100,22 @@ async function main() {
   // Role → permission assignments
   await prisma.rolePermission.createMany({
     data: [
-      // Manager (2) and Head (3): workforce:read:org so HR employees at these levels
-      // gain cross-org read when the structural business.code check also passes.
+      // Team Lead (2), Vertical Manager (3), General Manager (4): workforce:read:org
+      // so HR employees at these tiers get cross-org read when the structural
+      // business.code check also passes.
       { roleId: roles[2].id, permissionId: pWorkforce.id },
       { roleId: roles[3].id, permissionId: pWorkforce.id },
-      // Head (3)+: may write employee records
-      { roleId: roles[3].id, permissionId: pEmployeesWrite.id },
+      { roleId: roles[4].id, permissionId: pWorkforce.id },
+      // General Manager (4)+: may write employee records
       { roleId: roles[4].id, permissionId: pEmployeesWrite.id },
       { roleId: roles[5].id, permissionId: pEmployeesWrite.id },
-      // Business Owner (4)+: org-level dashboard
-      { roleId: roles[4].id, permissionId: pDashboardOrg.id },
+      { roleId: roles[6].id, permissionId: pEmployeesWrite.id },
+      // Business Owner (5)+: org-level dashboard
       { roleId: roles[5].id, permissionId: pDashboardOrg.id },
-      // Super Admin (5) only: audit logs and org config
-      { roleId: roles[5].id, permissionId: pAuditRead.id },
-      { roleId: roles[5].id, permissionId: pRolesWrite.id },
+      { roleId: roles[6].id, permissionId: pDashboardOrg.id },
+      // Super Admin (6) only: audit logs and org config
+      { roleId: roles[6].id, permissionId: pAuditRead.id },
+      { roleId: roles[6].id, permissionId: pRolesWrite.id },
     ],
   });
 
@@ -243,13 +247,13 @@ async function main() {
     data: {
       organizationId: organization.id,
       businessId: bImmigration.id,
-      roleId: roles[5].id,
+      roleId: roles[6].id,
       firstName: "Super",
       lastName: "Admin",
       email: "superadmin@demo.com",
       passwordHash,
       designation: "Super Admin",
-      level: 5,
+      level: 6,
     },
   });
 
@@ -257,14 +261,14 @@ async function main() {
     data: {
       organizationId: organization.id,
       businessId: bImmigration.id,
-      roleId: roles[4].id,
+      roleId: roles[5].id,
       managerId: superAdmin.id,
       firstName: "Business",
       lastName: "Owner",
       email: "owner@demo.com",
       passwordHash,
       designation: "Business Owner",
-      level: 4,
+      level: 5,
     },
   });
 
@@ -273,14 +277,14 @@ async function main() {
     data: {
       organizationId: organization.id,
       businessId: bImmigration.id,
-      roleId: roles[3].id,
+      roleId: roles[4].id,
       managerId: businessOwner.id,
       firstName: "Immigration",
       lastName: "Head",
       email: "immigration.head@demo.com",
       passwordHash,
       designation: "Head of Immigration",
-      level: 3,
+      level: 4,
     },
   });
   const verticalImmigration = await prisma.employee.create({
@@ -288,14 +292,14 @@ async function main() {
       organizationId: organization.id,
       businessId: bImmigration.id,
       verticalId: vImmigration.id,
-      roleId: roles[2].id,
+      roleId: roles[3].id,
       managerId: headImmigration.id,
       firstName: "Immigration",
       lastName: "Vertical",
       email: "immigration.vertical@demo.com",
       passwordHash,
       designation: "Vertical Manager",
-      level: 2,
+      level: 3,
     },
   });
   const salesHeadImm = await prisma.employee.create({
@@ -450,14 +454,14 @@ async function main() {
     data: {
       organizationId: organization.id,
       businessId: bEvaluation.id,
-      roleId: roles[3].id,
+      roleId: roles[4].id,
       managerId: businessOwner.id,
       firstName: "Evaluation",
       lastName: "Head",
       email: "evaluation.head@demo.com",
       passwordHash,
       designation: "Head of Evaluation",
-      level: 3,
+      level: 4,
     },
   });
   const verticalEvaluation = await prisma.employee.create({
@@ -465,14 +469,14 @@ async function main() {
       organizationId: organization.id,
       businessId: bEvaluation.id,
       verticalId: vEvaluation.id,
-      roleId: roles[2].id,
+      roleId: roles[3].id,
       managerId: headEvaluation.id,
       firstName: "Evaluation",
       lastName: "Vertical",
       email: "evaluation.vertical@demo.com",
       passwordHash,
       designation: "Vertical Manager",
-      level: 2,
+      level: 3,
     },
   });
   const salesHeadEval = await prisma.employee.create({
@@ -641,14 +645,14 @@ async function main() {
     data: {
       organizationId: organization.id,
       businessId: bHR.id,
-      roleId: roles[3].id,
+      roleId: roles[4].id,
       managerId: businessOwner.id,
       firstName: "HR",
       lastName: "Manager",
       email: "hr.manager@demo.com",
       passwordHash,
       designation: "HR Manager",
-      level: 3,
+      level: 4,
     },
   });
   const hrExec = await prisma.employee.create({
@@ -705,14 +709,14 @@ async function main() {
     data: {
       organizationId: organization.id,
       businessId: bIT.id,
-      roleId: roles[3].id,
+      roleId: roles[4].id,
       managerId: businessOwner.id,
       firstName: "IT",
       lastName: "Head",
       email: "it.head@demo.com",
       passwordHash,
       designation: "IT Head",
-      level: 3,
+      level: 4,
     },
   });
   const devLead = await prisma.employee.create({

@@ -117,7 +117,7 @@ export default function App() {
           <Route path="sales/approvals"     element={<Tasks />} />
 
           {/* Sales Level >= 1 (Executive+) */}
-          <Route element={<RoleRouteGuard allowedLevels={[1, 2, 3, 4, 5]} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[1, 2, 3, 4, 5, 6]} />}>
             <Route path="sales/tasks/new"     element={<TaskForm />} />
             <Route path="sales/follow-ups"    element={<FollowUps />} />
             <Route path="sales/meetings"      element={<Meetings />} />
@@ -127,7 +127,7 @@ export default function App() {
           </Route>
 
           {/* Sales Head / Manager dashboard + team management (Level >= 2) */}
-          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5]} allowedDesignations={['sales head', 'sales manager']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5, 6]} allowedDesignations={['sales head', 'sales manager']} />}>
             <Route path="sales-manager/dashboard" element={<SalesHeadDashboard />} />
             <Route path="sales/team"              element={<SalesTeamPage />} />
             <Route path="sales/reports"           element={<Reports />} />
@@ -145,7 +145,7 @@ export default function App() {
           <Route path="marketing/approvals"       element={<MarketingTasks />} />
 
           {/* Marketing Level >= 1 (Executive+) */}
-          <Route element={<RoleRouteGuard allowedLevels={[1, 2, 3, 4, 5]} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[1, 2, 3, 4, 5, 6]} />}>
             <Route path="marketing/campaigns"       element={<MarketingCampaigns />} />
             <Route path="marketing/activities"      element={<MarketingActivities />} />
             <Route path="marketing/email-marketing" element={<MarketingEmail />} />
@@ -156,13 +156,13 @@ export default function App() {
           </Route>
 
           {/* Marketing Manager dashboard + team (Level >= 2) */}
-          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5]} allowedDesignations={['marketing manager']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5, 6]} allowedDesignations={['marketing manager']} />}>
             <Route path="marketing-manager/dashboard" element={<MarketingManagerDashboard />} />
             <Route path="marketing/team"              element={<MarketingTeamPage />} />
           </Route>
 
           {/* ── Production (Documentation) module ───────────────────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[0, 1, 2, 3, 4, 5]} allowedDesignations={['documentation', 'owner', 'admin']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[0, 1, 2, 3, 4, 5, 6]} allowedDesignations={['documentation', 'owner', 'admin']} />}>
             <Route path="production/dashboard"      element={<ProductionDashboard />} />
             <Route path="production/tasks"          element={<Tasks />} />
             <Route path="production/profile"        element={<Profile />} />
@@ -175,21 +175,21 @@ export default function App() {
           </Route>
 
           {/* Documentation role-specific dashboards */}
-          <Route element={<RoleRouteGuard allowedLevels={[0, 1, 2, 3, 4, 5]} allowedDesignations={['documentation', 'owner', 'admin']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[0, 1, 2, 3, 4, 5, 6]} allowedDesignations={['documentation', 'owner', 'admin']} />}>
             <Route path="documentation-intern/dashboard"   element={<ProductionDashboard />} />
             <Route path="documentation/dashboard"          element={<ProductionDashboard />} />
             <Route path="documentation-manager/dashboard"  element={<ProductionDashboard />} />
           </Route>
 
           {/* ── Evaluation module ────────────────────────────────────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[1, 3, 4, 5]} allowedDesignations={['professor', 'evaluation', 'owner', 'admin']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[1, 4, 5, 6]} allowedDesignations={['professor', 'evaluation', 'owner', 'admin']} />}>
             <Route path="evaluation/dashboard"      element={<EvaluationDashboard />} />
             <Route path="head-evaluation/dashboard" element={<EvaluationDashboard />} />
             <Route path="professor/dashboard"       element={<EvaluationDashboard />} />
           </Route>
 
           {/* ── HR module ─────────────────────────────────────────────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[1, 3, 4, 5]} allowedDesignations={['hr', 'recruitment', 'owner', 'admin']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[1, 4, 5, 6]} allowedDesignations={['hr', 'recruitment', 'owner', 'admin']} />}>
             <Route path="hr/dashboard"              element={<HRDashboard />} />
             <Route path="hr-executive/dashboard"    element={<HRDashboard />} />
             <Route path="recruitment/dashboard"     element={<HRDashboard />} />
@@ -202,12 +202,12 @@ export default function App() {
           </Route>
 
           {/* ── Owner module — Business Owner + Super Admin only ──────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[4, 5]} allowedDesignations={['business owner', 'owner']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[5, 6]} allowedDesignations={['business owner', 'owner']} />}>
             <Route path="owner/dashboard"           element={<OwnerDashboard />} />
           </Route>
 
           {/* Owner sub-pages — accessible to all management levels */}
-          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5]} allowedDesignations={['vertical manager', 'immigration', 'owner', 'admin']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5, 6]} allowedDesignations={['vertical manager', 'immigration', 'owner', 'admin']} />}>
             <Route path="owner/businesses"          element={<Reports />} />
             <Route path="owner/employees"           element={<EmployeesPage />} />
             <Route path="owner/reports"             element={<Reports />} />
@@ -235,7 +235,7 @@ export default function App() {
           <Route path="audit" element={<AuditLogs />} />
 
           {/* ── Immigration Head module ───────────────────────────────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[3, 4, 5]} allowedDesignations={['immigration']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[4, 5, 6]} allowedDesignations={['immigration']} />}>
             <Route path="head/dashboard"   element={<HeadDashboard />} />
             <Route path="head/cases"       element={<HeadCasesPage />} />
             <Route path="head/employees"   element={<HeadTeamPage />} />
@@ -247,29 +247,30 @@ export default function App() {
           </Route>
 
           {/* ── Vertical Manager module ───────────────────────────────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5]} allowedDesignations={['vertical manager']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[2, 3, 4, 5, 6]} allowedDesignations={['vertical manager']} />}>
             <Route path="vertical/dashboard"        element={<OwnerDashboard />} />
           </Route>
 
           {/* ── Super Admin module ────────────────────────────────────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[5]} allowedDesignations={['super admin', 'it head']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[6]} allowedDesignations={['super admin', 'it head']} />}>
             <Route path="super-admin/dashboard"     element={<AdminDashboard />} />
           </Route>
 
           {/* ── IT Development module (isolated) ──────────────────────────── */}
-          {/* Visible to IT's own staff (by designation) + level 4/5 oversight.
+          {/* Visible to IT's own staff (by designation) + level 5/6 oversight.
               No allowedLevels for L1–L3 so other departments can't see IT. */}
-          <Route element={<RoleRouteGuard allowedLevels={[4, 5]} allowedDesignations={['it head', 'development team lead', 'developer']} />}>
-            <Route path="it/dashboard"     element={<ItDashboard />} />
-            <Route path="it/tasks"         element={<ItDashboard />} />
-            <Route path="it/tickets"       element={<ItDashboard />} />
-            <Route path="it/credentials"   element={<ItDashboard />} />
-            <Route path="it/productivity"  element={<ItDashboard />} />
-            <Route path="it/code-reviews"  element={<ItDashboard />} />
+          <Route element={<RoleRouteGuard allowedLevels={[5, 6]} allowedDesignations={['it head', 'development team lead', 'developer']} />}>
+            <Route path="it/dashboard"     element={<ItDashboard view="overview" />} />
+            <Route path="it/board"         element={<ItDashboard view="board" />} />
+            <Route path="it/team-load"     element={<ItDashboard view="team" />} />
+            <Route path="it/tasks"         element={<ItDashboard view="mine" />} />
+            <Route path="it/assign"        element={<ItDashboard view="assign" />} />
+            <Route path="it/task-flow"     element={<ItDashboard view="flow" />} />
+            <Route path="it/eod"           element={<ItDashboard view="eod" />} />
           </Route>
 
           {/* ── Admin module ──────────────────────────────────────────────── */}
-          <Route element={<RoleRouteGuard allowedLevels={[3, 4, 5]} allowedDesignations={['it head', 'super admin', 'admin']} />}>
+          <Route element={<RoleRouteGuard allowedLevels={[4, 5, 6]} allowedDesignations={['it head', 'super admin', 'admin']} />}>
             <Route path="admin/dashboard"           element={<AdminDashboard />} />
             <Route path="admin/org-explorer"        element={<OrgExplorer />} />
             <Route path="admin/users"               element={<EmployeesPage />} />
