@@ -35,46 +35,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* ── Left decorative panel — hidden on mobile ── */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-700 flex-col items-center justify-center p-12 relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-white/5" />
-        <div className="absolute -bottom-32 -right-16 w-80 h-80 rounded-full bg-white/5" />
-        <div className="absolute top-1/3 right-8 w-40 h-40 rounded-full bg-white/5" />
-
-        {/* Logo + tagline */}
-        <div className="relative z-10 text-white text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mx-auto mb-6">
-            <span className="text-3xl font-bold text-white">C</span>
-          </div>
-          <h1 className="text-3xl font-bold mb-3">{APP_NAME}</h1>
-          <p className="text-white/70 text-base leading-relaxed">
-            Enterprise CRM Platform for modern sales &amp; marketing teams
-          </p>
-
-          {/* Feature list */}
-          <div className="mt-8 space-y-3 text-left">
-            {['Role-based access control', 'Real-time analytics', 'Multi-hierarchy management'].map(
-              (text) => (
-                <div key={text} className="flex items-center gap-3 text-white/80">
-                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <svg viewBox="0 0 12 12" fill="white" width="8" height="8">
-                      <path
-                        d="M1 6l3.5 3.5L11 2"
-                        stroke="white"
-                        strokeWidth="2"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-sm">{text}</span>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* ── Right form panel ── */}
       <div className="flex-1 flex items-center justify-center p-6 bg-neutral-50 dark:bg-neutral-900">
@@ -213,7 +173,7 @@ export default function Login() {
 
             {/* Footer */}
             <p className="mt-6 text-center text-xs text-neutral-400 dark:text-neutral-500">
-              {APP_NAME} — Enterprise CRM Platform
+              {APP_NAME} — Enterprise CRM Platform - Developed by Embtel Solutions
             </p>
           </div>
         </div>

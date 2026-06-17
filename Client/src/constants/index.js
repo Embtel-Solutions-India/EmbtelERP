@@ -1,4 +1,4 @@
-export const APP_NAME = 'CRM Pro'
+export const APP_NAME = 'EMBTEL ERP'
 
 export const PIPELINE_COLUMNS = [
   { id: 'new',         label: 'New Leads',     color: '#6366f1' },
