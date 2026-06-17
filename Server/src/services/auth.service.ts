@@ -12,6 +12,9 @@ export async function login(email: string, password: string) {
       role: {
         include: { permissions: { include: { permission: true } } },
       },
+      team:       { select: { name: true } },
+      vertical:   { select: { name: true } },
+      department: { select: { name: true } },
     },
   });
 
@@ -63,6 +66,11 @@ export async function login(email: string, password: string) {
       teamId: employee.teamId,
       verticalId: employee.verticalId,
       departmentId: employee.departmentId,
+      // Names let the client resolve the correct department dashboard
+      // (e.g. a "Social Media Executive" on the Marketing Team → Marketing).
+      teamName: employee.team?.name ?? null,
+      verticalName: employee.vertical?.name ?? null,
+      departmentName: employee.department?.name ?? null,
     },
     accessToken,
     refreshToken,

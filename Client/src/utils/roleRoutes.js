@@ -61,6 +61,9 @@ const DESIGNATION_ROUTE_MAP = [
   [['hr executive'],                                    '/hr-executive/dashboard'],
   [['recruitment executive', 'recruitment executive'],  '/recruitment/dashboard'],
   [['professor'],                                       '/professor/dashboard'],
+  // Generic evaluation staff (exec/intern/manager) — 'evaluation head' is matched
+  // above, so only non-head evaluation roles fall through to here.
+  [['evaluation'],                                      '/evaluation/dashboard'],
   [['documentation intern'],                            '/documentation-intern/dashboard'],
   [['marketing intern'],                                '/marketing-intern/dashboard'],
   [['sales intern'],                                    '/sales-intern/dashboard'],
@@ -71,6 +74,36 @@ const DESIGNATION_ROUTE_MAP = [
   [['owner'],                                           '/owner/dashboard'],
 ]
 
+// Operating-tier dashboards keyed by department → level (0 intern, 1 exec, 2 manager).
+const DEPARTMENT_DASHBOARDS = {
+  sales: {
+    0: '/sales-intern/dashboard',
+    1: '/sales/dashboard',
+    2: '/sales-manager/dashboard',
+  },
+  marketing: {
+    0: '/marketing-intern/dashboard',
+    1: '/marketing/dashboard',
+    2: '/marketing-manager/dashboard',
+  },
+  documentation: {
+    0: '/documentation-intern/dashboard',
+    1: '/documentation/dashboard',
+    2: '/documentation-manager/dashboard',
+  },
+}
+
+// Detect the department from any available context (team/vertical/department name
+// + designation). Team name is the most reliable signal — e.g. a "Social Media
+// Executive" or "Senior Case Manager" carries no department keyword in their title,
+// but their team ("Marketing Team" / "Documentation Team") does.
+function detectDepartment(ctx) {
+  if (/market/.test(ctx)) return 'marketing'
+  if (/document|case|production|processing/.test(ctx)) return 'documentation'
+  if (/sales/.test(ctx)) return 'sales'
+  return null
+}
+
 export function getHomePath(userOrLevel) {
   const user = typeof userOrLevel === 'object' ? userOrLevel : { roleLevel: userOrLevel }
 
@@ -79,7 +112,25 @@ export function getHomePath(userOrLevel) {
     return ROLE_DASHBOARD_MAP[user.role]
   }
 
-  // 2. Designation keyword match
+  // Role level drives role-based routing. A user with no department team is
+  // routed purely by their role — e.g. role level 4 (General Manager) →
+  // /head/dashboard — never the level fallback's Sales default.
+  const level = Number(user?.roleLevel ?? user?.employeeLevel ?? userOrLevel ?? 1)
+
+  // 2. Team + role resolution for the operating tiers (intern/exec/manager).
+  //    Department is taken from the TEAM (and vertical/department) only — not the
+  //    designation. If there's no team, this is skipped and the user falls through
+  //    to role-based routing below.
+  const ctx = [user?.teamName, user?.verticalName, user?.departmentName]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+  const department = ctx ? detectDepartment(ctx) : null
+  if (department && level >= 0 && level <= 2) {
+    return DEPARTMENT_DASHBOARDS[department][level] ?? DEPARTMENT_DASHBOARDS[department][1]
+  }
+
+  // 3. Designation keyword match (heads, owner, vertical manager, HR, IT, professor…)
   const designation = (user?.designation || '').toLowerCase()
   if (designation) {
     for (const [keywords, route] of DESIGNATION_ROUTE_MAP) {
@@ -89,8 +140,7 @@ export function getHomePath(userOrLevel) {
     }
   }
 
-  // 3. Numeric level fallback
-  const level = Number(user?.roleLevel ?? user?.employeeLevel ?? userOrLevel ?? 1)
+  // 4. Numeric level fallback
   const levelRoutes = {
     6: '/super-admin/dashboard',
     5: '/owner/dashboard',
