@@ -32,3 +32,5 @@ Server/node_modules/.vite/
 
 # TypeScript build info
 *.tsbuildinfo
+
+Server/package-lock.json
