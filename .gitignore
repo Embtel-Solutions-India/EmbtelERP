@@ -28,8 +28,8 @@ npm-debug.log*
 Server/node_modules/.prisma/
 
 # Test results
-Server/node_modules/.vite/
-
+Server/node_modules/
+Client/node_modules/
 # TypeScript build info
 *.tsbuildinfo
 
